@@ -1,0 +1,30 @@
+M291 S3 R"Bed Position After Job End" P"Select an option:" K{"Set custom Z position", "Lower bed to Z420", "Do not move"} H1
+
+if input = 0
+    ; Set custom Z position
+    if !move.axes[2].homed
+        M98 P"homeall.g"
+    M291 S3 P"Press ""OK"" to set custom Z position" Z1
+    G4 P260
+    var cstmz = move.axes[2].machinePosition
+    echo >"0:/user/lowerbed.g" "if move.axes[2].machinePosition < "^{var.cstmz}
+    echo >>"0:/user/lowerbed.g" "  G90  ; absolute positioning"
+    echo >>"0:/user/lowerbed.g" "  G1 Z"^{var.cstmz}
+    echo >>"0:/user/lowerbed.g" "else"
+    echo >>"0:/user/lowerbed.g" "  M99"
+    echo "Custom position set to " ^{var.cstmz}
+elif input = 1
+    ; Lower bed to Z420
+    echo >"0:/user/lowerbed.g" "if move.axes[2].machinePosition > 420"
+    echo >>"0:/user/lowerbed.g" "  M99"
+    echo >>"0:/user/lowerbed.g" "G90  ; absolute positioning"
+    echo >>"0:/user/lowerbed.g" "G1 Z420 F5000 ; Move bed to the bottom of print volume"
+    echo "Bed will be lowered all the way"
+elif input = 2
+    ; Do not move
+    echo >"0:/user/lowerbed.g" "G91"
+    echo >>"0:/user/lowerbed.g" "G1 Z50 F5000"
+    echo >>"0:/user/lowerbed.g" "G90"
+    echo "Bed will not be moved"
+
+echo "Setting was changed"
