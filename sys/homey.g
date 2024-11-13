@@ -31,10 +31,10 @@ G1 H1 Y-10 F200                       ; Move the Y axis back quickly to hit the 
 
 M574 Y1 S1 P"io1.in"                  ; Configure the Y endstop on io1.in
 if sensors.endstops[1].triggered      ; Check if the Y1 endstop on io1.in is triggered
-    set var.side =  "right"           ; If only the endstop on io1.in is triggered, set "left" as the side    
+    set var.side =  "right"           ; If only the endstop on io1.in is triggered, set "right" as the side    
 M574 Y1 S1 P"io2.in"                  ; Switch the Y endstop to io2.in
 if sensors.endstops[1].triggered      ; Check if the Y1 endstop on io2.in is triggered
-    set var.side =  "left"            ; Set "right" as the side if the endstop is triggered
+    set var.side =  "left"            ; Set "left" as the side if the endstop is triggered
     M574 Y1 S1 P"io1.in"              ; Configure the Y endstop on io1.in
     if sensors.endstops[1].triggered  ; Check if the Y1 endstop on io1.in is triggered
         set var.side =  "" 
