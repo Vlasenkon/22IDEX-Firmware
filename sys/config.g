@@ -41,7 +41,7 @@ M92 X80 Y80 U80 Z400 E400:400                                    ; set steps per
 M566 X600 U600 Y600 Z200 E600:600                                ; set maximum jerk (mm/min)
 M203 X18000 U18000 Y18000 Z1200 E12000:12000                     ; set maximum speeds (mm/min)
 M201 X10000 U10000 Y10000 Z500 E5000:5000                        ; set accelerations (mm/s^2)
-M906 X1800 U1800 Y1800:1800 Z800 E600:600 I50                    ; set motor currents (mA) and motor idle factor in per cent
+M906 X1800 U1800 Y1800:1800 Z850 E600:600 I35                    ; set motor currents (mA) and motor idle factor in per cent
 M84 S10                                                          ; set idle timeout
 M204 P5000 T5000
 
@@ -58,7 +58,7 @@ M98 P"0:/user/filamentsensor0.g"                                 ; configure end
 M98 P"0:/user/filamentsensor1.g"                                 ; configure endstop
 
 ; Probe 
-M950 S0 C"out9"                                                  ; define servo pin
+M950 S0 C"out9" Q50                                              ; define servo pin
 M558 K0 P8 C"1.io4.in" H5 F18000 T18000                          ; define Z probe parameters
 M98 P"0:/user/ProbeOffset.g"                                     ; define Z probe offsets
 M950 P4 C"1.out4" Q500                                           ; define output for ESD protection
