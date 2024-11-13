@@ -1,4 +1,4 @@
-var mm = {global.xcomp * 1.3}
+var mm = 0.0
 
 
 M569 P1.2 S1
