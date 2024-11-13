@@ -1,3 +1,0 @@
-echo >"0:/user/bedfinishbehavior.g" "; Please edit contents of '/macros/System/Settings/Keep the Bed 110C after print is finished'"
-
-echo "Setting was changed"
