@@ -1,0 +1,43 @@
+; Display a message to inform the user that the right extruder motor direction test is starting
+M291 R"Right Extruder Motor Direction Test" P"The side gear on the left side of the extruder should rotate clockwise" S3                                             ; Inform the user that the test for the right extruder motor is about to begin.
+
+M302 P1                                                                                     ; Enable cold extrusion (allow extruder to move without hotend being at the target temperature)
+T1 P0                                                                                      ; Select the left extruder (T0)
+M83                                                                                         ; Set the extruder to relative mode for filament feeding
+G1 E100 F1000 
+
+T1                                                                                           ; Activate the right extruder tool (T1).
+
+var initialTemp = sensors.analog[1].lastReading                                                 ; Measure the initial temperature of the right print head
+var DELTA_TEMP = 10                                                                             ; Set a temperature increase threshold of 10°C.
+
+; Set the target temperature to 10°C higher than the current temperature
+var targetTemp = var.initialTemp + {var.DELTA_TEMP}                                             ; Calculate the target temperature.
+M291 P{"Target temperature is " ^ var.targetTemp ^ "°C"} R"Temperature Information" S3 T0       ; Inform the user of the target temperature.
+G10 P1 R{var.targetTemp} S{var.targetTemp}                                                      ; Set the active and standby temperatures for the right extruder (T1).
+
+M291 P"Heating the right print head. Please wait..." R"Heating in Progress" S3 T0               ; Inform the user that heating has started.
+M116 P1                                                                                         ; Wait until the right extruder reaches the target temperature.
+
+var currentTemp = sensors.analog[1].lastReading                                                 ; Measure the current temperature of the right print head (sensor 1).
+var tempDifference = {var.currentTemp - var.initialTemp}                                        ; Calculate the difference between the current and initial temperatures.
+
+if var.tempDifference >= {var.DELTA_TEMP} - 2
+    ; If the temperature increased by 9°C or more, display a success message
+    M291 P"Heating and temperature sensor for the right print head are working correctly. Check temperature right tool manually." R"Success" S2 T0
+else
+    ; If the temperature did not rise sufficiently, display an error message
+    M291 P"Error: No significant temperature increase detected. The right print head heater or temperature sensor may be faulty." R"Heating Failure" S2 T0
+
+G10 P1 R0 S0                                                                                    ; Turn off heating for the right extruder (T1) by setting temperatures to 0°C.
+
+; Fan test for right extruder
+var termoControl = fans[0].thermostatic.lowTemperature                                          ; Store the lower threshold for fan 0.
+M106 P0 H1 T10 S1                                                                               ; Activate fan 0 if the temperature exceeds 10°C at full speed (S1).
+M291 R"Fan Test" P"Checking the Radiator Fan" S3                                                ; Display a message while testing the radiator fan (fan 0).
+M106 P0 H1 T{var.termoControl} S1                                                               ; Reset the fan to its original temperature control settings.
+
+; Fan test for fanshroud
+M106 P1 S1                                                                                      ; Activate fan 1 (fanhroud fan) at full speed.
+M291 R"Fan Test" P"Checking the Tool Fan" S3                                                    ; Display a message while testing the fanshroud fan (fan 1).
+M106 P1 S0                                                                                      ; Turn off fan 1 (fanhsroud fan) after the test.

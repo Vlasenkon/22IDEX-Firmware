@@ -1,0 +1,17 @@
+if !move.axes[1].homed || !move.axes[0].homed || !move.axes[3].homed
+  G28 Y
+  G28 X
+  G28 U
+
+var stopCycle = false
+
+while !var.stopCycle
+  M98 P"pick.g" 
+  M400                                                              ; Pick the Probe using standart macro
+  M98 P"place.g"                                                    ; Place the Probe using standart macro
+  M400
+  if sensors.endstops[0].triggered || sensors.endstops[3].triggered
+    set var.stopCycle = true
+    break
+
+   

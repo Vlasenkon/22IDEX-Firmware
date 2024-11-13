@@ -1,0 +1,28 @@
+if !move.axes[2].homed || !move.axes[0].homed || !move.axes[1].homed
+    G28 
+
+G90
+
+G1 X-100 U100 Z450
+
+M291 P"Рівномірно змастіть вісі Z моторів консистентним мастилом, по завершенню натисніть OK " S3
+M291 P"Після рівномірного змащення вісей двигунів натиснути на один з кінцевиків Х або U " S1
+
+var stopCycle = false
+
+while var.stopCycle == false
+    while move.axes[2].machinePosition < 450
+        G1 Z{move.axes[2].machinePosition - 20}
+        G1 Z{move.axes[2].machinePosition + 10}
+        M400
+        if sensors.endstops[0].triggered || sensors.endstops[3].triggered
+            set var.stopCycle = true
+            break
+
+    while move.axes[2].machinePosition > 0
+        G1 Z{move.axes[2].machinePosition + 20}
+        G1 Z{move.axes[2].machinePosition - 10}
+        M400
+        if sensors.endstops[0].triggered || sensors.endstops[3].triggered
+            set var.stopCycle = true
+            break

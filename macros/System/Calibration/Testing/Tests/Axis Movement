@@ -1,0 +1,10 @@
+
+M564 H0                                     ; Allow axis movement without homing (disables homing requirement for movement)
+
+M291 R"Move Tools by Hand" P" " S3          ; Display a message prompting the user to move tools by hand
+
+M291 R"Move Z - Axis" P" " S3 Z1            ; Display a prompt to move the Z axis with a starting value of 1 for Z
+;M84                                        ; Disable motors (turn off stepper motors to allow manual movement)
+M291 R"Move XYU - Axis" P" " S3 X1 Y1 U1    ; Prompt the user to move the X, Y, and U axes with starting values of 1 for each axis
+
+M564 H1                                     ; Re-enable homing requirement (axes can only move after homing is performed)

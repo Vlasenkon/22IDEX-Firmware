@@ -1,0 +1,36 @@
+M291 R"Chamber Heater Test" P" " S3
+
+var initialTemp = sensors.analog[3].lastReading
+
+var DELTA_TEMP = 10
+
+var targetTemp = floor(var.initialTemp + var.DELTA_TEMP)
+
+M291 P{"The current chamber temperature: " ^ var.initialTemp ^". Target chamber temperature is: " ^ var.targetTemp ^ "°C"} R"Temperature Information" S2 T0
+
+M141 S{var.targetTemp} R{var.targetTemp} 
+
+; Initialize timer
+var startTime = state.time
+var timeLimit = 300
+
+M291 P{"Heating the chamber to the target temperature. Please wait "^ {var.timeLimit} ^ " s..."} R"Heating in Progress" S3
+
+while state.time < var.startTime + var.timeLimit
+    var currentTemp = sensors.analog[3].lastReading
+    if var.currentTemp >= var.targetTemp
+        M291 P"Chamber temperature reached successfully." R"Success" S2 T0
+        break
+
+    G4 P5000
+
+    ; Check if time limit has been exceeded
+    if state.time >= var.startTime + var.timeLimit
+        M291 P"Error: Chamber did not reach the target temperature in time." R"Failure" S2 T0
+        break
+var timeOfHeating = state.time - var.startTime
+
+
+M291 P{"The current chamber temperature: " ^ sensors.analog[3].lastReading ^"°C. Heating Time: " ^ var.timeOfHeating ^ " s "} R"Heating Information" S3
+
+M141 S0 R0  ; Turn off the bed heater (H0)

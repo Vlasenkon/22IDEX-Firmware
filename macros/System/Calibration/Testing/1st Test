@@ -1,24 +1,59 @@
-M291 S7 J1 R"Enter Password" P"Enter the password to start the test."
-var pp = {input}
+; Display warning message to the user
+M291 P"Warning: Power to the Z-axis motors will be disconnected. Please remove any objects from under the bed. The bed will need to be manually lowered. Proceed carefully to avoid damage." R"Z-Axis Motor Power Off" S2 T0
 
-if var.pp != "vmawt"
-	abort
-	M99
+; Disable the Z-axis motors to allow manual movement
+M84 Z  ; Turn off power to the Z-axis motors
 
-;Fans & Heaters Test ==========================================================================================
-M98 P"0:/macros/System/Calibration/Testing/Tests/Fans & Heaters"
+; Optional: Provide a final confirmation to the user
+M291 P"The Z-axis motors have been powered off. Please manually lower the bed by hand." R"Manual Bed Lowering" S2 T0
 
-;LED Test ==========================================================================================
+;LED Test ==========================================================================================================
 M98 P"0:/macros/System/Calibration/Testing/Tests/LED"
 
-;Z-Binding Test ==========================================================================================
-M98 P"0:/macros/System/Calibration/Testing/Tests/Z - Binding & Motor Dir"
+;X-Axis Limit Switch Test ===========================================================================================
+M98 P"0:/macros/System/Calibration/Testing/Tests/X-Axis Limit Switch"
 
-;Homing Test ==========================================================================================
+;U-Axis Limit Switch Test ==========================================================================================
+M98 P"0:/macros/System/Calibration/Testing/Tests/U-Axis Limit Switch"
+
+;Y_Left Limit Switch Test ==========================================================================================
+M98 P"0:/macros/System/Calibration/Testing/Tests/Y-Left Limit Switch"
+
+;Y-Right Limit Switch Test ==========================================================================================
+M98 P"0:/macros/System/Calibration/Testing/Tests/Y-Right Limit Switch"
+
+;Filament Sensor Left Test ==========================================================================================
+M98 P"0:/macros/System/Calibration/Testing/Tests/Filament Sensor Left"
+
+;Filament Sensor Right Test ==========================================================================================
+M98 P"0:/macros/System/Calibration/Testing/Tests/Filament Sensor Right"
+
+;Probe and Servo Test ================================================================================================
+M98 P"0:/macros/System/Calibration/Testing/Tests/Probes_Servo"
+
+;Axis Movement Test =================================================================================================
+M98 P"0:/macros/System/Calibration/Testing/Tests/Axis Movement"
+
+;Homing Test ========================================================================================================
 M98 P"0:/macros/System/Calibration/Testing/Tests/Homing"
 
-;Homing Test ==========================================================================================
-M98 P"0:/macros/System/Calibration/Testing/Tests/Probes"
+; Z-axis Test =======================================================================================================
+M98 P"0:/macros/System/Calibration/Testing/Tests/Test Z-axis"
+
+; Display message about upcoming testing of print heads, bed, and chamber heater ====================================
+M291 P"System is transitioning to the testing phase of the print heads, heated bed, and chamber heater. Please ensure all necessary preparations are complete, and the machine is clear of any obstructions." R"Initiating System Testing" S2 T0
+
+; Left Head Test ====================================================================================================
+M98 P"0:/macros/System/Calibration/Testing/Tests/Head Left"
+
+; Right Head Test ===================================================================================================
+M98 P"0:/macros/System/Calibration/Testing/Tests/Head Right"
+
+; Bed Heating Test ==================================================================================================
+M98 P"0:/macros/System/Calibration/Testing/Tests/Bed Heating Test"
+
+; Chamber Heater & Fan Test  ==========================================================================================
+M98 P"0:/macros/System/Calibration/Testing/Tests/Chamber Heater + Fan"
 
 
-M291 R"Test Both Filament Sernsor" P" " S1
+

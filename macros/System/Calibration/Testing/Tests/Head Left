@@ -1,0 +1,43 @@
+; Display a message to inform the user that the left extruder motor direction test is starting
+M291 R"Left Extruder Motor Direction Test" P"The side gear on the right side of the extruder should rotate counterclockwise" S3
+
+M302 P1                                                                                     ; Enable cold extrusion (allow extruder to move without hotend being at the target temperature)
+T0 P0                                                                                       ; Select the left extruder (T0)
+M83                                                                                         ; Set the extruder to relative mode for filament feeding
+G1 E100 F1000                                                                               ; Feed 100mm of filament at 1000 mm/min
+T0                                                                                        ; Ensure the left extruder tool (T0) is still selected
+
+; Measure the initial temperature of the left print head
+var initialTemp = sensors.analog[0].lastReading
+var DELTA_TEMP = 10                                                                         ; Set a temperature increase threshold of 10°C
+
+; Set the target temperature to 10°C higher than the current temperature
+var targetTemp = var.initialTemp + {var.DELTA_TEMP}
+M291 P{"Target temperature is " ^ var.targetTemp ^ "°C"} R"Temperature Information" S3 T0   ; Inform the user about the target temperature
+G10 P0 R{var.targetTemp} S{var.targetTemp}        
+; Set both standby and active temperatures for the left extruder
+M291 P"Heating the left print head. Please wait..." R"Heating in Progress" S3 T0            ; Display a message while heating is in progress
+M116 P0                                                                                     ; Wait for the temperature to rise by 10°C
+
+
+var currentTemp = sensors.analog[0].lastReading                                             ; Measure the current temperature after heating
+var tempDifference = {var.currentTemp - var.initialTemp}                                    ; Calculate the temperature difference between current and initial values
+
+
+if var.tempDifference >= {var.DELTA_TEMP} - 2
+    ; If the temperature increased by 9°C or more, display a success message
+    M291 P"Heating and temperature sensor for the left print head are working correctly. Check temperature left print head manually" R"Success" S3 T0
+else
+    ; Display error if insufficient temperature increase
+    M291 P"Error: No significant temperature increase detected. The left print head heater or temperature sensor may be faulty." R"Heating Failure" S3 T0  
+G10 P0 R0 S0                                                                                ; Turn off the left print head heater after the test
+
+; Fan test for left extruder
+var termoControl = fans[2].thermostatic.lowTemperature                                      ; Store the fan's lower temperature threshold
+M106 P2 H0 T10 S1                                                                           ; Activate fan 2 if temperature exceeds 10°C at full speed
+M291 R"Fan Test" P"Checking the Radiator Fan" S3                                            ; Display message while testing the radiator fan
+M106 P2 H0 T{var.termoControl} S1                                                           ; Reset the fan to its original temperature control settings
+
+M106 P3 S1                                                                                  ; Activate the fanshroud fan (fan 3) at full speed
+M291 R"Fan Test" P"Checking the Tool Fan" S3                                                ; Display message while testing the fanshroud fan
+M106 P3 S0                                                                                  ; Turn off the fanshroud fan (fan 3)

@@ -1,11 +1,19 @@
-M291 R"Home Y" P" " S3
-G28 Y
 
-M291 R"Home X" P" " S3
-G28 X
+M291 R"Home Y" P" " S3                                                      ; Display a message prompting the user to home the Y axis
+G28 Y                                                                       ; Home the Y axis
 
-M291 R"Home U" P" " S3
-G28 U
+M291 R"Home X" P" " S3                                                      ; Display a message prompting the user to home the X axis
+G28 X                                                                       ; Home the X axis
 
-M291 R"Move Axis?" P" " S3
-G1 F18000 Y-999 X-50 U50
+M291 R"Home U" P" " S3                                                      ; Display a message prompting the user to home the U axis
+G28 U                                                                       ; Home the U axis
+
+; Check if all axes (X, Y, U) are homed
+if !move.axes[0].homed || !move.axes[1].homed || !move.axes[3].homed
+    M291 P"Error: Not all axes are homed. Please home all axes and try again." R"Axis Not Homed" S2 T0
+    abort "Homing is required before proceeding."                           ; Abort the script if not all axes are homed
+
+M291 P"Success: All axes are homed." R"Homing Successful" S2 T0             ; If all axes are homed, display a success message
+
+M291 R"Move Axis?" P"Proceed with axis movement" S3                         ; After successful homing, display a prompt to move the axes
+G1 F18000 Y-999 X-50 U50                                                    ; Move the Y, X, and U axes at a feed rate of 18000 mm/min

@@ -6,6 +6,8 @@ G10 P3 S350 R350
 M140 S150 R150
 M141 S95 R95
 
+var startTime = state.time  ; Store the current system time in startTime
+
 ; Fans
 M106 P1 S0.5
 M106 P3 S0.5
@@ -80,6 +82,12 @@ while sensors.analog[3].lastReading <= 80
   G1 X2.5  Y-175
   G1 X2.5  Y160
 
+var durationTime = floor((state.time - var.startTime) / 60)  ; Calculate duration in minutes
+
+; Multiply by 100, round, and divide by 100 to keep 2 decimal places
+;set var.durationTime = floor(var.durationTime * 100) / 100
+; Convert duration from seconds to minutes with 2 decimal places and display it in a pop-up
+M291 P{"Heating duration: " ^ {var.durationTime} ^ " minutes"} R"Heating Duration" S2
 
 
 

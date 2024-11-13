@@ -5,17 +5,17 @@ M106 P6 S0
 
 
 M42 P1 S0.1
-M291 R"Red Test" P" " S3
+M291 R"Red LED Test" P" " S3
 M42 P1 S0
 
 
 M42 P2 S0.1
-M291 R"Green Test" P" " S3
+M291 R"Green LED Test" P" " S3
 M42 P2 S0
 
 
 M42 P3 S0.1
-M291 R"Blue Test" P" " S3
+M291 R"Blue LED Test" P" " S3
 M42 P3 S0
 
 M42 P1 S1

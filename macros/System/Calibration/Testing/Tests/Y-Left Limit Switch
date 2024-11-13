@@ -1,0 +1,31 @@
+; Display a message to start the left Y-axis endstop test
+M291 P"Check the left Y-axis endstop. Within 60 seconds, press the left Y-axis endstop. Press OK to start." S3 T0
+
+; Initialize the timer for left endstop test
+var startTime = state.time  ; Record the current time
+var duration = 60  ; Set the timer duration to 60 seconds
+var endstopTriggered = false  ; Initialize a variable to track the endstop state
+
+; Configure the left Y-axis endstop
+M574 Y1 S1 P"io1.in"  ; Configure the Y endstop on io1.in
+
+; Main loop to check the left Y-axis endstop for 60 seconds
+while state.time < {var.startTime + var.duration}
+    if sensors.endstops[1].triggered
+        set var.endstopTriggered = true  ; Set the state to true if the endstop is triggered
+        break  ; Exit the loop if the endstop is triggered
+    G4 P100  ; Wait for 100 ms between checks
+
+; Process the test results for the left endstop
+if var.endstopTriggered
+    M291 P"The left Y-axis endstop is correctly connected." S2 T0  ; Display a message with a single OK button
+else
+    M291 P"The left Y-axis endstop was not pressed or is not working / incorrectly connected. Retry the test?" R"Left Endstop Test Failed" S4 T0 K{"OK", "Cancel"}
+    
+    if input == 0
+        M98 P"0:/macros/System/Calibration/Testing/Tests/Y-Left Limit Switch"  ; Restart the left endstop test
+    elif input == 1
+        abort "Test canceled by user."  ; Terminate the script
+
+; Reconfigure the Y-axis endstops to use both left and right
+M574 Y1 S1 P"io1.in+io2.in"  ; Configure endstops for both sides of the Y axis

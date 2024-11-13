@@ -1,0 +1,29 @@
+; Display a message to start the X-axis endstop test
+M291 P"Check the X-axis endstop. Within 60 seconds, press the X-axis endstop. Press OK to start." S3 T0
+
+; Initialize the timer
+var startTime = state.time  ; Record the current time
+var duration = 60  ; Set the timer duration to 60 seconds
+var endstopTriggered = false  ; Initialize a variable to track the endstop state
+
+; Main loop to check the endstop for 60 seconds
+while state.time < {var.startTime + var.duration}
+    if sensors.endstops[0].triggered
+        set var.endstopTriggered = true  ; Set the state to true if the endstop is triggered
+        break  ; Exit the loop if the endstop is triggered
+    G4 P100  ; Wait for 100 ms between checks
+
+; Process the test results
+if var.endstopTriggered
+    ; If the endstop was pressed
+    M291 P"The endstop is correctly connected." S2 T0  ; Display a message with a single OK button
+else
+    ; If the endstop was not pressed
+    M291 P"The endstop was not pressed or is not working / incorrectly connected. Retry the test?" R"Endstop Test Failed" S4 T0 K{"OK", "Cancel"}
+    
+    if input == 0
+        ; If OK is selected
+        M98 P"0:/macros/System/Calibration/Testing/Tests/X-Axis Limit Switch"  ; Restart the test 
+    elif input == 1
+        ; If Cancel is selected
+        abort "Test canceled by user."  ; Terminate the script

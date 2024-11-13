@@ -1,0 +1,45 @@
+; Message about the start of the Z motor test
+M291 P"Testing Z motors. The bed will up by 20mm. Press OK to continue." R"Z-Axis Test" S2
+
+G92 Z20
+
+; Lower the entire bed by 20mm
+G1 Z-20 F1200
+
+; Configure drivers and movement parameters for each motor
+M584 A1.2 B1.0 C1.1 P7             ; Assign drivers for each axis (A, B, C)
+M350 A16 B16 C16 I1                ; Set microstepping with interpolation for all axes
+M92 A300 B300 C300                 ; Set steps per mm for each axis
+M566 A600 B600 C600                ; Maximum jerk (mm/min)
+M203 A3600 B3600 C3600             ; Maximum speed (mm/min)
+M201 A200 B200 C200                ; Maximum acceleration (mm/s^2)
+M906 A1000 B1000 C1000 I20         ; Motor current (mA) and idle factor
+M204 P15000 T15000                 ; Acceleration for print and travel moves
+
+; Axis limits
+M208 Z0 A0 B0 C0 S1                ; Set axis minima
+M208 Z450 A440 B440 C440 S0        ; Set axis maxima
+
+; Set initial positions for axes
+G92 A0 B0 C0                 ; Set current position for axes A, B, C
+
+; Testing the front-left motor
+M291 P"Moving the front-left motor up. Press OK to continue." R"Front-Left Motor Test" S3
+G1 A20 F1800                      ; Raise the front-left motor by 20mm
+G1 A-20 F1800 
+
+; Testing the front-right motor
+M291 P"Moving the front-right motor up. Press OK to continue." R"Front-Right Motor Test" S3
+G1 B20 F1800                      ; Raise the front-right motor by 20mm
+G1 B-20 F1800
+
+; Testing the rear motor
+M291 P"Moving the rear motor up. Press OK to continue." R"Rear Motor Test" S3
+G1 C20 F1800                      ; Raise the rear motor by 20mm
+G1 C-20 F1800
+ 
+G1 Z20 F1200
+
+; Reset to default configuration
+M584 P4                            ; Restore default driver settings
+M18 A B C

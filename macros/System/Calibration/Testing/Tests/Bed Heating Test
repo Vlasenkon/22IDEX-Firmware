@@ -1,0 +1,33 @@
+; Display a message to inform the user that the bed heater test is starting
+M291 R"Bed Heater Test" P" " S3
+
+var initialTemp = sensors.analog[2].lastReading                                                     ; Measure the initial temperature of the bed
+
+var DELTA_TEMP = 8
+; Set the target temperature for the bed to 50°C, which is 5°C higher than the current temperature
+var targetTemp = var.initialTemp + {var.DELTA_TEMP}
+M291 P{"Target bed temperature is " ^ var.targetTemp ^ "°C"} R"Temperature Information" S2 T0
+M140 S{var.targetTemp} R{var.targetTemp}                                                            ; Set both standby and active bed temperature to targetTemp
+
+M291 P"Heating the bed to the target temperature. Please wait..." R"Heating in Progress" S2 T0      ; Display a message indicating the bed heating process has started
+
+; Initialize timer
+var startTime = state.time                                                                          ; Record the start time
+var timeLimit = 600                                                                                 ; Set a time limit of 180 seconds (10 minutes) for the bed to reach the target temperature
+
+while state.time < {var.startTime + var.timeLimit}
+    var currentTemp = sensors.analog[2].lastReading                                                 ; Read the current temperature from analog line 2
+    var tempDifference = {var.currentTemp - var.initialTemp}                                        ; Temperature difference calculation
+
+    if var.tempDifference >= {var.DELTA_TEMP} - 1
+        M291 P"Bed temperature reached successfully." R"Success" S2 T0
+        break                                                                                       ; Exit the loop if the bed temperature rises by 5°C or more
+
+    G4 P5000                                                                                        ; Wait for 5 seconds
+
+    ; Check if time limit has been exceeded
+    if state.time >= {var.startTime + var.timeLimit}
+        M291 P"Error: Bed did not reach the target temperature in time." R"Failure" S2 T0
+        break
+
+M140 S0 R0                                                                                          ; Turn off the bed heater (H0)

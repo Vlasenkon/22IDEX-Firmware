@@ -1,0 +1,51 @@
+; Chamber Heater Test
+
+; Display a message indicating the start of the chamber heater test and checking fan status
+M291 R"Chamber Heater Test" P"Starting the chamber heater test. Please ensure the small & large fans are spinning." S3  
+
+; Measure the initial temperature of the chamber
+var initialTemp = sensors.analog[4].lastReading                                                     ; Assign the initial temperature from sensor 4 (chamber temperature sensor) to variable
+var DELTA_TEMP = 5                                                                                  ; Define the temperature increase threshold to be checked (5°C)
+
+; Set the target temperature for the chamber to 50°C
+var targetTemp = var.initialTemp + {var.DELTA_TEMP}                                                 ; Calculate the target temperature by adding the threshold to the initial temperature
+M291 P{"Target chamber temperature is " ^ var.targetTemp ^ "°C"} R"Temperature Information" S2 T0   ; Display the target temperature to the user
+M141 S{var.targetTemp} R{var.targetTemp}                                                            ; Set both standby and active chamber temperatures to the calculated target temperature
+
+; Display a message indicating the chamber heating process has started
+M291 P"Heating the chamber to the target temperature. Please wait..." R"Heating in Progress" S2 T0  ; Notify the user that the chamber is heating
+
+; Initialize timer for chamber heating
+var startTime = state.time                                                                          ; Record the current time as the start time for heating
+var timeLimit = 600                                                                                 ; Set a maximum time limit of 600 seconds for the chamber to reach the target temperature
+
+; Loop to monitor chamber temperature increase
+while state.time < {var.startTime + var.timeLimit}                                                  ; Run a loop as long as the time limit is not exceeded
+    var currentTemp = sensors.analog[4].lastReading                                                 ; Read the current temperature from the chamber sensor (analog sensor 4)
+    var tempDifference = {var.currentTemp - var.initialTemp}                                        ; Calculate the difference between the current and initial temperatures
+
+    if var.tempDifference >= {var.DELTA_TEMP} - 1                                                   ; If the temperature increase is close to or greater than 5°C
+        M291 P"Chamber temperature reached successfully." R"Success" S2 T0                          ; Notify the user that the target temperature has been reached
+        break                                                                                       ; Exit the loop once the target temperature is reached
+
+    G4 P5000                                                                                        ; Wait for 5 seconds before checking the temperature again
+
+    ; Check if time limit has been exceeded
+    if state.time >= {var.startTime + var.timeLimit}                                                ; If the current time exceeds the time limit
+        M291 P"Error: Chamber did not reach the target temperature in time." R"Failure" S2 T0       ; Notify the user that the target temperature wasn't reached in time
+        break                                                                                       ; Exit the loop if the time limit is exceeded
+
+; Turn off the chamber heater after the test
+M141 S0 R0                                                                                          ; Set both the standby and active chamber temperatures to 0 to turn off the heater
+
+; Check the fan status for the chamber (Fan P4)
+var termoControl = fans[4].thermostatic.lowTemperature                                              ; Store the current low temperature setting of Fan 4
+M106 P4 H4 T10 S1                                                                                   ; Turn on Fan 4 for testing with a set temperature of 10°C
+M291 R"Fan Test" P"Checking the chamber heater fan." S3                                             ; Display a message that the chamber heater fan (Fan 4) is being tested
+M106 P4 H4 T{var.termoControl} S1                                                                   ; Restore Fan 4 to its original thermostatic control setting
+
+; Chamber Air Fan Test (Fan P7)
+var termoControlair = fans[7].thermostatic.lowTemperature                                           ; Store the current low temperature setting of Fan 7 (chamber air fan)
+M106 P7 H3 T10 S1                                                                                   ; Turn on Fan 7 for testing with a set temperature of 10°C
+M291 R"Chamber Air Fan Test" P"Checking the chamber air fan." S3                                    ; Display a message that the chamber air fan (Fan 7) is being tested
+M106 P7 H3 T{var.termoControlair} S1                                                                ; Restore Fan 7 to its original thermostatic control setting

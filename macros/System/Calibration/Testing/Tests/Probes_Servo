@@ -1,0 +1,16 @@
+M291 R"Servo Test" P"The servo will rotate, there should be no extraneous noise, the movement should be smooth " S3
+
+M98 P"0:/macros/System/Calibration/Z Probe/Rotate holder to 0 degree"
+G4S1
+M98 P"0:/macros/System/Calibration/Z Probe/Rotate holder to a set degree"
+G4S1
+M98 P"0:/macros/System/Calibration/Z Probe/Rotate holder to 0 degree"
+
+
+
+
+M291 R"Enable Probe" P"ESD Warning, Install the probe on the magnets and press the endstop switch. Touch Left & Right Nozzle and Bed, Z - Probe value should change" S3
+M98 P"0:/macros/System/Calibration/Testing/Enable XY - Probe"
+
+M291 R"Disable Probe" P" " S3
+M98 P"0:/macros/System/Calibration/Testing/Disable XY - Probe"

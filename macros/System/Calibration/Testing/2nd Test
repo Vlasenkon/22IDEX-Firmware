@@ -1,15 +1,6 @@
-M291 S7 J1 R"Enter Password" P"Enter the password to start the test."
-var pp = {input}
-
-if var.pp != "vmawt"
-	abort
-	M99
-
-
 M291 R"Was Z - Probe Set Up?" P" " S3
 
 M98 P"0:/macros/System/Calibration/Testing/Tests/True Bed Leveling"
-
 
 M98 P"0:/macros/Close the Lid"
 
