@@ -33,7 +33,11 @@ if !exists(param.C)
   M98 R1 P"0:/sys/attachedcheck.g" ; make sure probe is conected, pick if negative and leave relay active
   M558 K0 P8 C"1.io4.in" H5 F300 T18000
   M98 P"0:/user/ProbeOffset.g"
-  G30           ; Home bed using probe
+  
+  ; Perform 3 probes and average the results
+  G30 P0 X{0 - sensors.probes[0].offsets[0]} Y{10 - sensors.probes[0].offsets[1]} Z-99999
+  G30 P1 X{0 - sensors.probes[0].offsets[0]} Y{10 - sensors.probes[0].offsets[1]} Z-99999
+  G30 P2 X{0 - sensors.probes[0].offsets[0]} Y{10 - sensors.probes[0].offsets[1]} Z-99999 S3
 
 if !exists(param.S)
   G1 H2 Z100 F18000   ; Lift Z
