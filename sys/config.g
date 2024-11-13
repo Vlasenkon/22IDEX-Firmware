@@ -152,6 +152,7 @@ M98 P"0:/user/pickupposition.g"                                  ; load global v
 M98 P"0:/user/pickupangle.g"                                     ; load global variables
 M98 P"0:/user/eventlogging.g"                                    ; load global variables
 M98 P"0:/user/xcomp.g"                                           ; load global variables
+M98 P"0:/user/filamentRunoutToolSwap.g"                          ; load filament runout tool swap variable
 
 echo >"0:/user/toolchangeretraction.g" "                         ; ToolChange Retraction Disabled"
 echo >"0:/sys/resetzbabystep.g" "                                ; do nothing"
