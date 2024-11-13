@@ -9,9 +9,17 @@ G1 U999 F18000                              ; move U out of the way
 
 M558 K0 P8 C"1.io4.in" H4 F300 T18000  ; define probe parameters
 M98 P"0:/user/ProbeOffset.g"                ; det probe offsets
-M557 X-165:155 Y-146:165 P8                 ; define mesh grid
 
-G29 S0                                      ; run MBC
+; Check if parameters are provided and set the mesh grid accordingly
+if exists(param.A) && exists(param.B) && exists(param.D) && exists(param.J)
+  M557 X{param.A}:{param.B} Y{param.D}:{param.J} S35                 ; define mesh grid
+else
+  ; Default mesh grid if parameters are not provided
+  M557 X-165:155 Y-146:165 P8                 ; define mesh grid
+
+; Perform mesh bed leveling
+G29 S0
+
 if result !=0
   M98 P"0:/sys/led/fault.g"
   echo >>"0:/sys/eventlog.txt" "Print cancelled due to Mesh Compensation Error"
