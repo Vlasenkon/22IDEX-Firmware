@@ -1,3 +1,0 @@
-echo >"0:/user/chamberwait.g" ";Do not wait for Chamber Temp"
-
-echo "Setting Changed"
