@@ -12,7 +12,7 @@ if network.interfaces[0].actualIP != "0.0.0.0"
 	if network.interfaces[0].gateway != "0.0.0.0"
 		echo >>"0:/user/networkmode.g" "M554 P"^{network.interfaces[0].gateway}
 
-	M291 S1 R"Ethernet Configuration" P"Ethernet IP address was saved." T15
+	echo "Ethernet Configuration: Ethernet IP address was saved."
 else
 	; WiFi
 	if network.interfaces[1].actualIP != "0.0.0.0"
@@ -28,4 +28,4 @@ else
 		if network.interfaces[1].gateway != "0.0.0.0"
 			echo >>"0:/user/networkmode.g" "M554 P"^{network.interfaces[1].gateway}
 
-		M291 S1 R"WiFi Configuration" P"WiFi IP address was saved." T15
+		echo "WiFi Configuration: WiFi IP address was saved."
