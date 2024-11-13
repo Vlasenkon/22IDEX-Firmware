@@ -1,5 +1,0 @@
-M291 R"Warning!" P"Disabling Fault Detection is NOT RECOMMENDED and may cause fire, please do it ON YOUR OWN RISK and do not leave the printer unattended" S3
-echo >"0:/user/faultdetection.g" "M570 H3 P999999 T999999 ; Disable Chamber Heater fault detection"
-M570 H3 P999999 T999999
-
-echo "Fault Detection Disabled"
