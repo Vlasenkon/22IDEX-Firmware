@@ -13,7 +13,7 @@ T R4                 ; select the tool that was active last time the print was p
 G1 R4 Z2 F18000       ; go above the position of the last print move
 
 ; Check if resuming after filament runout
-if global.filamentRunoutTakeover == true
+if global.filamentRunoutTakeover == true && exists(param.D) && param.D == "filament-error"
   ; Prepare new tool after filament runout
   M400                                       ; Ensure all previous moves are completed
   

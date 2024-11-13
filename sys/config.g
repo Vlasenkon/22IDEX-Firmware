@@ -154,6 +154,10 @@ M98 P"0:/user/eventlogging.g"                                    ; load global v
 M98 P"0:/user/xcomp.g"                                           ; load global variables
 M98 P"0:/user/filamentRunoutToolSwap.g"                          ; load filament runout tool swap variable
 
+; Remove redundant variable initialization
+; The global variable 'filamentRunoutTakeover' is loaded from filamentRunoutToolSwap.g
+; The global variable 'isFilamentRunout' is handled within the scripts and doesn't need to be initialized here
+
 echo >"0:/user/toolchangeretraction.g" "                         ; ToolChange Retraction Disabled"
 echo >"0:/sys/resetzbabystep.g" "                                ; do nothing"
 

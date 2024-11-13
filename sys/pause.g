@@ -25,7 +25,7 @@ M568 P3 A0
 M208 Z-1 S1         ; set axis minima to default
 
 ; Check if pause is due to filament runout
-if global.filamentRunoutTakeover == true
+if global.filamentRunoutTakeover == true && exists(param.D) && param.D == "filament-error"
   ; Handle filament runout and switch tools
   M400                                       ; Ensure all previous moves are completed
   

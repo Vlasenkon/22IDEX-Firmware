@@ -1,19 +1,13 @@
 ; filament-error.g
 ; Called when a filament error is detected
 
-; Load the filament runout tool swap variable
-M98 P"0:/user/filamentRunoutToolSwap.g"
-
 ; Check if automatic tool swapping is enabled
-if global.filamentRunoutTakeover
-  ; Set flag to indicate filament runout
-  set global.isFilamentRunout = true
-  
+if global.filamentRunoutTakeover == true  
   ; Ensure all previous commands are completed
   M400
   
-  ; Pause the print
-  M25   ; This will call pause.g
+  ; Pause the print with filament-error parameter
+  M25 D"filament-error"   ; This will call pause.g with the parameter
 
 else
   ; Automatic tool swapping is disabled
