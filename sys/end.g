@@ -42,3 +42,5 @@ echo >"0:/sys/resetzbabystep.g" "; do nothing"
 
 if move.axes[2].babystep != 0
 	M291 R"Reminder: Save Z - Offset?" P{"Adjustment of "^move.axes[2].babystep^" mm was detected, please save Z - Offset"} S1 T120
+
+M98 P"0:/user/filamentRunoutToolSwap.g"                          ; load filament runout tool swap variable
