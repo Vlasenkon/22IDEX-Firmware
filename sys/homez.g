@@ -37,7 +37,7 @@ if !exists(param.C)
   ; Perform 3 probes at different positions within a 5mm radius circle
   G30 P0 X{0 - sensors.probes[0].offsets[0]} Y{10 - sensors.probes[0].offsets[1] + 5} Z-99999
   G30 P1 X{0 - sensors.probes[0].offsets[0] - 4.33} Y{10 - sensors.probes[0].offsets[1] - 2.5} Z-99999
-  G30 P2 X{0 - sensors.probes[0].offsets[0] + 4.33} Y{10 - sensors.probes[0].offsets[1] - 2.5} Z-99999 S3
+  G30 P2 X{0 - sensors.probes[0].offsets[0] + 4.33} Y{10 - sensors.probes[0].offsets[1] - 2.5} Z-99999 S0 ;S-1;S1;S2
 
 if !exists(param.S)
   G1 H2 Z100 F18000   ; Lift Z
