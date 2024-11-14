@@ -38,6 +38,7 @@ if exists(global.filamenterror) && global.filamenterror = true
 
     T{global.nextTool}                           ; Switch to the next tool
     M568 P{global.nextTool} S{var.oldTemp[0]} R{var.oldTemp[1]} ; Set the new tool's temperatures
+    M568 P{var.oldTool} S0 R0                            ; Disable the old tool
     
   else
     ; Handle filament runout and switch tools

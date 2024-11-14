@@ -17,20 +17,26 @@ else
   T R4
 
 
-M116 H[state.currentTool] S5
+M116 H{state.currentTool} S5
 M116 H2 S5                                 ; Wait for heaters to reach temperature
 M98 P"0:/user/chamberwait.g"
 
 M98 P"0:/sys/nozzlewipe.g" E50 W1 C5  
 M208 Z-1 S1                                ; Set axis minima for Z-offset
-    
+
+G90
 ; Move to resume position
-G1 R4 Z2 F18000                            ; Move above last print position
-G1 R4 X0 Y0 F18000                         ; Move to last print position
-G1 R4 Z0                                   ; Lower to last print position
+;G1 R4 Z2 F18000                            ; Move above last print position
+;G1 R4 X0 Y0 F18000                         ; Move to last print position
+;G1 R4 Z0                                   ; Lower to last print position
 
-; Reset filament runout flag
-;set global.filamentRunoutTakeover = false
+G90
+G1 Z{state.restorePoints[4].coords[2]+2} F18000
+G1 X{state.restorePoints[4].coords[0]} Y{state.restorePoints[4].coords[1]} F18000
+G1 Z{state.restorePoints[4].coords[2]} F18000
 
-M204 T5000                 ; set the accelerations
-M106 R4                    ; Restore part cooling
+;set global.filamentRunoutTakeover = false ; Reset filament runout flag
+;M98 P"0:/sys/led/resume.g"                ; Resume LED
+;M98 P"0:/sys/entoolchangeretraction.g"     ; Enable ToolChange Retraction
+;M204 T5000                 ; set the accelerations
+;M106 R4                    ; Restore part cooling
