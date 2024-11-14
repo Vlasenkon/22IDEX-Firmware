@@ -8,7 +8,7 @@ M550 P"22IDEX"                                                   ; set printer n
 M80 C"pson"                                                      ; define PS_ON pin
 
 ; Wait a moment for the CAN expansion boards to start 
-G4 S1
+G4 S2
 
 ; Network
 M98 P"0:/user/networkmode.g"
