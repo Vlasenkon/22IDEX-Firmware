@@ -115,7 +115,7 @@ var pr = (var.pr1 + var.pr2 + var.pr3)/3
 
 
 M98 P"place.g"
-
+M98 P"0:/sys/nozzlewipe.g" T0
 
 ;=====Test with a nozzle====
 M42 P4 S1                      ; Turn on relay
