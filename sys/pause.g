@@ -41,6 +41,7 @@ if global.filamentRunoutTakeover == true && exists(param.D) && param.D == "filam
   else
     T{global.nextTool}                           ; Switch to the next tool
     M568 P{global.nextTool} S{var.oldTemp}
+    
 elif ((global.filamentRunoutTakeover != true || !exists(param.D)) && param.D == "filament-error"
   ; Handle filament runout and switch tools
   if move.axes[2].machinePosition < 420
