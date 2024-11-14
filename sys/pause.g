@@ -40,8 +40,10 @@ if global.filamentRunoutTakeover == true && exists(param.D) && param.D == "filam
   else
     T{global.nextTool}                           ; Switch to the next tool
     M568 P{global.nextTool} S{var.oldTemp}
+elif ((global.filamentRunoutTakeover != true || !exists(param.D)) && param.D == "filament-error"
+  ; Handle filament runout and switch tools
   
-  
+
 ; If one of the heaters failed light alarm LEDs or normal pause LEDs otherwise
 if heat.heaters[0].state == "fault" || heat.heaters[1].state == "fault" || heat.heaters[2].state == "fault" || heat.heaters[3].state == "fault"
   M98 P"0:/sys/led/fault.g"  
