@@ -31,9 +31,9 @@ G1 R4 Z2 F18000                            ; Move above last print position
 G1 R4 X0 Y0 F18000                         ; Move to last print position
 G1 R4 Z0                                   ; Lower to last print position
 
+M106 R4                    ; Restore part cooling
 
 set global.filamentRunoutTakeover = false ; Reset filament runout flag
 M98 P"0:/sys/led/resume.g"                ; Resume LED
 M98 P"0:/sys/entoolchangeretraction.g"     ; Enable ToolChange Retraction
 M204 T5000                 ; set the accelerations
-M106 R4                    ; Restore part cooling
