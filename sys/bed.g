@@ -22,7 +22,7 @@ G30 P2 X-36.3 Y-34.3 Z-99999 S3 ; probe near an adjusting screw and report adjus
 
 M204 T10000                                 ; set accelerations
 
-M558 K0 P8 C"1.io4.in" H5 F300 T18000
+M558 K0 P8 C"1.io4.in" H5 F300 T18000 A3
 M98 P"0:/user/ProbeOffset.g"
 
 G30 P1 X-150 Y-140 Z-99999 ; probe near an adjusting screw
