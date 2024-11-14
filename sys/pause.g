@@ -26,13 +26,14 @@ M208 Z-1 S1         ; set axis minima to default
 
 if global.filamentRunoutTakeover == true && exists(param.D) && param.D == "filament-error"
   ; Handle filament runout and switch tools
-  var oldTool = state.currentTool            ; Store the current tool number
   var oldTemp = tools[state.currentTool].active[0]   ; Store the current tool's active temperature
+  var oldTool = state.currentTool            ; Store the current tool number
+  var nextTool = (var.oldTool == 0) ? 1 : 0
 
-  if exists(global.nextTool)
-    set global.nextTool = (var.oldTool == 0) ? 1 : 0
+  if !exists(global.nextTool)
+    global nextTool = var.nextTool
   else
-    global nextTool = (var.oldTool == 0) ? 1 : 0
+    set global.nextTool = var.nextTool
 
   if var.oldTool == 0
     T{global.nextTool}                           ; Switch to the next tool
