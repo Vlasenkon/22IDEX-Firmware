@@ -12,9 +12,9 @@ if !exists(global.xcomp_manual)
 
 ; Set compensation value based on mode
 if global.xcomp_mode == "auto"
-  var mm = global.xcomp_auto
+  set var.mm = global.xcomp_auto
 else
-  var mm = global.xcomp_manual
+  set var.mm = global.xcomp_manual
 
 M569 P1.2 S1
 M584 Z1.0:1.2     ; define driver mapping
