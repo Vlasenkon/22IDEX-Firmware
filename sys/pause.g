@@ -42,6 +42,8 @@ if global.filamentRunoutTakeover == true && exists(param.D) && param.D == "filam
     M568 P{global.nextTool} S{var.oldTemp}
 elif ((global.filamentRunoutTakeover != true || !exists(param.D)) && param.D == "filament-error"
   ; Handle filament runout and switch tools
+  if move.axes[2].machinePosition < 420
+    G1 Z420 F18000 ; Move Z to 420mm position
   
 
 ; If one of the heaters failed light alarm LEDs or normal pause LEDs otherwise
