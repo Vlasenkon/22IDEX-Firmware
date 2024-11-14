@@ -1,4 +1,4 @@
-if exists(global.filamentRunoutTakeover)
-  set global.filamentRunoutTakeover = false
+if exists(global.filamentbackup)
+  set global.filamentbackup = false
 else
-  global filamentRunoutTakeover = false
+  global filamentbackup = false

@@ -10,7 +10,7 @@ M568 P3 A1
 
 T-1
 ; Check if resuming after filament runout
-if exists(global.filamenterror) && exists(global.filamentRunoutTakeover) && global.filamenterror == true && global.filamentRunoutTakeover == true
+if exists(global.filamenterror) && exists(global.filamentbackup) && global.filamenterror == true && global.filamentbackup == true
   ; Prepare new tool after filament runout  
   T{global.nextTool}                         ; Select the tool active before pause
 else
@@ -33,7 +33,7 @@ G1 R4 Z0                                   ; Lower to last print position
 
 M106 R4                    ; Restore part cooling
 
-set global.filamentRunoutTakeover = false ; Reset filament runout flag
+set global.filamentbackup = false ; Reset filament runout flag
 M98 P"0:/sys/led/resume.g"                ; Resume LED
 M98 P"0:/sys/entoolchangeretraction.g"     ; Enable ToolChange Retraction
 M204 T5000                 ; set the accelerations

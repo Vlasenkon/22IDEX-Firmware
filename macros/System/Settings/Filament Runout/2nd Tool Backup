@@ -1,15 +1,18 @@
-; toggleFilamentRunoutToolSwap.g
+; togglefilamentbackup.g
 ; Toggles the filament runout tool swap feature
 
-if global.filamentRunoutTakeover == true
-  set global.filamentRunoutTakeover = false
+if !exists(global.filamentbackup)
+  global filamentbackup = false
+
+if global.filamentbackup == true
+  set global.filamentbackup = false
   echo "Filament runout tool swap feature disabled."
 else
-  set global.filamentRunoutTakeover = true
+  set global.filamentbackup = true
   echo "Filament runout tool swap feature enabled."
 
-; Save the updated value to filamentRunoutToolSwap.g for persistence
-echo >"0:/user/filamentRunoutToolSwap.g" "if exists(global.filamentRunoutTakeover)"
-echo >>"0:/user/filamentRunoutToolSwap.g" "  set global.filamentRunoutTakeover = "^{global.filamentRunoutTakeover}
-echo >>"0:/user/filamentRunoutToolSwap.g" "else"
-echo >>"0:/user/filamentRunoutToolSwap.g" "  global filamentRunoutTakeover = "^{global.filamentRunoutTakeover}
+; Save the updated value to filamentbackup.g for persistence
+echo >"0:/user/filamentbackup.g" "if exists(global.filamentbackup)"
+echo >>"0:/user/filamentbackup.g" "  set global.filamentbackup = "^{global.filamentbackup}
+echo >>"0:/user/filamentbackup.g" "else"
+echo >>"0:/user/filamentbackup.g" "  global filamentbackup = "^{global.filamentbackup}
