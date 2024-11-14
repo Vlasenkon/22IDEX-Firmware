@@ -123,70 +123,73 @@ echo >"0:/user/tooloffset.g" "; Set tool offsets"
 echo >>"0:/user/tooloffset.g" "G10 P1 U"^{global.uoffset}^" Y"^{global.yoffset}^" Z"^{var.ddd}
 
 
-if   abs(var.ddd) < 0.05 ; ===If delta is less than allowed value===
+if abs(var.ddd) < 0.05 ; ===If delta is less than allowed value===
   echo "Good, deviation is "^{var.ddd}^" mm"
-  M291 S1 T10 R"Tool Heigh calibration succsesfull" P" "
+  M291 S1 T10 R"Tool Height calibration successful" P" "
 
 else ; ===If delta is more than allowed value===
-
-  M291 S3 R{"Nozzles are deviated by "^var.ddd^" mm"} P"Calibration should be performed"
-
-  M291 S2 R"Calibration Process" P"You will be asked to: Loosen heat break and lower it. The build plate will push the nozzle up to match the other nozzle's level.<br>Click ""OK"" when ready to start"
+  M291 S4 K{"Calibrate","Skip Calibration","Cancel Calibration"} R{"Nozzles are deviated by "^var.ddd^" mm"} P"Please select an option to proceed"
   
-  ;====Left is Lower====
-  if var.ddd > 0
+  if input == 0 ; User chose "Calibrate"
+    M291 S2 R"Calibration Process" P"You will be asked to: Loosen heat break and lower it. The build plate will push the nozzle up to match the other nozzle's level.<br>Click ""OK"" when ready to start."
+    ;====Left is Lower====
+    if var.ddd > 0
 
-    G90
-    G1 U-100 X-999 Z200 F18000
-    M400
+      G90
+      G1 U-100 X-999 Z200 F18000
+      M400
+
+      
+      M291 S2 R"Step 1: Loosen the Heatbreak" P"Use a 2mm hex screwdriver to loosen the heat break of the Right nozzle so the heat block can slide up and down.<br>Caution: HOT!"
+      G1S1
+      M291 S2 R"Step 2: Lower the Heatblock" P"Lower the heat block 2-3mm (Push it with a screwdriver or pliers)<br>(Caution: HOT!)"
+      
+      G1 X-999 U{0 - global.uoffset} Y{var.y_test_pos - global.yoffset} F18000
+
+      G90
+      G1 Z5 F18000
+      G1 Z{var.lll + var.add_z_offset} F240
+      
+      M400
+      M291 S2 R"Tighten Heat Break for Right Tool" P"Securely tighten the heat break after adjustment.<br>Click ""OK"" when done."
+      
+      G90
+      G1 U-100 Z200 F18000
 
     
-    M291 S2 R"Step 1: Loosen the Heatbreak" P"Use a 2mm hex screwdriver to loosen the heat break of the Right nozzle so the heat block can slide up and down.<br>Caution: HOT!"
-    G1S1
-    M291 S2 R"Step 2: Lower the Heatblock" P"Lower the heat block 2-3mm (Push it with a screwdriver or pliers)<br>(Caution: HOT!)"
-    
-    G1 X-999 U{0 - global.uoffset} Y{var.y_test_pos - global.yoffset} F18000
+    ;====Right is Lower====
+    if var.ddd < 0
 
-    G90
-    G1 Z5 F18000
-    G1 Z{var.lll + var.add_z_offset} F240
-    
-    M400
-    M291 S2 R"Tighten Heat Break for Right Tool" P"Securely tighten the heat break after adjustment.<br>Click ""OK"" when done."
-    
-    G90
-    G1 U-100 Z200 F18000
+      G90
+      G1 X100 U999 Z200 F18000    
+      M400
 
-  
-  ;====Right is Lower====
-  if var.ddd < 0
+      M291 S2 R"Step 1: Loosen the Heatbreak" P"Use a 2mm hex screwdriver to loosen the heat break of the Left nozzle so the heat block can slide up and down.<br>Caution: HOT!"
+      G1S1
+      M291 S2 R"Step 2: Lower the Heatblock" P"Lower the heat block 2-3mm (Push it with a screwdriver or pliers)<br>(Caution: HOT!)"
+      
+      G1 U999 X0 Y{var.y_test_pos} F18000
 
-    G90
-    G1 X100 U999 Z200 F18000    
-    M400
-
-    M291 S2 R"Step 1: Loosen the Heatbreak" P"Use a 2mm hex screwdriver to loosen the heat break of the Left nozzle so the heat block can slide up and down.<br>Caution: HOT!"
-    G1S1
-    M291 S2 R"Step 2: Lower the Heatblock" P"Lower the heat block 2-3mm (Push it with a screwdriver or pliers)<br>(Caution: HOT!)"
+      G90
+      G1 Z5 F18000
+      G1 Z{var.rrr + var.add_z_offset} F240
+      
+      M400
+      M291 S2 R"Tighten Heat Break for Left Tool" P"Securely tighten the heat break after adjustment.<br>Click ""OK"" when done."
+      
+      G90
+      G1 X100 Z200 F18000
     
-    G1 U999 X0 Y{var.y_test_pos} F18000
-
-    G90
-    G1 Z5 F18000
-    G1 Z{var.rrr + var.add_z_offset} F240
-    
-    M400
-    M291 S2 R"Tighten Heat Break for Left Tool" P"Securely tighten the heat break after adjustment.<br>Click ""OK"" when done."
-    
-    G90
-    G1 X100 Z200 F18000
-  
-  M291 S2 R"Confirm Tightening" P"Ensure the heat break is fully tightened to maintain alignment.<br>Click ""OK"" to confirm."
+    M291 S2 R"Confirm Tightening" P"Ensure the heat break is fully tightened to maintain alignment.<br>Click ""OK"" to confirm."
+  elif input == 1 ; User chose "Skip Calibration"
+    echo "Skipping calibration as per user request."
+  elif input == 2 ; User chose "Cancel Calibration"
+    abort "Calibration cancelled by user."
 
 G90
 G1 X-999 U999 F18000
 
-if abs(var.ddd) > 0.05
+if abs(var.ddd) > 0.05 && input == 0
   M98 P"0:/macros/System/Calibration/Auto Calibration Macros/Tool Height Auto Calibration" S1
 
 
