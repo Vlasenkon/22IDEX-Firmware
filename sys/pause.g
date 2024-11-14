@@ -24,8 +24,7 @@ M568 P3 A0
 
 M208 Z-1 S1         ; set axis minima to default
 
-if exists(param.D) && param.D == "filament-error"
-
+if exists(global.filamenterror) && global.filamenterror = true
   if global.filamentRunoutTakeover == true
     ; Handle filament runout and switch tools
     var oldTemp = tools[state.currentTool].active[0]   ; Store the current tool's active temperature
@@ -43,7 +42,6 @@ if exists(param.D) && param.D == "filament-error"
     else
       T{global.nextTool}                           ; Switch to the next tool
       M568 P{global.nextTool} S{var.oldTemp}    
-
   else
     ; Handle filament runout and switch tools
     if move.axes[2].machinePosition < 420
