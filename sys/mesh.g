@@ -12,7 +12,7 @@ M98 P"0:/user/ProbeOffset.g"                ; det probe offsets
 
 ; Check if parameters are provided and set the mesh grid accordingly
 if exists(param.A) && exists(param.B) && exists(param.D) && exists(param.J)
-  M557 X{param.A}:{param.B} Y{param.D}:{param.J} S35                 ; define mesh grid
+  M557 X{param.A, param.B} Y{param.D, param.J} S35                 ; define mesh grid
 else
   ; Default mesh grid if parameters are not provided
   M557 X-165:155 Y-146:165 P8                 ; define mesh grid
