@@ -8,6 +8,7 @@ M568 P1 A1
 M568 P2 A1
 M568 P3 A1
 
+T-1
 ; Check if resuming after filament runout
 if global.filamentRunoutTakeover == true && exists(param.D) && param.D == "filament-error"
   ; Prepare new tool after filament runout  
