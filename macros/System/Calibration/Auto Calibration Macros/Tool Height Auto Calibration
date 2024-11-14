@@ -59,19 +59,11 @@ if !exists(param.S)
 
 
 
-
+M98 P"0:/sys/nozzlewipe.g" T0
 
 
 var y_test_pos = -101
 var add_z_offset = -0.070
-
-
-
-
-
-
-
-
 
 ; ===== Test diviation =====
 M42 P4 S1                ; Turn on relay
@@ -89,6 +81,12 @@ echo "Left "^{var.lll}^" mm"
 
 G90
 G1 X-999 F18000
+
+M98 P"0:/sys/nozzlewipe.g" T1
+
+G90
+G1 X-999 F18000
+
 G1 U{0}-{global.uoffset} Y{var.y_test_pos - global.yoffset}
 
 G90
