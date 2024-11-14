@@ -25,21 +25,10 @@ M204 T10000                                 ; set accelerations
 M558 K0 P8 C"1.io4.in" H5 F300 T18000
 M98 P"0:/user/ProbeOffset.g"
 
-G30 P0 X-155 Y-145 Z-99999 ; probe near an adjusting screw
 G30 P1 X-150 Y-140 Z-99999 ; probe near an adjusting screw
-G30 P2 X-145 Y-135 Z-99999 ; probe near an adjusting screw
-
-G30 P3 X145  Y-145 Z-99999 ; probe near an adjusting screw
 G30 P4 X150  Y-140 Z-99999 ; probe near an adjusting screw
-G30 P5 X155  Y-135 Z-99999 ; probe near an adjusting screw
-
-G30 P6 X145  Y155  Z-99999 ; probe near an adjusting screw
-G30 P7 X150  Y150  Z-99999 ; probe near an adjusting screw
-G30 P8 X155  Y145  Z-99999 ; probe near an adjusting screw
-
-G30 P9 X-155 Y155  Z-99999 ; probe near an adjusting screw
-G30 P10 X-150 Y150  Z-99999 ; probe near an adjusting screw
-G30 P11 X-145 Y145  Z-99999 S3 ; probe near an adjusting screw and make adjustments needed
+G30 P7 X150  Y140  Z-99999 ; probe near an adjusting screw
+G30 P11 X-150 Y140  Z-99999 S3 ; probe near an adjusting screw and make adjustments needed
 
 
 if exists(param.L) && exists(param.S) && exists(param.Z)
