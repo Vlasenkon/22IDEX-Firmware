@@ -15,3 +15,8 @@ M400
 if global.filamentRunoutTakeover == true
   M400
   M24 ; Resume the print
+
+if exists(global.filamenterror)
+  set global.filamenterror = false
+else
+  global filamenterror = false
