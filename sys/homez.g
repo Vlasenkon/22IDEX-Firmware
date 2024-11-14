@@ -17,24 +17,22 @@ M98 R1 P"0:/sys/attachedcheck.g" ; make sure probe is conected, pick if negative
 if !exists(param.F)
   G90                 ; absolute positioning
   G1 U999 F18000      ; Move second tool out of the way
+  G1 X{0 - sensors.probes[0].offsets[0]} Y{10 - sensors.probes[0].offsets[1]} F18000 
   M558 K0 P8 C"1.io4.in" H5 F18000 T18000
   M98 P"0:/user/ProbeOffset.g"
   M98 R1 P"0:/sys/attachedcheck.g" ; make sure probe is conected, pick if negative and leave relay active
-  
-  G1 X{0-sensors.probes[0].offsets[0]} Y{0-sensors.probes[0].offsets[1]} F18000
-  G30 P0 X{0} Y{0} Z-99999
+  G30           ; Home bed using probe
 
 
 ; Slow home Z
 if !exists(param.C)
   G90                 ; absolute positioning
   G1 U999 F18000      ; Move second tool out of the way
+  G1 X{0 - sensors.probes[0].offsets[0]} Y{10 - sensors.probes[0].offsets[1]} F18000
   M98 R1 P"0:/sys/attachedcheck.g" ; make sure probe is conected, pick if negative and leave relay active
-  M558 K0 P8 C"1.io4.in" H5 F300 T18000 A3
+  M558 K0 P8 C"1.io4.in" H5 F300 T18000
   M98 P"0:/user/ProbeOffset.g"
-
-  G1 X{0-sensors.probes[0].offsets[0]} Y{0-sensors.probes[0].offsets[1]} F18000
-  G30 P0 X{0} Y{0} Z-99999
+  G30           ; Home bed using probe
 
 
 if !exists(param.S)
