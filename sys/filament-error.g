@@ -12,6 +12,6 @@ if global.filamentRunoutTakeover == true
 M25 ; This will call pause.g with the parameter
 
 M400
-M400
-
-M24 ; Resume the print
+if global.filamentRunoutTakeover == true
+  M400
+  M24 ; Resume the print
