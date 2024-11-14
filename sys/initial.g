@@ -59,7 +59,7 @@ if result !=0
 
 
 if exists(param.A) && exists(param.B) && exists(param.D) && exists(param.J)
-  M98 P"mesh.g" A{param.A} B{param.B} D{param.D} E{param.J}
+  M98 P"mesh.g" A{param.A} B{param.B} D{param.D} J{param.J}
 else
   M98 P"mesh.g"
   if result !=0
