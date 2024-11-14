@@ -1,4 +1,4 @@
-M291 S3 R"Filament Sensor 0" P"Select an option:" K{"Enable", "Disable"} H1
+M291 S4 R"Filament Sensor 0" P"Select an option:" K{"Enable", "Disable"} H1
 
 if input = 0
     ; Enable Sensor 0
