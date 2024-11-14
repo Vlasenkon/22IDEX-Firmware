@@ -24,28 +24,30 @@ M568 P3 A0
 
 M208 Z-1 S1         ; set axis minima to default
 
-if global.filamentRunoutTakeover == true && exists(param.D) && param.D == "filament-error"
-  ; Handle filament runout and switch tools
-  var oldTemp = tools[state.currentTool].active[0]   ; Store the current tool's active temperature
-  var oldTool = state.currentTool            ; Store the current tool number
-  var nextTool = (var.oldTool == 0) ? 1 : 0
+if exists(param.D) && param.D == "filament-error"
 
-  if !exists(global.nextTool)
-    global nextTool = var.nextTool
-  else
-    set global.nextTool = var.nextTool
+  if global.filamentRunoutTakeover == true
+    ; Handle filament runout and switch tools
+    var oldTemp = tools[state.currentTool].active[0]   ; Store the current tool's active temperature
+    var oldTool = state.currentTool            ; Store the current tool number
+    var nextTool = (var.oldTool == 0) ? 1 : 0
 
-  if var.oldTool == 0
-    T{global.nextTool}                           ; Switch to the next tool
-    M568 P{global.nextTool} S{var.oldTemp}
+    if !exists(global.nextTool)
+      global nextTool = var.nextTool
+    else
+      set global.nextTool = var.nextTool
+
+    if var.oldTool == 0
+      T{global.nextTool}                           ; Switch to the next tool
+      M568 P{global.nextTool} S{var.oldTemp}
+    else
+      T{global.nextTool}                           ; Switch to the next tool
+      M568 P{global.nextTool} S{var.oldTemp}    
+
   else
-    T{global.nextTool}                           ; Switch to the next tool
-    M568 P{global.nextTool} S{var.oldTemp}
-    
-elif ((global.filamentRunoutTakeover != true || !exists(param.D)) && param.D == "filament-error"
-  ; Handle filament runout and switch tools
-  if move.axes[2].machinePosition < 420
-    G1 Z420 F18000 ; Move Z to 420mm position
+    ; Handle filament runout and switch tools
+    if move.axes[2].machinePosition < 420
+      G1 Z420 F18000 ; Move Z to 420mm position
   
 
 ; If one of the heaters failed light alarm LEDs or normal pause LEDs otherwise
