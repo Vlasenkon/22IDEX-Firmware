@@ -1,0 +1,3 @@
+echo >"0:/user/chamberfinishbehavior.g" "M141 S0       ; turn off chamber heater"
+
+echo "Setting was changed"

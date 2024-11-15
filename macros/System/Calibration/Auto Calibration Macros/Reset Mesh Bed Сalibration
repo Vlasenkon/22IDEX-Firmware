@@ -1,0 +1,4 @@
+echo >"0:/user/xcomp.g" "if exists(global.xcomp)"
+echo >>"0:/user/xcomp.g" "  set global.xcomp = "0
+echo >>"0:/user/xcomp.g" "else"
+echo >>"0:/user/xcomp.g" "  global xcomp = "0

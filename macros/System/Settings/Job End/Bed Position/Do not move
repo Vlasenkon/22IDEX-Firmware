@@ -1,0 +1,5 @@
+echo >"0:/user/lowerbed.g" "G91"
+echo >>"0:/user/lowerbed.g" "G1 Z50 F5000"
+echo >>"0:/user/lowerbed.g" "G90"
+
+echo "Setting was changed"

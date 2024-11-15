@@ -58,14 +58,14 @@ if result !=0
   abort "Error: Print cancelled due to Homing"
 
 
-if exists(param.A) && exists(param.B) && exists(param.D) && exists(param.J)
-  M98 P"mesh.g" A{param.A} B{param.B} D{param.D} J{param.J}
+if exists(param.A) && exists(param.B) && exists(param.D) && exists(param.E)
+  M98 P"mesh.g" A{param.A} B{param.B} D{param.D} E{param.E}
 else
   M98 P"mesh.g"
-  if result !=0
-    M98 P"0:/sys/led/fault.g"
-    echo >>"0:/sys/eventlog.txt" "Error: Print cancelled due to Mesh Compensation"
-    abort "Error: Print cancelled due to Mesh Compensation"
+if result !=0
+  M98 P"0:/sys/led/fault.g"
+  echo >>"0:/sys/eventlog.txt" "Error: Print cancelled due to Mesh Compensation"
+  abort "Error: Print cancelled due to Mesh Compensation"
 
 ;Clean the nozzles ===========================================================================
 T R0                                   ; Load previously selected tool
@@ -103,8 +103,8 @@ M98 P"0:/sys/nozzlewipe.g" E50 W1
 
 
 ; Select the tool before ToolChange Retraction Enabled
-if exists(param.J)
-  T{param.J}
+if exists(param.E)
+  T{param.E}
 
 
 M98 P"0:/sys/entoolchangeretraction.g" ; Enable ToolChange Retraction

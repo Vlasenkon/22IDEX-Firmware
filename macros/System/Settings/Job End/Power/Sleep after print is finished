@@ -1,0 +1,16 @@
+;M291 R" " P"""Lower the bed after print is finished"" was enabled to prevent the build plate from moving when  power is not supplied" S2
+
+
+var aa = "M98 P""0:/macros/System/Settings/"
+var bb = "Job End/Bed Position"
+var cc = "/Lower the bed after print is finished"""
+
+M98 P"0:/macros/System/Settings/Job End/Bed Position/Lower the bed after print is finished"
+
+echo >"0:/user/powerendbehavior.g" ""^{var.aa}^""^{var.bb}^""^{var.cc}
+
+echo >>"0:/user/powerendbehavior.g" "M400"
+echo >>"0:/user/powerendbehavior.g" "G4 S5"
+echo >>"0:/user/powerendbehavior.g" "M81 S1"
+
+echo "Setting was changed"

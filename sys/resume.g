@@ -9,31 +9,22 @@ M568 P2 A1
 M568 P3 A1
 
 T-1
-; Check if resuming after filament runout
-if exists(global.filamenterror) && exists(global.filamentbackup) && global.filamenterror == true && global.filamentbackup == true
-  ; Prepare new tool after filament runout  
-  T{global.nextTool}                         ; Select the tool active before pause
-else
-  T R4
+T R4                 ; select the tool that was active last time the print was paused
+G1 R4 Z2 F18000       ; go above the position of the last print move
 
 
-M116 H{state.currentTool} S5
-M116 H2 S5                                 ; Wait for heaters to reach temperature
-M98 P"0:/user/chamberwait.g"
+M98 P"0:/sys/nozzlewipe.g" E50 W1 C5
 
-M98 P"0:/sys/nozzlewipe.g" E50 W1 C5  
-M208 Z-1 S1                                ; Set axis minima for Z-offset
+M106 R4  ; Recover part cooling
+
+M208 Z-1 S1         ; set axis minima to allow for wider range of Z - Offset
 
 
-; Move to resume position
-G90
-G1 R4 Z2 F18000                            ; Move above last print position
-G1 R4 X0 Y0 F18000                         ; Move to last print position
-G1 R4 Z0                                   ; Lower to last print position
+G1 R4 X0 Y0 F18000    ; go back to the last print move
+G1 R4 Z0              ; go back to the last print move
 
-M106 R4                    ; Restore part cooling
+M98 P"0:/sys/entoolchangeretraction.g" ; Enable ToolChange Retraction
 
-set global.filamentbackup = false ; Reset filament runout flag
-M98 P"0:/sys/led/resume.g"                ; Resume LED
-M98 P"0:/sys/entoolchangeretraction.g"     ; Enable ToolChange Retraction
+M98 P"0:/sys/led/resume.g"
+
 M204 T5000                 ; set the accelerations

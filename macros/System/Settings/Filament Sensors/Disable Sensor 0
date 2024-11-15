@@ -1,0 +1,4 @@
+echo >"0:/user/filamentsensor0.g" "M591 P1 C""io8.in"" S0 D0 ; Disable filament sensor 0 monitoring"
+M591 P1 C"io8.in" S0 D0
+
+echo "Sensor 0 Disabled"

@@ -1,0 +1,6 @@
+echo >"0:/user/lowerbed.g" "if move.axes[2].machinePosition > 420"
+echo >>"0:/user/lowerbed.g" "  M99"
+echo >>"0:/user/lowerbed.g" "G90  ; absolute positioning"
+echo >>"0:/user/lowerbed.g" "G1 Z420 F5000 ; Move bed to the bottom of print volume"
+
+echo "Setting was changed"

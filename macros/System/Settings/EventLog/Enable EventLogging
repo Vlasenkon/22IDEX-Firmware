@@ -1,0 +1,3 @@
+echo >"0:/user/eventlogging.g" "M929 P""eventlog.txt"" S1 ; EventLogging Enabled"
+
+echo "Setting was changed"
