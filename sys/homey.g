@@ -59,7 +59,7 @@ set var.dimension = abs(var.leftZeroPosition - var.rightZeroPosition)
 
 ; If the offset is greater than 0.5 mm, print a correction message
 if var.dimension >= 0.5
-  echo "The "^{var.side}^" side has been adjusted by "^{var.dimension}^" mm"
+  echo "Error: The "^{var.side}^" side has been adjusted by "^{var.dimension}^" mm"
 
 ; Reset the Y axis position and restore the original endstop configuration
 G92 Y-999                             ; Set the current Y axis position to -999
