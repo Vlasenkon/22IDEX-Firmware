@@ -115,7 +115,7 @@ var pr = (var.pr1 + var.pr2 + var.pr3)/3
 
 
 M98 P"place.g"
-
+M98 P"0:/sys/nozzlewipe.g" T0
 
 ;=====Test with a nozzle====
 M42 P4 S1                      ; Turn on relay
@@ -146,16 +146,20 @@ echo "Mesh Right "^{var.dr}^" mm"
 echo "Mesh Competition Measured "^{var.dd}^" mm"
 
 
-if exists(global.xcomp)
-  set global.xcomp = var.dd
+; Update global auto compensation variable
+if exists(global.xcomp_auto)
+  set global.xcomp_auto = var.dd
 else
-  global xcomp = var.dd
-  
-echo >"0:/user/xcomp.g" "if exists(global.xcomp)"
-echo >>"0:/user/xcomp.g" "  set global.xcomp = "^{var.dd}
-echo >>"0:/user/xcomp.g" "else"
-echo >>"0:/user/xcomp.g" "  global xcomp = "^{var.dd}
+  global xcomp_auto = var.dd
 
+; Write updated value to xcomp_auto.g
+echo >"0:/user/xcomp_auto.g" "if exists(global.xcomp_auto)"
+echo >>"0:/user/xcomp_auto.g" "  set global.xcomp_auto = "^{var.dd}
+echo >>"0:/user/xcomp_auto.g" "else"
+echo >>"0:/user/xcomp_auto.g" "  global xcomp_auto = "^{var.dd}
+
+// Remove the redundant write to xcomp.g
+// (No longer needed)
 
 
 

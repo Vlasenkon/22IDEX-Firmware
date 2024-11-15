@@ -8,7 +8,7 @@ M550 P"22IDEX"                                                   ; set printer n
 M80 C"pson"                                                      ; define PS_ON pin
 
 ; Wait a moment for the CAN expansion boards to start 
-G4 S1
+G4 S2
 
 ; Network
 M98 P"0:/user/networkmode.g"
@@ -151,7 +151,10 @@ M98 P"0:/user/rtzoffset.g"                                       ; load global v
 M98 P"0:/user/pickupposition.g"                                  ; load global variables
 M98 P"0:/user/pickupangle.g"                                     ; load global variables
 M98 P"0:/user/eventlogging.g"                                    ; load global variables
-M98 P"0:/user/xcomp.g"                                           ; load global variables
+M98 P"0:/user/filamentbackup.g"                          ; load filament runout tool swap variable
+M98 P"0:/user/xcomp_auto.g"                                      ; load auto calibration value
+M98 P"0:/user/xcomp_manual.g"                                    ; load manual calibration value
+M98 P"0:/user/xcomp_mode.g"                                      ; load compensation mode
 
 echo >"0:/user/toolchangeretraction.g" "                         ; ToolChange Retraction Disabled"
 echo >"0:/sys/resetzbabystep.g" "                                ; do nothing"

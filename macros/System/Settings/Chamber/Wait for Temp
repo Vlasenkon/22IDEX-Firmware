@@ -1,3 +1,0 @@
-echo >"0:/user/chamberwait.g" "M116 C0 S5 ; Wait for Chamber Temp"
-
-echo "Setting Changed"
