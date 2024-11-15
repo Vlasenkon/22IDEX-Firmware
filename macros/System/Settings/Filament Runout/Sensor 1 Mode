@@ -1,0 +1,12 @@
+M291 S4 R"Filament Sensor 1" P"Select an option:" K{"Enable", "Disable"} H1
+
+if input = 0
+    ; Enable Sensor 1
+    echo >"0:/user/filamentsensor1.g" "M591 P1 C""io6.in"" S1 D1 ; Enable filament sensor 1 monitoring"
+    M591 P1 C"io6.in" S1 D1
+    echo "Sensor 1 Enabled"
+elif input = 1
+    ; Disable Sensor 1
+    echo >"0:/user/filamentsensor1.g" "M591 P1 C""io6.in"" S0 D1 ; Disable filament sensor 1 monitoring"
+    M591 P1 C"io6.in" S0 D1
+    echo "Sensor 1 Disabled"

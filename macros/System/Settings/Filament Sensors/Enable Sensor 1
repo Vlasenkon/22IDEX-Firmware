@@ -1,4 +1,0 @@
-echo >"0:/user/filamentsensor1.g" "M591 P1 C""io6.in"" S1 D1 ; Enable filament sensor 1 monitoring"
-M591 P1 C"io6.in" S1 D1
-
-echo "Sensor 1 Enabled"
