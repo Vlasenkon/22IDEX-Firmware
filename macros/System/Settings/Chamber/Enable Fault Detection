@@ -1,4 +1,0 @@
-echo >"0:/user/faultdetection.g" "M570 H3 P999 T70 S0 ; Enable Chamber Heater fault detection"
-M570 H3 P999 T70 S0
-
-echo "Fault Detection Enabled"

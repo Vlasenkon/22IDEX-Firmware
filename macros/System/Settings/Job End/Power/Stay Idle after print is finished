@@ -1,3 +1,0 @@
-echo >"0:/user/powerendbehavior.g" "; Please edit contents of the original file"
-
-echo "Setting was changed"
