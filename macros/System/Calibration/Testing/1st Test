@@ -1,24 +1,32 @@
+; Prompt user to enter password
 M291 S7 J1 R"Enter Password" P"Enter the password to start the test."
 var pp = {input}
 
+; Check if the entered password is correct
 if var.pp != "vmawt"
-	abort
+	abort "Wrong Password"
 	M99
 
-;Fans & Heaters Test ==========================================================================================
+; Fans & Heaters Test ==========================================================================================
 M98 P"0:/macros/System/Calibration/Testing/Tests/Fans & Heaters"
 
-;LED Test ==========================================================================================
+; Endstop Test ==========================================================================================
+M98 P"0:/macros/System/Calibration/Testing/Tests/Endstop"
+
+; LED Test ==========================================================================================
 M98 P"0:/macros/System/Calibration/Testing/Tests/LED"
 
-;Z-Binding Test ==========================================================================================
-M98 P"0:/macros/System/Calibration/Testing/Tests/Z - Binding & Motor Dir"
+; Z-Binding Test ==========================================================================================
+M98 P"0:/macros/System/Calibration/Testing/Tests/Z - Binding"
 
-;Homing Test ==========================================================================================
+; Z-Binding Test ==========================================================================================
+M98 P"0:/macros/System/Calibration/Testing/Tests/Z - Connection"
+
+; Homing Test ==========================================================================================
 M98 P"0:/macros/System/Calibration/Testing/Tests/Homing"
 
-;Homing Test ==========================================================================================
+; Probes Test ==========================================================================================
 M98 P"0:/macros/System/Calibration/Testing/Tests/Probes"
 
-
+; Prompt user to test both filament sensors
 M291 R"Test Both Filament Sernsor" P" " S1

@@ -1,0 +1,43 @@
+; Endstop Test Macro
+
+
+; Test Left-hand side Y-axis endstop (io1.in)
+M574 Y1 S1 P"io1.in"                              ; Configure Y-axis to use only io1.in
+M291 R"Testing Left Y-axis Endstop" P"Please press the Left Y-axis endstop" S1 T60
+while !sensors.endstops[1].triggered
+    G4 P100
+M292                                             ; Close the message window
+
+; Test Right-hand side Y-axis endstop (io2.in)
+M574 Y1 S1 P"io2.in"                              ; Configure Y-axis to use only io2.in
+M291 R"Testing Right Y-axis Endstop" P"Please press the Right Y-axis endstop" S1 T60
+while !sensors.endstops[1].triggered
+    G4 P100
+M292                                             ; Close the message window
+
+; Restore Y-axis endstop configuration
+M574 Y1 S1 P"io1.in+io2.in"                       ; Restore original Y-axis endstop configuration
+
+; Test X-axis endstop (io4.in)
+M291 R"Testing X-axis Endstop" P"Please press the X-axis endstop" S1 T60
+while !sensors.endstops[0].triggered
+    G4 P100
+M292                                             ; Close the message window
+
+; Test U-axis endstop (io5.in)
+M291 R"Testing U-axis Endstop" P"Please press the U-axis endstop" S1 T60
+while !sensors.endstops[3].triggered
+    G4 P100
+M292                                             ; Close the message window
+
+; Test Left Filament Sensor
+M291 R"Testing Left Filament Sensor" P"Please trigger the Left Filament Sensor" S1 T60
+while sensors.filamentMonitors[0].status != "ok"
+    G4 P100
+M292                                             ; Close the message window
+
+; Test Right Filament Sensor
+M291 R"Testing Right Filament Sensor" P"Please trigger the Right Filament Sensor" S1 T60
+while sensors.filamentMonitors[1].status != "ok"
+    G4 P100
+M292                                             ; Close the message window

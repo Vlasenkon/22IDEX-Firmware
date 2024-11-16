@@ -1,0 +1,37 @@
+M564 H0
+
+; Move Left lead screw
+M584 Z1.2     ; define driver mapping
+
+G91               ; set to relative positioning
+G1 F18000 Z10    ; move 10mm down
+G1 F18000 Z-20     ; move 20mm up
+G1 F18000 Z10    ; move 10mm down back to original position
+G90               ; set to absolute positioning
+
+M400
+
+; Move Right lead screw
+M584 Z1.0     ; define driver mapping
+
+G91               ; set to relative positioning
+G1 F18000 Z10    ; move 10mm down
+G1 F18000 Z-20     ; move 20mm up
+G1 F18000 Z10    ; move 10mm down back to original position
+G90               ; set to absolute positioning
+
+M400
+
+; Move Rear lead screw
+M584 Z1.1     ; define driver mapping
+
+G91               ; set to relative positioning
+G1 F18000 Z10    ; move 10mm down
+G1 F18000 Z-20     ; move 20mm up
+G1 F18000 Z10    ; move 10mm down back to original position
+G90               ; set to absolute positioning
+
+M400
+M584 Z1.0:1.1:1.2 ; restore original driver mapping
+
+M564 H0
