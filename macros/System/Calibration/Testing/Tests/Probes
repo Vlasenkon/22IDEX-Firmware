@@ -1,3 +1,8 @@
+M98 P"0:/sys/led/statusoff.g"
+M98 P"0:/sys/led/restorewhite.g"
+M98 P"0:/macros/System/Calibration/Testing/Disable Probe"
+
+
 M291 R"Test Servo?" P" " S3
 
 ; Rotate holder to 0 degree
@@ -12,6 +17,14 @@ M98 P"0:/macros/System/Calibration/Z Probe/Rotate holder to 0 degree"
 
 M291 R"Mode build plate close to the nozzle" P"Move the build plate close to the nozzle" Z1 S3
 
+if sensors.probes[0].value[0] != 1000
+    M98 P"0:/sys/led/fault.g"
+    abort "Error: S0 Dissconnect Z Probe or move the build plate away from the nozzle"
+else
+    M98 P"0:/sys/led/start_cold.g"
+
+
+
 ; Enable probe
 M98 P"0:/macros/System/Calibration/Testing/Enable Probe"
 
@@ -25,8 +38,7 @@ var iter = 0
 if sensors.probes[0].value[0] == 1000
     M291 R"Touch the nozzle" P"Touch Left Nozzle to the Bed, Z - Probe value should change to 0" S1 T60
 else
-    M106 P6 S0
-    M42 P2 S0 ; set red LED
+    M98 P"0:/sys/led/fault.g"
     abort "Error: Z-Probe value is not 1000"
 
 ; wait for z-probe value to change to 0
@@ -36,17 +48,14 @@ while sensors.probes[0].value[0] != 0
 
 if var.iter <= var.max_iter
     M292
-    M106 P6 S0
-    M42 P2 S1 ; set green LED
+    M98 P"0:/sys/led/end.g"
 else
-    M106 P6 S0
-    M42 P1 S1 ; set red LED
+    M98 P"0:/sys/led/fault.g"
     abort "Error: Z-Probe value did not change to 0"
 
 
-G4 S2
-M98 P"0:/sys/led/statusoff.g"
-M98 P"0:/sys/led/restorewhite.g"
+
+M98 P"0:/sys/led/start_cold.g"
 
 
 
@@ -55,8 +64,7 @@ M98 P"0:/sys/led/restorewhite.g"
 if sensors.probes[0].value[0] == 1000
     M291 R"Touch the nozzle" P"Touch Right Nozzle to the Bed, Z - Probe value should change to 0" S1 T60
 else
-    M106 P6 S0
-    M42 P2 S0 ; set red LED
+    M98 P"0:/sys/led/fault.g"
     abort "Error: Z-Probe value is not 1000"
 
 ; wait for z-probe value to change to 0
@@ -66,21 +74,14 @@ while sensors.probes[0].value[0] != 0
 
 if var.iter <= var.max_iter
     M292
-    M106 P6 S0
-    M42 P2 S1 ; set green LED
+    M98 P"0:/sys/led/end.g"
 else
-    M106 P6 S0
-    M42 P1 S1 ; set red LED
+    M98 P"0:/sys/led/fault.g"
     abort "Error: Z-Probe value did not change to 0"
 
 
-G4 S2
-M98 P"0:/sys/led/statusoff.g"
-M98 P"0:/sys/led/restorewhite.g"
 
-
-
-
+M98 P"0:/sys/led/start_cold.g"
 
 
 
@@ -89,8 +90,7 @@ M98 P"0:/sys/led/restorewhite.g"
 if sensors.probes[0].value[0] == 1000
     M291 R"Attach the Z-Probe to the holder" P"Attach the Z-Probe to the holder, Z - Probe value should change to 0" S1 T60
 else
-    M106 P6 S0
-    M42 P2 S0 ; set red LED
+    M98 P"0:/sys/led/fault.g"
     abort "Error: Z-Probe value is not 1000"
 
 ; wait for z-probe value to change to 0
@@ -100,17 +100,14 @@ while sensors.probes[0].value[0] != 0
 
 if var.iter <= var.max_iter
     M292
-    M106 P6 S0
-    M42 P2 S1 ; set green LED
+    M98 P"0:/sys/led/end.g"
 else
-    M106 P6 S0
-    M42 P1 S1 ; set red LED
+    M98 P"0:/sys/led/fault.g"
     abort "Error: Probe was not recognized"
 
 
-G4 S2
-M98 P"0:/sys/led/statusoff.g"
-M98 P"0:/sys/led/restorewhite.g"
+
+M98 P"0:/sys/led/start_cold.g"
 
 
 
@@ -119,8 +116,7 @@ M98 P"0:/sys/led/restorewhite.g"
 if sensors.probes[0].value[0] == 0
     M291 R"Click the Z-Probe" P"Click the Z-Probe, Z - Probe value should change to 1000" S1 T60
 else
-    M106 P6 S0
-    M42 P2 S0 ; set red LED
+    M98 P"0:/sys/led/fault.g"
     abort "Error: S4 Probe was not attached"
 
 ; wait for z-probe value to change to 1000
@@ -130,19 +126,13 @@ while sensors.probes[0].value[0] != 1000
 
 if var.iter <= var.max_iter
     M292
-    M106 P6 S0
-    M42 P2 S1 ; set green LED
+    M98 P"0:/sys/led/end.g"
 else
-    M106 P6 S0
-    M42 P1 S1 ; set red LED
+    M98 P"0:/sys/led/fault.g"
     abort "Error: S4 Probe might be damaged"
 
 
-G4 S2
+M98 P"0:/macros/System/Calibration/Testing/Disable Probe" ; Disable probe
+
 M98 P"0:/sys/led/statusoff.g"
 M98 P"0:/sys/led/restorewhite.g"
-
-
-; Disable probe
-M291 R"Disable Probe" P"Do you want to disable the probe?" S3
-M98 P"0:/macros/System/Calibration/Testing/Disable Probe"
