@@ -1,0 +1,33 @@
+M98 P"0:/sys/led/statusoff.g"
+M98 P"0:/sys/led/restorewhite.g"
+
+M291 R"Voltage Test" P"Are you ready to start the voltage test?" S3
+
+var minVoltage = 24
+var maxVoltage = 24.3
+var iter = 0
+
+if boards[0].vIn.current < var.minVoltage && boards[0].vIn.current > var.maxVoltage
+    echo "Board 0 voltage OK: " ^ boards[0].vIn.current ^ "V"
+    M99
+
+M98 P"0:/sys/led/dimmwhite.g"
+G1 S2
+
+while true && iterations < 900 && var.iter < 100
+    G4 P100
+    M42 P1 S0
+    M42 P2 S0
+    M42 P3 S0
+    if boards[0].vIn.current > var.maxVoltage
+        M42 P1 S1
+    elif boards[0].vIn.current < var.minVoltage
+        M42 P3 S1
+    else
+        M42 P2 S1
+        set var.iter = var.iter + 1
+
+
+
+M98 P"0:/sys/led/statusoff.g"
+M98 P"0:/sys/led/restorewhite.g"

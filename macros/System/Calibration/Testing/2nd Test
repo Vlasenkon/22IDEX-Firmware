@@ -6,10 +6,11 @@ if var.pp != "vmawt"
 	M99
 
 
+M98 P"0:/macros/System/Calibration/Testing/Tests/Voltage"
+
 M291 R"Was Z - Probe Set Up?" P" " S3
 
-M98 P"0:/macros/System/Calibration/Testing/Tests/True Bed Leveling"
-
+; G32 test
 
 M98 P"0:/macros/Close the Lid"
 
