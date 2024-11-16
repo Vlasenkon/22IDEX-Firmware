@@ -1,3 +1,6 @@
+M98 P"0:/sys/led/statusoff.g"
+M98 P"0:/sys/led/restorewhite.g"
+
 ; Prompt user to enter password
 M291 S7 J1 R"Enter Password" P"Enter the password to start the test."
 var pp = {input}
@@ -27,6 +30,3 @@ M98 P"0:/macros/System/Calibration/Testing/Tests/Homing"
 
 ; Probes Test ==========================================================================================
 M98 P"0:/macros/System/Calibration/Testing/Tests/Probes"
-
-; Prompt user to test both filament sensors
-M291 R"Test Both Filament Sernsor" P" " S1

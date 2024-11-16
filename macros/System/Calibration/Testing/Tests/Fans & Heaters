@@ -1,5 +1,5 @@
 M140 S50 R50
-M291 R"Bed Heater Test" P" " S3
+M291 R"Bed Heater Test" P"Make sure the Bed Heater is Hot" S3
 M140 S0 R0
 
 
@@ -16,37 +16,41 @@ M106 P7 H3 T50 S1 B0
 
 
 M106 P3 S1
-M291 R"Left Tool Fan Test" P" " S3
+M291 R"Left Tool Fan Test" P"Left Part Cooling Fan should start spinning" S3
 M106 P3 S0
 
 
 M106 P1 S1
-M291 R"Right Tool Fan Test" P" " S3
+M291 R"Right Tool Fan Test" P"Right Part Cooling Fan should start spinning" S3
 M106 P1 S0
 
 
-if sensors.analog[0].lastReading >= 60
+if heat.heaters[0].current >= 60
   abort "Temperature detected too high for tool 0."
 
-if sensors.analog[1].lastReading >= 60
+if heat.heaters[1].current >= 60
   abort "Temperature detected too high for tool 1."
 
 T0 P0
-G10 P0 R80 S80
-M291 R"Left Tool Heater & Fan Test" P" " S3
-var initialTemp = sensors.analog[0].lastReading
+G10 P0 R100 S100
+var initialTempL = heat.heaters[0].current
 G4 S10
-if sensors.analog[0].lastReading - initialTemp < 10
-  echo "Error: Temperature raising too slowly. Temperature raise was not determined."
+if {heat.heaters[0].current - var.initialTempL} < 10
+  echo {heat.heaters[0].current - var.initialTempL}
+  G10 P0 R0 S0
+  abort "Error: Temperature raising too slowly."
+M291 R"Left Tool Heater & Fan Test" P" " S3
 G10 P0 R0 S0
 
-
 T1 P0
-G10 P1 R80 S80
-M291 R"Right Tool Heater & Fan Test" P" " S3
-var initialTemp = sensors.analog[1].lastReading
+G10 P1 R100 S100
+var initialTempR = heat.heaters[1].current
 G4 S10
-if sensors.analog[1].lastReading - initialTemp < 10
-  echo "Error: Temperature raising too slowly. Temperature raise was not determined."
+if {heat.heaters[1].current - var.initialTempR} < 10
+  echo {heat.heaters[1].current - var.initialTempR}
+  G10 P1 R0 S0
+  abort "Error: Temperature raising too slowly."
+M291 R"Right Tool Heater & Fan Test" P" " S3
 G10 P1 R0 S0
+
 T0 P0
