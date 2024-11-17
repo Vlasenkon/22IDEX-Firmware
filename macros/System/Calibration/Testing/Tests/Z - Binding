@@ -17,6 +17,7 @@ elif input == 2
     abort "Z - Binding test cancelled by user."
 
 G1 Z-2 F18000
+G92 Z999
 
 ; Move Z-axis up and down five times
 var iter = 0

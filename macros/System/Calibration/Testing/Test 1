@@ -43,4 +43,4 @@ M98 P"0:/macros/System/Calibration/Testing/Tests/Z - Binding"
 M98 P"0:/macros/System/Calibration/Testing/Tests/Homing"
 
 ; Probes Test
-M98 P"0:/macros/System/Calibration/Testing/Tests/Probes"
+M98 P"0:/macros/System/Calibration/Testing/Tests/Probe"

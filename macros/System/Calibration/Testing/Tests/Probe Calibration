@@ -1,0 +1,101 @@
+M564 H0 ; Allow movement without homing
+
+G90 ; Set to absolute positioning
+; Move T0 to the probe
+G90 ; Set to absolute positioning
+G1 F18000 Y{move.axes[1].max-20} X{global.probePickX} U{move.axes[3].max-10} Z200 F18000
+
+; Test servo rotation
+while iterations < 3
+    M98 P"0:/macros/System/Calibration/Z Probe/Rotate holder to 0 degree"
+    G4 S1
+    M98 P"0:/macros/System/Calibration/Z Probe/Rotate holder to a set degree"
+    G4 S1
+
+; S1 Set Angle Rugh
+while true
+    M291 R"Probe Calibration" P"Move the servo all the way down." S4 K{"Adjust CCW","Adjust CW","Test","Done","Cancel"}
+    if input == 0
+        M98 P"0:/macros/System/Calibration/Z Probe/Adjust pickup angle CCW"
+    elif input == 1
+        M98 P"0:/macros/System/Calibration/Z Probe/Adjust pickup angle CW"
+    elif input == 2
+        while iterations < 3
+            M98 P"0:/macros/System/Calibration/Z Probe/Rotate holder to 0 degree"
+            G4 S1
+            M98 P"0:/macros/System/Calibration/Z Probe/Rotate holder to a set degree"
+            G4 S1
+    elif input == 3
+        break
+    elif input == 4
+        abort "Calibration cancelled by user"
+
+M291 S3 R"Pick the Probe and Secure Screws" P"Press ""OK"" to save new X pos (Y jogging only for convenience)" X1 Y1
+
+set global.probePickX = move.axes[0].machinePosition
+; Generate pickupposition.g
+echo >"0:/user/pickupposition.g" "; Set X probe pickup position"
+echo >>"0:/user/pickupposition.g" "if exists(global.probePickX)"
+echo >>"0:/user/pickupposition.g" "  set global.probePickX = "^{global.probePickX}
+echo >>"0:/user/pickupposition.g" "else"
+echo >>"0:/user/pickupposition.g" "  global probePickX = "^{global.probePickX}
+
+; Tihten the Screws
+G91
+G1 Y-50 F18000
+G90
+G1 Y-150 X-150 F18000
+M280 P0 S0
+M291 R"Tighten the screws" P"Press ""OK"" when 3 screws are tight" S3
+M280 P0 S180
+M291 R"Tighten the screws" P"Press ""OK"" when all screws are tight" S3
+M98 P"0:/macros/System/Calibration/Z Probe/Rotate holder to a set degree"
+
+
+; Move T0 to the probe
+G90 ; Set to absolute positioning   
+G1 F18000 Y{move.axes[1].max-20} X{global.probePickX} U{move.axes[3].max-10} Z200 F18000
+
+while true
+    M291 R"Probe Calibration" P"Move the servo all the way down." S4 K{"Adjust CCW","Adjust CW","Test","Done","Cancel"}
+    if input == 0
+        M98 P"0:/macros/System/Calibration/Z Probe/Adjust pickup angle CCW"
+    elif input == 1
+        M98 P"0:/macros/System/Calibration/Z Probe/Adjust pickup angle CW"
+    elif input == 2
+        while iterations < 3
+            M98 P"0:/macros/System/Calibration/Z Probe/Rotate holder to 0 degree"
+            G4 S1
+            M98 P"0:/macros/System/Calibration/Z Probe/Rotate holder to a set degree"
+            G4 S1
+    elif input == 3
+        break
+    elif input == 4
+        abort "Calibration cancelled by user"
+
+
+
+M291 S3 P"Press ""OK"" to save new X pos (Y jogging only for convenience)" X1 Y1
+
+set global.probePickX = move.axes[0].machinePosition
+; Generate pickupposition.g
+echo >"0:/user/pickupposition.g" "; Set X probe pickup position"
+echo >>"0:/user/pickupposition.g" "if exists(global.probePickX)"
+echo >>"0:/user/pickupposition.g" "  set global.probePickX = "^{global.probePickX}
+echo >>"0:/user/pickupposition.g" "else"
+echo >>"0:/user/pickupposition.g" "  global probePickX = "^{global.probePickX}
+
+M98 P"place.g"
+G4 S1
+
+M98 P"pick.g" R1
+G4 S1
+M98 P"pick.g" R1
+G4 S1
+M98 P"pick.g" R1
+
+G4 S1
+M98 P"place.g"
+
+
+M564 H1 ; Disable movement without homing
