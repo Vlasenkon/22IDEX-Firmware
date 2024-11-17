@@ -21,23 +21,26 @@ if boards[1].vIn.current < 23.5 || boards[1].vIn.current > 24.5
 	abort "Board 1 voltage out of range: " ^ boards[1].vIn.current ^ "V"
 	M99
 
-; Fans & Heaters Test ==========================================================================================
+; Fans & Heaters Test
 M98 P"0:/macros/System/Calibration/Testing/Tests/Fans & Heaters"
 
-; Endstop Test ==========================================================================================
-M98 P"0:/macros/System/Calibration/Testing/Tests/Endstop"
-
-; LED Test ==========================================================================================
+; LED Test
 M98 P"0:/macros/System/Calibration/Testing/Tests/LED"
 
-; Z-Binding Test ==========================================================================================
-M98 P"0:/macros/System/Calibration/Testing/Tests/Z - Binding"
+; Endstop Test
+M98 P"0:/macros/System/Calibration/Testing/Tests/Endstop"
 
-; Z-Binding Test ==========================================================================================
+; XYE - Motor Direction & Connection Test
+M98 P"0:/macros/System/Calibration/Testing/Tests/Motor Direction"
+
+; Z - Motor Connection Test
 M98 P"0:/macros/System/Calibration/Testing/Tests/Z - Connection"
 
-; Homing Test ==========================================================================================
+; Z - Binding Test
+M98 P"0:/macros/System/Calibration/Testing/Tests/Z - Binding"
+
+; Homing Test
 M98 P"0:/macros/System/Calibration/Testing/Tests/Homing"
 
-; Probes Test ==========================================================================================
+; Probes Test
 M98 P"0:/macros/System/Calibration/Testing/Tests/Probes"

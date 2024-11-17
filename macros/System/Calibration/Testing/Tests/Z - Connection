@@ -34,4 +34,4 @@ G90               ; set to absolute positioning
 M400
 M584 Z1.0:1.1:1.2 ; restore original driver mapping
 
-M564 H0
+M564 H1

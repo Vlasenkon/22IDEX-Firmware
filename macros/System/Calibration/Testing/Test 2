@@ -1,0 +1,30 @@
+M291 S7 J1 R"Enter Password" P"Enter the password to start the test."
+var pp = {input}
+
+if var.pp != "vmawt"
+	abort
+	M99
+
+; Test Voltage // add 5V PSU test
+M98 P"0:/macros/System/Calibration/Testing/Tests/Voltage"
+
+; Test Y - Homming Error
+M98 P"0:/macros/System/Calibration/Testing/Tests/Homing/Y - Homing"
+
+; Tigten Nozles
+M98 P"0:/macros/System/Calibration/Testing/Tests/Nozzle/Nozzle"
+
+; Purging bucket clearance height
+M98 P"0:/macros/System/Calibration/Testing/Tests/Nozzle/Purging"
+
+; True Bed Leveling Test
+M98 P"0:/macros/System/Calibration/Testing/Tests/Bed/Bed Leveling"
+
+; Z Lubrication Script
+M98 P"0:/macros/System/Calibration/Testing/Tests/Bed/Lubrication"
+
+; XY - Movement Test // Set Heater Fault to be very sensitive // Add Timer // Add way to stop it with End Stops // Add prompt to listen to Noises and watch temp graph
+M98 P"0:/macros/System/Calibration/Testing/Tests/XY - Movement"
+
+; Auto Calibration
+M98 P"0:/macros/System/Calibration/Testing/Tests/Auto Calibration"
