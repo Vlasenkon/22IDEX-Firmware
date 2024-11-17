@@ -13,12 +13,10 @@ G1 E100 F1000 ; Feed filament
 T0 P0
 
 M564 H0
-M291 R"Move Z - Axis" P" " S3 Z1
 
 M84
 M291 R"Check Belt Tension" P" " S3
 
-M84
 M291 R"Move Tools by Hand" P" " S3
 
 M291 R"Move XYU - Axis" P" " S3 X1 Y1 U1

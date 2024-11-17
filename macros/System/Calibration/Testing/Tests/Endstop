@@ -1,5 +1,5 @@
 ; Endstop Test Macro
-
+M84
 
 ; Test Left-hand side Y-axis endstop (io1.in)
 M574 Y1 S1 P"io1.in"                              ; Configure Y-axis to use only io1.in

@@ -14,8 +14,9 @@ G4 S1
 ; Rotate holder back to 0 degree
 M98 P"0:/macros/System/Calibration/Z Probe/Rotate holder to 0 degree"
 
-
+M564 H0
 M291 R"Mode build plate close to the nozzle" P"Move the build plate close to the nozzle" Z1 S3
+M564 H1
 
 if sensors.probes[0].value[0] != 1000
     M98 P"0:/sys/led/fault.g"

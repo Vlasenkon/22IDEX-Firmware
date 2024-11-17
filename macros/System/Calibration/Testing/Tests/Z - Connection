@@ -1,3 +1,4 @@
+M291 S3 R"Z - Motor Connection Test" P"Each motor will move in sequence: Left, Right, Rear"
 M564 H0
 
 ; Move Left lead screw

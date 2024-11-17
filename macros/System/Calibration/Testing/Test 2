@@ -2,7 +2,7 @@ M291 S7 J1 R"Enter Password" P"Enter the password to start the test."
 var pp = {input}
 
 if var.pp != "vmawt"
-	abort
+	abort "Error: Incorrect password entered."
 	M99
 
 ; Calibrate Z - Probe // Servo rotation test // Z-Probe Pickup Angle // Height // Z-Probe Pickup Position

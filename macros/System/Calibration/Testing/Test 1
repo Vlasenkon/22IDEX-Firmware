@@ -7,7 +7,7 @@ var pp = {input}
 
 ; Check if the entered password is correct
 if var.pp != "vmawt"
-	abort "Wrong Password"
+	abort "Error: Incorrect password entered."
 	M99
 
 ; Check voltage for both boards
@@ -21,11 +21,11 @@ if boards[1].vIn.current < 23.5 || boards[1].vIn.current > 24.5
 	abort "Board 1 voltage out of range: " ^ boards[1].vIn.current ^ "V"
 	M99
 
-; Fans & Heaters Test
-M98 P"0:/macros/System/Calibration/Testing/Tests/Fans & Heaters"
-
 ; LED Test
 M98 P"0:/macros/System/Calibration/Testing/Tests/LED"
+
+; Fans & Heaters Test
+M98 P"0:/macros/System/Calibration/Testing/Tests/Fans & Heaters"
 
 ; Endstop Test
 M98 P"0:/macros/System/Calibration/Testing/Tests/Endstop"

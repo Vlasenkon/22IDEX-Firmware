@@ -1,11 +1,12 @@
 M291 R"Move Z-Axis" P"Choose an option:" K{"Move Down","Done","Cancel"} S4
 
 M564 H0
+G91
 
 if input == 0
     while true
-        G1 Z50 F1800
-        M291 R"Move Z-Axis" P"Choose an option:" K{"Move more","Done","Cancel"} S4
+        G1 Z50 F18000
+        M291 R"Move Z-Axis Down" P"Choose an option:" K{"Move Down","Done","Cancel"} S4
         if input == 1
             break
         elif input == 2
@@ -15,20 +16,23 @@ elif input == 1
 elif input == 2
     abort "Z - Binding test cancelled by user."
 
+G1 Z-2 F18000
+
 ; Move Z-axis up and down five times
 var iter = 0
 while var.iter < 5
-    G1 Z-20 F1800
-    G1 Z20 F1800
+    G1 Z-20 F18000
+    G1 Z20 F18000
     set var.iter = var.iter + 1
 
 M291 R"Was the motion smooth?" P"Choose an option:" K{"Yes","No"} S4
 
 if input == 0
-    G1 Z-400 F1800
+    G1 Z-400 F18000
 elif input == 1
-    G1 Z-250 F1800
+    G1 Z-250 F18000
     M291 R"Perform Z - Motor alignment" P" "
     abort "Error: Z - Motor binding reported."
 
 M564 H1
+G90

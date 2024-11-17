@@ -1,3 +1,6 @@
+M98 P"0:/sys/led/statusoff.g"
+M98 P"0:/sys/led/restorewhite.g"
+
 M140 S50 R50
 M291 R"Bed Heater Test" P"Make sure the Bed Heater is Hot" S3
 M140 S0 R0
@@ -26,31 +29,82 @@ M106 P1 S0
 
 
 if heat.heaters[0].current >= 60
-  abort "Temperature detected too high for tool 0."
+  abort "Error: Temperature detected too high for tool 0."
 
 if heat.heaters[1].current >= 60
-  abort "Temperature detected too high for tool 1."
+  abort "Error: Temperature detected too high for tool 1."
+
+
+
+
+
+; Left Tool Heater Test
+M98 P"0:/sys/led/start_cold.g"
 
 T0 P0
 G10 P0 R100 S100
 var initialTempL = heat.heaters[0].current
+echo "Waiting for T0 to reach 80C"
+
+; Check if the temperature is raising
 G4 S10
 if {heat.heaters[0].current - var.initialTempL} < 10
+  M98 P"0:/sys/led/fault.g"
   echo {heat.heaters[0].current - var.initialTempL}
   G10 P0 R0 S0
-  abort "Error: Temperature raising too slowly."
+  abort "Error: T0 Temperature raising too slowly."
+else
+  echo "T0 Temperature raising correctly."
+
+
+while heat.heaters[0].current < 80
+  G4 P100
+  if iterations >= 100
+    M98 P"0:/sys/led/fault.g"
+    abort "Error: T0 Temperature not reaching 80C"
+
+M98 P"0:/sys/led/end.g"
+echo "T0 Temperature reached 80C"
+
 M291 R"Left Tool Heater & Fan Test" P" " S3
 G10 P0 R0 S0
+
+
+
+
+
+
+; Right Tool Heater Test
+M98 P"0:/sys/led/start_cold.g"
 
 T1 P0
 G10 P1 R100 S100
 var initialTempR = heat.heaters[1].current
+echo "Waiting for T1 to reach 80C"
+
+; Check if the temperature is raising
 G4 S10
 if {heat.heaters[1].current - var.initialTempR} < 10
+  M98 P"0:/sys/led/fault.g"
   echo {heat.heaters[1].current - var.initialTempR}
   G10 P1 R0 S0
-  abort "Error: Temperature raising too slowly."
+  abort "Error: T1 Temperature raising too slowly."
+else
+  echo "T1 Temperature raising correctly."
+
+while heat.heaters[1].current < 80
+  G4 P100
+  if iterations >= 100
+    M98 P"0:/sys/led/fault.g"
+    abort "Error: T1 Temperature not reaching 80C"
+
+M98 P"0:/sys/led/end.g"
+echo "T1 Temperature reached 80C"
+
 M291 R"Right Tool Heater & Fan Test" P" " S3
 G10 P1 R0 S0
 
+
+M98 P"0:/sys/led/statusoff.g"
+M98 P"0:/sys/led/restorewhite.g"
 T0 P0
