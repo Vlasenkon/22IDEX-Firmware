@@ -5,6 +5,9 @@ if var.pp != "vmawt"
 	abort
 	M99
 
+; Calibrate Z - Probe // Servo rotation test // Z-Probe Pickup Angle // Height // Z-Probe Pickup Position
+M98 P"0:/macros/System/Calibration/Testing/Tests/Z - Probe"
+
 ; Test Voltage // add 5V PSU test
 M98 P"0:/macros/System/Calibration/Testing/Tests/Voltage"
 
