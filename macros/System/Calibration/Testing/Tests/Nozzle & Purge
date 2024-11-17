@@ -1,0 +1,42 @@
+M291 R"Nozzle Tightening" P" " S3
+
+M564 H1 ; Disable movement without homing
+
+G28 Y
+G28 X
+G28 U
+
+if !move.axes[2].homed
+    G28 Z
+
+G90
+G1 Y0 F18000
+G1 X-999 U999 F18000
+G1 Y-75 F18000
+
+G10 P0 S410 R410
+G10 P1 S410 R410
+G10 P2 S410 R410
+G10 P3 S410 R410
+
+M116 P0 S5
+M116 P1 S5
+
+G4 S30
+
+
+G1 X-50 U50 Y-150 Z400 F18000
+M291 R"Tighten Nozzle" P" " S2
+
+
+G10 P0 S0 R0
+G10 P1 S0 R0
+G10 P2 S0 R0
+G10 P3 S0 R0
+
+
+; Purging Bucket Clearance Height Adjustment
+G1 X-190 U190 Y-73
+M291 R"Adjust Purgin Buckets" P"Click ""OK"" when ready to test clearance height." S3
+M98 P"0:/sys/nozzlewipe.g" T0 C1
+M98 P"0:/sys/nozzlewipe.g" T1 C1

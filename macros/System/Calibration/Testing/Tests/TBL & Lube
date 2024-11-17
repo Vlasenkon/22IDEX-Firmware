@@ -1,0 +1,24 @@
+M84 Z
+
+M291 R"True Bed Leveling Test" P"Manually tilt the build plate" S3
+
+G28
+
+M291 R"Lubracation will Start" P" " S3
+
+G90
+G1 X-999 U999 Y0 F18000
+
+while true
+    if sensors.endstops[0].triggered || sensors.endstops[3].triggered
+        break
+    G1 Z450 F18000
+    M400
+    
+    if sensors.endstops[0].triggered || sensors.endstops[3].triggered
+        break
+    G1 Z0 F18000
+    M400
+
+
+G1 Z300 F18000

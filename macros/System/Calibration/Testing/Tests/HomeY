@@ -1,0 +1,44 @@
+M98 P"0:/sys/led/statusoff.g"
+M98 P"0:/sys/led/restorewhite.g"
+
+M84 XYU
+
+M291 R"Home Y Test" P" " S3
+
+M98 P"0:/sys/homey.g" T1
+M400
+G4 P500
+var dis1 = global.HomeYDis
+echo "Test 1: The "^{global.HomeYSide}^" side was adjusted by "^{global.HomeYDis}^" mm"
+
+M84 XYU
+G1 S2
+
+M98 P"0:/sys/homey.g" T1
+M400
+G4 P500
+var dis2 = global.HomeYDis
+echo "Test 2: The "^{global.HomeYSide}^" side was adjusted by "^{global.HomeYDis}^" mm"
+
+M84 XYU
+G1 S2
+
+M98 P"0:/sys/homey.g" T1
+M400
+G4 P500
+var dis3 = global.HomeYDis
+echo "Test 3: The "^{global.HomeYSide}^" side was adjusted by "^{global.HomeYDis}^" mm"
+
+var avgDis = (var.dis1 + var.dis2 + var.dis3) / 3
+
+if var.avgDis < 0.4
+  M98 P"0:/sys/led/end.g"
+  echo "Average Adjustment: "^{var.avgDis}^" mm"
+else
+  M98 P"0:/sys/led/fault.g"
+  abort "Error: Average Adjustment is: "^{var.avgDis}^" mm"
+
+
+M98 P"0:/sys/led/statusoff.g"
+M98 P"0:/sys/led/restorewhite.g"
+M84 XYU

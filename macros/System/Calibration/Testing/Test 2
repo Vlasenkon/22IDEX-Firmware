@@ -5,29 +5,24 @@ if var.pp != "vmawt"
 	abort "Error: Incorrect password entered."
 	M99
 
-; Calibrate Z - Probe // Servo rotation test // Z-Probe Pickup Angle // Height // Z-Probe Pickup Position
-M98 P"0:/macros/System/Calibration/Testing/Tests/Probe Calibration"
-
 ; Test Voltage // add 5V PSU test
 M98 P"0:/macros/System/Calibration/Testing/Tests/Voltage"
 
 ; Test Y - Homming Error
-M98 P"0:/macros/System/Calibration/Testing/Tests/Homing/Y - Homing"
+M98 P"0:/macros/System/Calibration/Testing/Tests/Homing/HomeY"
 
-; Tigten Nozles
-M98 P"0:/macros/System/Calibration/Testing/Tests/Nozzle/Nozzle"
+; Calibrate Z - Probe // Servo rotation test // Z-Probe Pickup Angle // Height // Z-Probe Pickup Position
+M98 P"0:/macros/System/Calibration/Testing/Tests/Probe Calibration"
 
-; Purging bucket clearance height
-M98 P"0:/macros/System/Calibration/Testing/Tests/Nozzle/Purging"
+; Tigten Nozles & Adjust Purging Backets
+M98 P"0:/macros/System/Calibration/Testing/Tests/Nozzle & Purge"
 
 ; True Bed Leveling Test
-M98 P"0:/macros/System/Calibration/Testing/Tests/Bed/Bed Leveling"
+M98 P"0:/macros/System/Calibration/Testing/Tests/Bed/TBL & Lube"
 
-; Z Lubrication Script
-M98 P"0:/macros/System/Calibration/Testing/Tests/Bed/Lubrication"
-
-; XY - Movement Test // Set Heater Fault to be very sensitive // Add Timer // Add way to stop it with End Stops // Add prompt to listen to Noises and watch temp graph
+; XY - Movement Test // Add Timer // Add prompt to listen to Noises and watch temp graph
 M98 P"0:/macros/System/Calibration/Testing/Tests/XY - Movement"
 
 ; Auto Calibration
-M98 P"0:/macros/System/Calibration/Testing/Tests/Auto Calibration"
+M291 R"Auto Calibration" P"Click ""OK"" to start the Auto Calibration process." S3
+M98 P"0:/macros/Auto Calibration"

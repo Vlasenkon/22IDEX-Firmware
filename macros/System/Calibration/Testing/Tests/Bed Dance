@@ -29,7 +29,7 @@ G92 A100 B100 C100
 G1 A70.460 B70.460 C134.051 F1200
 G1 F18000
 
-while iterations < 9999 && sensors.endstops[0].triggered == false && sensors.endstops[3].triggered == false
+while sensors.endstops[0].triggered == false && sensors.endstops[3].triggered == false
 
 	G1 A70.460 B70.460 C134.051
 	G1 A71.283 B69.648 C134.045

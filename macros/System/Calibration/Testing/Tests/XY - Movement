@@ -5,7 +5,8 @@ G10 P0 S350 R350
 G10 P1 S350 R350
 G10 P2 S350 R350
 G10 P3 S350 R350
-M140 S160 R160
+
+M140 S150 R150
 M141 S100 R100
 
 ; Fans
@@ -16,18 +17,16 @@ M106 P3 S0.5
 if !move.axes[0].homed || !move.axes[1].homed || !move.axes[2].homed || !move.axes[3].homed
   M98 P"homeall.g"
 
-
-;M570 H1 P1 T10
-;M570 H2 P1 T10
-
 ;Wait for temp
 M116 H0 S5
 M116 H1 S5
 
-
-
+M570 H0 P1 T10 R1                                            ; configure heater fault detection
+M570 H1 P1 T10 R1                                            ; configure heater fault detection
 
 while sensors.analog[3].lastReading <= 80
+  if sensors.endstops[0].triggered || sensors.endstops[3].triggered
+    break
   ;Corners Left Tool
   T0
   G1 X-200 U200 Y160 F24000
@@ -38,6 +37,8 @@ while sensors.analog[3].lastReading <= 80
   ;Diagonal 1
   G1 X144 Y-175
   G1 X-200 Y160 
+  if sensors.endstops[0].triggered || sensors.endstops[3].triggered
+    break
   ;Diagonal 2
   G1 X144  Y160
   G1 X-200 Y-175
@@ -57,6 +58,8 @@ while sensors.analog[3].lastReading <= 80
   G1 U200 Y-175
   G1 U-144  Y160
   G1 U200 Y160
+  if sensors.endstops[0].triggered || sensors.endstops[3].triggered
+    break
   ;Mirror Mode Corners
   T3
   G1 X-200 Y160 F18000
@@ -75,6 +78,8 @@ while sensors.analog[3].lastReading <= 80
   G1 X-200 Y-63
   G1 X-25  Y48
   G1 X-200 Y160
+  if sensors.endstops[0].triggered || sensors.endstops[3].triggered
+    break
   ;Duplicate Mode ZigZag
   T2
   G1 X97.5    Y48
@@ -82,8 +87,8 @@ while sensors.analog[3].lastReading <= 80
   G1 X2.5  Y-175
   G1 X2.5  Y160
 
-
-
+M570 H0 P30 T50 R10                                              ; configure heater fault detection
+M570 H1 P30 T50 R10                                              ; configure heater fault detection
 
 G10 P0 S0 R0
 G10 P1 S0 R0

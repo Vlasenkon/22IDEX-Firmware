@@ -24,7 +24,7 @@ G1 Y5 F1200                           ; Move the Y axis forward by 5 mm
 ; Initialize variables to store the zero positions of the left and right sides
 var leftZeroPosition = 0
 var rightZeroPosition = 0
-var dimension = 0
+var dis = 0
 var side = ""
 
 G1 H1 Y-10 F200                       ; Move the Y axis back quickly to hit the endstop
@@ -55,11 +55,11 @@ if var.side == "left"
   set var.leftZeroPosition = move.axes[1].machinePosition  ; Store the left side zero position
 
 ; Calculate the offset between the left and right positions
-set var.dimension = abs(var.leftZeroPosition - var.rightZeroPosition)
+set var.dis = abs(var.leftZeroPosition - var.rightZeroPosition)
 
 ; If the offset is greater than 0.5 mm, print a correction message
-if var.dimension >= 0.5
-  echo "Error: The "^{var.side}^" side has been adjusted by "^{var.dimension}^" mm"
+if var.dis >= 0.5
+  echo "Error: The "^{var.side}^" side has been adjusted by "^{var.dis}^" mm"
 
 ; Reset the Y axis position and restore the original endstop configuration
 G92 Y-999                             ; Set the current Y axis position to -999
@@ -80,3 +80,15 @@ M400                                  ; Ensure all moves are completed before ma
 G90                                   ; Switch to absolute positioning
 M913 Y100                             ; Restore the Y axis motor current to 100%
 M204 T5000                            ; Restore the original accelerations
+
+
+if exists(param.T)
+  if !exists(global.HomeYSide) && exists(var.side)
+    global HomeYSide = var.side
+  else
+    set global.HomeYSide = var.side
+  
+  if !exists(global.HomeYDis) && exists(var.dis)
+    global HomeYDis = var.dis
+  else
+    set global.HomeYDis = var.dis
