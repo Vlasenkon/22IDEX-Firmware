@@ -5,14 +5,12 @@ M98 P"0:/macros/System/Calibration/Testing/Disable Probe"
 
 M291 R"Test Servo?" P" " S3
 
-; Rotate holder to 0 degree
-M98 P"0:/macros/System/Calibration/Z Probe/Rotate holder to 0 degree"
-G4 S1
-; Rotate holder to a set degree
-M98 P"0:/macros/System/Calibration/Z Probe/Rotate holder to a set degree"
-G4 S1
-; Rotate holder back to 0 degree
-M98 P"0:/macros/System/Calibration/Z Probe/Rotate holder to 0 degree"
+while iterations < 3
+    M98 P"0:/macros/System/Calibration/Z Probe/Rotate holder to a set degree"
+    G4 S1
+    M98 P"0:/macros/System/Calibration/Z Probe/Rotate holder to 0 degree"
+    G4 S1
+
 
 M564 H0
 M291 R"Mode build plate close to the nozzle" P"Move the build plate close to the nozzle" Z1 S3

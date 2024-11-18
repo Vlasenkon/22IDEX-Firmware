@@ -40,6 +40,7 @@ if heat.heaters[1].current >= 60
 
 ; Left Tool Heater Test
 M98 P"0:/sys/led/start_cold.g"
+M291 R"Feel if T0 is heating up" P" " S0 T10
 
 T0 P0
 G10 P0 R100 S100
@@ -65,7 +66,7 @@ while heat.heaters[0].current < 80
 
 M98 P"0:/sys/led/end.g"
 echo "T0 Temperature reached 80C"
-
+M292
 M291 R"Left Tool Heater & Fan Test" P" " S3
 G10 P0 R0 S0
 
@@ -76,6 +77,7 @@ G10 P0 R0 S0
 
 ; Right Tool Heater Test
 M98 P"0:/sys/led/start_cold.g"
+M291 R"Feel if T1 is heating up" P" " S0 T10
 
 T1 P0
 G10 P1 R100 S100
@@ -100,7 +102,7 @@ while heat.heaters[1].current < 80
 
 M98 P"0:/sys/led/end.g"
 echo "T1 Temperature reached 80C"
-
+M292
 M291 R"Right Tool Heater & Fan Test" P" " S3
 G10 P1 R0 S0
 

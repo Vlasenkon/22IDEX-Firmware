@@ -14,9 +14,10 @@ if input == 0
 elif input == 1
     ; Proceed to next step
 elif input == 2
-    abort "Z - Binding test cancelled by user."
+    M99
 
-G1 Z-2 F18000
+G91
+G1 Z-2 F600
 G92 Z999
 
 ; Move Z-axis up and down five times
@@ -28,8 +29,9 @@ while var.iter < 5
 
 M291 R"Was the motion smooth?" P"Choose an option:" K{"Yes","No"} S4
 
+G90
 if input == 0
-    G1 Z-250 F18000
+    G1 Z50 F18000
 elif input == 1
     M291 R"Perform Z - Motor alignment" P" "
     abort "Error: Z - Motor binding reported."

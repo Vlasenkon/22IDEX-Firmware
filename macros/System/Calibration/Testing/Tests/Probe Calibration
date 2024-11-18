@@ -44,7 +44,7 @@ echo >>"0:/user/pickupposition.g" "  global probePickX = "^{global.probePickX}
 G91
 G1 Y-50 F18000
 G90
-G1 Y-150 X-150 F18000
+G1 Y-150 X-150 U999 F18000
 M280 P0 S0
 M291 R"Tighten the screws" P"Press ""OK"" when 3 screws are tight" S3
 M280 P0 S180
@@ -88,11 +88,11 @@ echo >>"0:/user/pickupposition.g" "  global probePickX = "^{global.probePickX}
 M98 P"place.g"
 G4 S1
 
-M98 P"pick.g" R1
+M98 P"pick.g"
 G4 S1
-M98 P"pick.g" R1
+M98 P"pick.g"
 G4 S1
-M98 P"pick.g" R1
+M98 P"pick.g"
 
 G4 S1
 M98 P"place.g"

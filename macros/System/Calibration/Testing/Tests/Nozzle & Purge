@@ -9,6 +9,8 @@ G28 U
 if !move.axes[2].homed
     G28 Z
 
+M98 P"0:/sys/led/start_cold.g"
+
 G90
 G1 Y0 F18000
 G1 X-999 U999 F18000
@@ -24,7 +26,7 @@ M116 P1 S5
 
 G4 S30
 
-
+M98 P"0:/sys/led/start_hot.g"
 G1 X-50 U50 Y-150 Z400 F18000
 M291 R"Tighten Nozzle" P" " S2
 

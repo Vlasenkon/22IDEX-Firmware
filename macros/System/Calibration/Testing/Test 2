@@ -9,7 +9,7 @@ if var.pp != "vmawt"
 M98 P"0:/macros/System/Calibration/Testing/Tests/Voltage"
 
 ; Test Y - Homming Error
-M98 P"0:/macros/System/Calibration/Testing/Tests/Homing/HomeY"
+M98 P"0:/macros/System/Calibration/Testing/Tests/HomeY"
 
 ; Calibrate Z - Probe // Servo rotation test // Z-Probe Pickup Angle // Height // Z-Probe Pickup Position
 M98 P"0:/macros/System/Calibration/Testing/Tests/Probe Calibration"
@@ -18,7 +18,7 @@ M98 P"0:/macros/System/Calibration/Testing/Tests/Probe Calibration"
 M98 P"0:/macros/System/Calibration/Testing/Tests/Nozzle & Purge"
 
 ; True Bed Leveling Test
-M98 P"0:/macros/System/Calibration/Testing/Tests/Bed/TBL & Lube"
+M98 P"0:/macros/System/Calibration/Testing/Tests/TBL & Lube"
 
 ; XY - Movement Test // Add Timer // Add prompt to listen to Noises and watch temp graph
 M98 P"0:/macros/System/Calibration/Testing/Tests/XY - Movement"
