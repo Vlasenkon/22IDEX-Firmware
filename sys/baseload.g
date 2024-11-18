@@ -53,12 +53,12 @@ else
 
 M400
 
-while input = 0
-  M291 R"Do you see new filament extruding?" P"Press ""Yes"" if filament is extruding or ""No"" to extrude more." S4 K{"Yes","No"}
+M291 R"Do you see new filament extruding?" P"Press ""Yes"" if filament is extruding or ""No"" to extrude more." S4 K{"Yes","No"}
+  while input = 1
+    M291 R"Do you see new filament extruding?" P"Press ""Yes"" if filament is extruding or ""No"" to extrude more." S4 K{"Yes","No"}
   if input = 1
     G1 E50 F{var.ss} ; Extrude
     M400
-
 
 M98 P"0:/sys/nozzlewipe.g" ; wipe curently active nozzle
 
