@@ -10,7 +10,7 @@ if !move.axes[3].homed
 G90 ; Set to absolute positioning
 if move.axes[2].homed
     G1 Z200 F18000
-G1 F18000 Y{move.axes[1].max-20} X{global.probePickX} U{move.axes[3].max-10} F18000
+G1 F18000 Y{move.axes[1].max-30} X{global.probePickX} U{move.axes[3].max-10} F18000
 
 ; Test servo rotation
 while iterations < 3
@@ -63,7 +63,7 @@ M98 P"0:/macros/System/Calibration/Z Probe/Rotate holder to a set degree"
 G90 ; Set to absolute positioning   
 if move.axes[2].homed
     G1 Z200 F18000
-G1 F18000 Y{move.axes[1].max-20} X{global.probePickX} U{move.axes[3].max-10} F18000
+G1 F18000 Y{move.axes[1].max-30} X{global.probePickX} U{move.axes[3].max-10} F18000
 
 while true
     M291 R"Probe Calibration" P"Move the servo all the way down." S4 K{"Adjust CCW","Adjust CW","Test","Done","Cancel"}
