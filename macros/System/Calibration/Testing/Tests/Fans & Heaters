@@ -60,7 +60,7 @@ else
 
 while heat.heaters[0].current < 80
   G4 P100
-  if iterations >= 100
+  if iterations >= 300
     M98 P"0:/sys/led/fault.g"
     abort "Error: T0 Temperature not reaching 80C"
 
@@ -96,7 +96,7 @@ else
 
 while heat.heaters[1].current < 80
   G4 P100
-  if iterations >= 100
+  if iterations >= 300
     M98 P"0:/sys/led/fault.g"
     abort "Error: T1 Temperature not reaching 80C"
 

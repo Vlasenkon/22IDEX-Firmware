@@ -7,5 +7,5 @@ G28 X
 M291 R"Home U" P" " S3
 G28 U
 
-M291 R"Move Axis?" P" " S3
-G1 F18000 Y-999 X-50 U50
+M291 R"Was Homing OK?" P" " S3
+G1 F18000 Y-999 X-100 U100

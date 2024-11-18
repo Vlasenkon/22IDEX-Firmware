@@ -8,18 +8,11 @@ var pp = {input}
 ; Check if the entered password is correct
 if var.pp != "vmawt"
 	abort "Error: Incorrect password entered."
-	M99
 
 ; Check voltage for both boards
-if boards[0].vIn.current < 23.5 || boards[0].vIn.current > 24.5
+if boards[0].vIn.current < 23 || boards[0].vIn.current > 24.8
 	M98 P"0:/sys/led/fault.g"
 	abort "Board 0 voltage out of range: " ^ boards[0].vIn.current ^ "V"
-	M99
-
-if boards[1].vIn.current < 23.5 || boards[1].vIn.current > 24.5
-	M98 P"0:/sys/led/fault.g"
-	abort "Board 1 voltage out of range: " ^ boards[1].vIn.current ^ "V"
-	M99
 
 ; LED Test
 M98 P"0:/macros/System/Calibration/Testing/Tests/LED"

@@ -1,3 +1,12 @@
+if !move.axes[1].homed
+    G28 Y
+if !move.axes[0].homed
+    G28 X
+if !move.axes[3].homed
+    G28 U
+if !move.axes[2].homed
+    G28 Z
+
 M84 Z
 
 M291 R"True Bed Leveling Test" P"Manually tilt the build plate" S3

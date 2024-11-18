@@ -1,11 +1,15 @@
-M291 R"Nozzle Tightening" P" " S3
+M291 S5 J1 F350 R"Nozzle Tightening" P"Set the temperature for the Test"
+var temp = input
+
 
 M564 H1 ; Disable movement without homing
 
-G28 Y
-G28 X
-G28 U
-
+if !move.axes[1].homed
+    G28 Y
+if !move.axes[0].homed
+    G28 X
+if !move.axes[3].homed
+    G28 U
 if !move.axes[2].homed
     G28 Z
 
@@ -16,10 +20,10 @@ G1 Y0 F18000
 G1 X-999 U999 F18000
 G1 Y-75 F18000
 
-G10 P0 S410 R410
-G10 P1 S410 R410
-G10 P2 S410 R410
-G10 P3 S410 R410
+G10 P0 S{var.temp} R{var.temp}
+G10 P1 S{var.temp} R{var.temp}
+G10 P2 S{var.temp} R{var.temp}
+G10 P3 S{var.temp} R{var.temp}
 
 M116 P0 S5
 M116 P1 S5
