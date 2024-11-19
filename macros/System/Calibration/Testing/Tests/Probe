@@ -26,6 +26,7 @@ else
 
 ; Enable probe
 M98 P"0:/macros/System/Calibration/Testing/Enable Probe"
+G4 S1
 
 var max_iter = 1200
 var iter = 0
@@ -55,6 +56,7 @@ else
 
 
 M98 P"0:/sys/led/start_cold.g"
+G4 S1
 
 
 
@@ -81,6 +83,7 @@ else
 
 
 M98 P"0:/sys/led/start_cold.g"
+G4 S1
 
 
 
@@ -107,6 +110,7 @@ else
 
 
 M98 P"0:/sys/led/start_cold.g"
+G4 S1
 
 
 
