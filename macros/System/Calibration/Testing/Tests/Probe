@@ -27,7 +27,7 @@ else
 ; Enable probe
 M98 P"0:/macros/System/Calibration/Testing/Enable Probe"
 
-var max_iter = 200
+var max_iter = 1200
 var iter = 0
 
 
@@ -38,7 +38,7 @@ if sensors.probes[0].value[0] == 1000
     M291 R"Touch the nozzle" P"Touch Left Nozzle to the Bed, Z - Probe value should change to 0" S1 T60
 else
     M98 P"0:/sys/led/fault.g"
-    abort "Error: Z-Probe value is not 1000"
+    abort "Error: S1 Z-Probe value is not 1000"
 
 ; wait for z-probe value to change to 0
 while sensors.probes[0].value[0] != 0
@@ -50,7 +50,7 @@ if var.iter <= var.max_iter
     M98 P"0:/sys/led/end.g"
 else
     M98 P"0:/sys/led/fault.g"
-    abort "Error: Z-Probe value did not change to 0"
+    abort "Error: S1 Z-Probe value did not change to 0"
 
 
 
@@ -64,7 +64,7 @@ if sensors.probes[0].value[0] == 1000
     M291 R"Touch the nozzle" P"Touch Right Nozzle to the Bed, Z - Probe value should change to 0" S1 T60
 else
     M98 P"0:/sys/led/fault.g"
-    abort "Error: Z-Probe value is not 1000"
+    abort "Error: S2 Z-Probe value is not 1000"
 
 ; wait for z-probe value to change to 0
 while sensors.probes[0].value[0] != 0
@@ -76,7 +76,7 @@ if var.iter <= var.max_iter
     M98 P"0:/sys/led/end.g"
 else
     M98 P"0:/sys/led/fault.g"
-    abort "Error: Z-Probe value did not change to 0"
+    abort "Error: S2 Z-Probe value did not change to 0"
 
 
 
@@ -90,7 +90,7 @@ if sensors.probes[0].value[0] == 1000
     M291 R"Attach the Z-Probe to the holder" P"Attach the Z-Probe to the holder, Z - Probe value should change to 0" S1 T60
 else
     M98 P"0:/sys/led/fault.g"
-    abort "Error: Z-Probe value is not 1000"
+    abort "Error: S3 Z-Probe value is not 1000"
 
 ; wait for z-probe value to change to 0
 while sensors.probes[0].value[0] != 0
@@ -102,7 +102,7 @@ if var.iter <= var.max_iter
     M98 P"0:/sys/led/end.g"
 else
     M98 P"0:/sys/led/fault.g"
-    abort "Error: Probe was not recognized"
+    abort "Error: S3 Probe was not recognized"
 
 
 
