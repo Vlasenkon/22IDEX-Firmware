@@ -47,7 +47,9 @@ else
 
 ; Perform mesh bed leveling
 G29 S0
-
+if move.compensation.meshDeviation.deviation > 0.25
+  echo "Warning: Mesh Compensation is too high"
+  echo >>"0:/sys/eventlog.txt" "Mesh Compensation is too high"
 if result !=0
   M98 P"0:/sys/led/fault.g"
   echo >>"0:/sys/eventlog.txt" "Print cancelled due to Mesh Compensation Error"

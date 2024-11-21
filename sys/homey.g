@@ -16,9 +16,12 @@ G1 H2 Z20 F18000                      ; Lift the Z axis by 20 mm at 18000 mm/min
 G1 H2 X10 U-10 F18000                 ; Move the X and U axes 10 mm in opposite directions at 18000 mm/min
 
 ;=== Home with Y End Stops ===
-G90                                   ; Switch to absolute positioning
-G1 H1 Y-500 F3000                     ; Move the Y axis back quickly to hit the endstop
-G91                                   ; Switch to relative positioning
+G91                                   ; Switch to absolute positioning
+G1 H1 Y-400 F3000                     ; Move the Y axis back quickly to hit the endstop
+if result !=0
+  M98 P"0:/sys/led/fault.g"
+  echo >>"0:/sys/eventlog.txt" "Error: Y axis homing failed"
+  abort "Error: Y axis homing failed"
 G1 Y5 F1200                           ; Move the Y axis forward by 5 mm
 
 ; Initialize variables to store the zero positions of the left and right sides
@@ -28,6 +31,10 @@ var dis = 0
 var side = ""
 
 G1 H1 Y-10 F200                       ; Move the Y axis back quickly to hit the endstop
+if result !=0
+  M98 P"0:/sys/led/fault.g"
+  echo >>"0:/sys/eventlog.txt" "Error: Y axis homing failed"
+  abort "Error: Y axis homing failed"
 
 M574 Y1 S1 P"io1.in"                  ; Configure the Y endstop on io1.in
 if sensors.endstops[1].triggered      ; Check if the Y1 endstop on io1.in is triggered

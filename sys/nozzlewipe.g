@@ -11,13 +11,13 @@ var brush_min = -87
 var brush_max = -59
 var x_center = -193
 var u_center = 193
-var xu_offset = {3}
+var xu_offset = 3
 var xu_step = 1
 var num_wipes = 2
 
 
 G1 F18000
-
+G90
 if move.axes[0].machinePosition > {move.axes[3].min + 5} || move.axes[3].machinePosition < {move.axes[3].max - 5}
   if state.currentTool == 3 || state.currentTool == 2
     G1 Y{var.brush_max + 50} X-999
@@ -25,7 +25,7 @@ if move.axes[0].machinePosition > {move.axes[3].min + 5} || move.axes[3].machine
     G1 Y{var.brush_max + 50} X-999 U999
   
 
-
+G90
 G1 Y{var.brush_max + var.brush_min}/2                            ; Go to the center of purging bucket
 M400
 
