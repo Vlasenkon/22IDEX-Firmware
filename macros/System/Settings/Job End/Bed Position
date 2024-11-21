@@ -5,7 +5,7 @@ if input = 0
     if !move.axes[2].homed
         M98 P"homeall.g"
     M291 S3 P"Press ""OK"" to set custom Z position" Z1
-    G4 P260
+    M400
     var cstmz = move.axes[2].machinePosition
     echo >"0:/user/lowerbed.g" "if move.axes[2].machinePosition < "^{var.cstmz}
     echo >>"0:/user/lowerbed.g" "  G90  ; absolute positioning"
@@ -25,6 +25,4 @@ elif input = 2
     echo >"0:/user/lowerbed.g" "G91"
     echo >>"0:/user/lowerbed.g" "G1 Z50 F5000"
     echo >>"0:/user/lowerbed.g" "G90"
-    echo "Bed will not be moved"
-
-echo "Setting was changed"
+    echo "Bed will not be moved by 50 mm"
