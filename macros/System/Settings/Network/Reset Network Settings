@@ -1,7 +1,7 @@
-M291 S4 K{"No, Cancel","Yes, Erase"} R"Network Reset Confirmation" P"This will delete all known networks and stored parameters and reset the network to access point mode. Are you sure you want to proceed?"
+M291 S4 K{"Yes, Erase","No, Cancel"} R"Network Reset Confirmation" P"This will delete all known networks and stored parameters and reset the network to access point mode. Are you sure you want to proceed?"
 
 
-if input = 1
+if input = 0
 	M292 ;Continue
 else
 	M99
@@ -11,19 +11,23 @@ else
 ; Erase values from WiFi Module
 M552 I1 S0
 M552 I0 S0
-G4S2
+G4S4
 
 M588 S"*"
 G4S2
+M589 S"*"
+G4S2
 
 M589 S"22 IDEX" P"1234567890" I192.168.0.1
-G4 S2
-
+if result != 0
+	while iterations < 5
+		G1 S2
+		M589 S"22 IDEX" P"1234567890" I192.168.0.1
 
 M98 P"0:/macros/System/Settings/Network/Enable WiFi - Access Point Mode" R1
-
 G4 S1
+
 M98 P"0:/user/networkmode.g"
-G4 S2
+G4 S1
 
 M98 P"0:/sys/networktest.g"

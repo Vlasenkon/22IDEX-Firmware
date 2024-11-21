@@ -1,11 +1,17 @@
-echo >"0:/user/networkmode.g" "M552 I1 S2 ; Enable WiFi Access Point mode"
-
 if !exists(param.R)
-    M291 R"Do you want to restart WiFi module and switch mode now?" P" " S3
-    M552 I0 S0
-    G4S1
-    M552 I1 S0
-    G4S1
-    M589 S"22 IDEX" P"1234567890" I192.168.0.1
-    G4S2
-    M98 P"0:/user/networkmode.g"
+    M291 R"Change WiFi to AP Mode?" P"Machine will share 22IDEX WiFi Network" S4 K{"Change & Reconnect Now","Change and Reconnect Later","Cancel"}
+    if input = 0
+        echo >"0:/user/networkmode.g" "M552 I1 S2 ; Enable WiFi Access Point mode"
+        M552 I0 S0
+        G4S1
+        M552 I1 S0
+        G4S1
+        M589 S"22 IDEX" P"1234567890" I192.168.0.1
+        G4S2
+        M98 P"0:/user/networkmode.g"
+    elif input = 1
+        echo >"0:/user/networkmode.g" "M552 I1 S2 ; Enable WiFi Access Point mode"
+    elif input = 2
+        abort
+else
+    echo >"0:/user/networkmode.g" "M552 I1 S2 ; Enable WiFi Access Point mode"

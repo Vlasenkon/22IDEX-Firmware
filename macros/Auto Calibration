@@ -4,10 +4,12 @@ var ll = input
 M291 S5 J1 F{var.ll} L150 H450 R"Set Right Tool Temperature" P"Please set the temperature for the filament previously loaded in the Right Tool.<br>If new machine, set to 250°C"
 var rr = input
 
-G10 P0 R{var.ll} S{var.ll}
-G10 P1 R{var.rr} S{var.rr}
-G10 P2 R{var.ll,var.rr} S{var.ll,var.rr}
-G10 P3 R{var.ll,var.rr} S{var.ll,var.rr}
+var delta = -75
+
+G10 P0 R{var.ll + var.delta} S{var.ll + var.delta}
+G10 P1 R{var.rr + var.delta} S{var.rr + var.delta}
+G10 P2 R{var.ll + var.delta,var.rr + var.delta} S{var.ll + var.delta,var.rr + var.delta}
+G10 P3 R{var.ll + var.delta,var.rr + var.delta} S{var.ll + var.delta,var.rr + var.delta}
 
 M568 P0 A2
 M568 P1 A2

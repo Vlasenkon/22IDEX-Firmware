@@ -1,11 +1,12 @@
 if network.interfaces[1].actualIP = "192.168.0.1"
 	abort "Error: Connect via Ethernet or WiFi - Client Mode"
 
-// Ethernet
+
 if network.interfaces[0].actualIP != "0.0.0.0"
-	M291 R"Ethernet IP Address" P"Enter Ethernet IP Address" S7 L7 H15 F{network.interfaces[0].actualIP}
+	; Ethernet
+	M291 S7 J1 R"Ethernet IP Address" P"Enter Ethernet IP Address" F{network.interfaces[0].actualIP}
 	var ethernetIP = {input}
-	echo >"0:/user/networkmode.g" "M552 I0 S1 P"^ethernetIP
+	echo >"0:/user/networkmode.g" "M552 I0 S1 P"^var.ethernetIP
 	
 	if network.interfaces[0].subnet != "0.0.0.0"
 		echo >>"0:/user/networkmode.g" "M553 P"^{network.interfaces[0].subnet}
@@ -14,20 +15,32 @@ if network.interfaces[0].actualIP != "0.0.0.0"
 		echo >>"0:/user/networkmode.g" "M554 P"^{network.interfaces[0].gateway}
 
 	echo "Ethernet Configuration: Ethernet IP address was saved."
-else
-	// WiFi
-	if network.interfaces[1].actualIP != "0.0.0.0"
-		M291 J1 S7 R{"Enter Password for """^network.interfaces[1].ssid^""" Network"} P"Case sensitive."
-		var pp = {input}
-		M291 R"WiFi IP Address" P"Enter WiFi IP Address" S7 L7 H15 F{network.interfaces[1].actualIP}
-		var wifiIP = {input}
-		echo >"0:/user/networkmode.g" "M587 S"""^{network.interfaces[1].ssid}^""" P"""^{var.pp}^""" I"^wifiIP
-		echo "M587 S"""^{network.interfaces[1].ssid}^""" P"""^{var.pp}^""" I"^wifiIP
-	
-		if network.interfaces[1].subnet != "0.0.0.0"
-			echo >>"0:/user/networkmode.g" "M553 P"^{network.interfaces[1].subnet}
-	
-		if network.interfaces[1].gateway != "0.0.0.0"
-			echo >>"0:/user/networkmode.g" "M554 P"^{network.interfaces[1].gateway}
 
-		echo "WiFi Configuration: WiFi IP address was saved."
+
+elif network.interfaces[1].actualIP != "0.0.0.0" || network.interfaces[1].actualIP = "192.168.0.1"
+	; WiFi
+	M291 S7 J1 R{"Enter Password for """^network.interfaces[1].ssid^""" Network"} P"Case sensitive."
+	var pass = {input}
+	M291 S7 J1 R"WiFi IP Address" P"Enter WiFi IP Address" F{network.interfaces[1].actualIP}
+	var wifiIP = {input}
+
+	echo >"0:/macros/wifiIP.g" "M587 S"""^{network.interfaces[1].ssid}^""" P"""^{var.pass}^""" I"^var.wifiIP
+		if result == 0
+			echo "Writte - OK"
+		else
+			echo "Writte - Failed"
+
+
+	M98 P"0:/macros/wifiIP.g"
+		if result == 0
+			echo "M98 - OK"
+		else
+			echo "M98 - Failed"
+
+	M472 P"0:/macros/wifiIP.g"
+		if result == 0
+			echo "M472 - OK"
+		else
+			echo "M472 - Failed"
+
+	echo "Commanded: M587 S"""^{network.interfaces[1].ssid}^""" P"""^{var.pass}^""" I"^var.wifiIP

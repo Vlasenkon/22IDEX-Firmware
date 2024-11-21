@@ -1,5 +1,4 @@
-M98 P"0:/sys/led/statusoff.g"
-M98 P"0:/sys/led/restorewhite.g"
+M98 P"0:/sys/led/resetstatus.g"
 
 M291 R"Voltage Test" P"Are you ready to start the voltage test?" S3
 
@@ -29,5 +28,4 @@ while true && iterations < 900 && var.iter < 100
 
 
 
-M98 P"0:/sys/led/statusoff.g"
-M98 P"0:/sys/led/restorewhite.g"
+M98 P"0:/sys/led/resetstatus.g"

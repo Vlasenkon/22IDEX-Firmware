@@ -2,7 +2,7 @@ if state.status == "off"
   M80                                 ; Turn on power if it's off
   G4 S3                               ; Delay for 3 seconds to allow power to stabilize
   
-M98 P"0:/sys/led/homeall.g"           ; Run the "homeall.g" macro to home all axes
+M98 P"0:/sys/led/resetstatus.g"       ; Reset the status of the LEDs
 M98 P"tfree3.g"                       ; Run the "tfree3.g" macro to free the tool
 
 T0 P0                                 ; Select tool T0 with priority 0

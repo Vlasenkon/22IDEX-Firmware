@@ -1,5 +1,4 @@
-M98 P"0:/sys/led/statusoff.g"
-M98 P"0:/sys/led/restorewhite.g"
+M98 P"0:/sys/led/resetstatus.g"
 M98 P"0:/macros/System/Calibration/Testing/Disable Probe"
 
 
@@ -137,5 +136,4 @@ else
 
 M98 P"0:/macros/System/Calibration/Testing/Disable Probe" ; Disable probe
 
-M98 P"0:/sys/led/statusoff.g"
-M98 P"0:/sys/led/restorewhite.g"
+M98 P"0:/sys/led/resetstatus.g"

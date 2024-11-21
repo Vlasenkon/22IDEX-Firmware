@@ -20,12 +20,16 @@ G91
 G1 Z-2 F600
 G92 Z999
 
+M913 Z75 ; Reduce Z-axis current
+
 ; Move Z-axis up and down five times
 var iter = 0
 while var.iter < 5
     G1 Z-20 F18000
     G1 Z20 F18000
     set var.iter = var.iter + 1
+
+M913 Z100 ; Reset Z-axis current
 
 M291 R"Was the motion smooth?" P"Choose an option:" K{"Yes","No"} S4
 

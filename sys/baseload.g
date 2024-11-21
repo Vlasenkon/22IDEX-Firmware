@@ -1,7 +1,6 @@
 M291 R"Please wait while the nozzle is being heated up" P"This may take a few minutes." S1 T15
 
-M98 P"0:/sys/led/statusoff.g"
-M98 P"0:/sys/led/restorewhite.g"
+M98 P"0:/sys/led/resetstatus.g"
 M98 P"0:/sys/led/start_cold.g"
 
 

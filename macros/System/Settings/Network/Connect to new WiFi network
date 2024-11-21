@@ -1,4 +1,4 @@
-; ask for SSID and Password;
+; Step 1: Ask for SSID and Password;
 M291  J1 R"Enter WiFi Network Name (SSID)" P"Case sensetive. Make sure to connect to a 2.4GHz network. The WiFi module will not connect to 5.0GHz networks." S7
 var nn = {input}
 M291  J1 R"Enter WiFi Network Name Password" P"Case sensetive. Make sure to connect to a 2.4GHz network. The WiFi module will not connect to 5.0GHz networks." S7
@@ -7,10 +7,10 @@ var pp = {input}
 ; save it as a file
 echo >"0:/user/WiFiPass.g" "M587 S"""^{var.nn}^""" P"""^{var.pp}^""""
 
-M98 P"0:/sys/led/statusoff.g"
-M98 P"0:/sys/led/restorewhite.g"
+M98 P"0:/sys/led/resetstatus.g"
 
 
+; Step 2: Try to connect to the network
 M291 S3 R"Restart Notification" P"Machine will restart now. If LEDs are GREEN, the connection was established. If RED, it failed.<br>Reconnect to the ""22 IDEX"" WiFi network after you see the green or red LED."
 
 ; Erase values from WiFi Module
@@ -40,7 +40,6 @@ G4 S1
 while network.interfaces[1].actualIP = "0.0.0.0" || network.interfaces[1].actualIP = "192.168.0.1" && iterations < 30
   G4 S1
 
-
 M98 P"0:/sys/led/dimmwhite.g"
 M98 P"0:/macros/System/Settings/Network/Enable WiFi - Access Point Mode" R1
 
@@ -62,18 +61,15 @@ else
 	G4 S2
 	M552 I1 S2
 
-
-	M291 S4 K{"Cancel","OK"} R{"Success, your IP address is: """^var.ip^""""} P{"To access DWC, in your browser enter """^var.ip^""". Press ""OK"" to switch mode now or restart the machine"}
-	echo >"0:/user/networkmode.g" "M552 I1 S1 ; Enable WiFi Client Mode"	
+	M291 S4 K{"OK","Cancel"} R{"Success, your IP address is: """^var.ip^""""} P{"To access DWC, in your browser enter """^var.ip^""". Press ""OK"" to switch mode now or restart the machine"}
 	
-	if input = 1
+	echo >"0:/user/networkmode.g" "M552 I1 S1 ; Enable WiFi Client Mode"	
+
+	if input = 0
 		M552 I1 S-1
 		G4 S1
-		M552 I1 S1
-
+		M98 P"0:/user/networkmode.g"
 	else
-		echo >"0:/user/networkmode.g" "M552 I1 S1 ; Enable WiFi Client Mode"
 		M292
 
-M98 P"0:/sys/led/statusoff.g"
-M98 P"0:/sys/led/restorewhite.g"
+M98 P"0:/sys/led/resetstatus.g"

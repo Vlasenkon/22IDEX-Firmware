@@ -1,14 +1,13 @@
-M291 S4 K{"Cancel","OK, Ethernet is connected"} R"Connect via Ethernet" P"Please connect the Ethernet cable to the device. Once connected, press ""OK"" to continue."
+M291 S4 K{"OK, Ethernet is connected","Cancel"} R"Connect via Ethernet" P"Please connect the Ethernet cable to the device. Once connected, press ""OK"" to continue."
 
-if input = 1
+if input = 0
 	M292 ;Continue
 else
 	M99
-	abort
 
 
-M291 S4 K{"Skip Test and Change Mode","Test Connection"} R"Test Network Connection" P"Machine will test the connection and restart into Acess Point WiFi mode."
-if input = 1
+M291 S4 K{"Test Connection","Skip Test and Change Mode"} R"Test Network Connection" P"Machine will test the connection and restart into AP WiFi mode.<br>Skipped and connect by using ""22.local"" address in your browser for ITAR"
+if input = 0
 	M292 ;Continue
 else
 	echo >"0:/user/networkmode.g" "M552 I0 S1 ; Enable Ethernet mode"
@@ -20,16 +19,13 @@ else
 	M552 I0 S1
 
 	echo "Ethernet mode Enabled"
-	
 	M99
-	abort
 
 
 M291 S2 R"Restart Notification" P"Machine will restart now.<br>If LEDs are GREEN, the connection was established. If RED, it failed.<br>Machine will restart into AP Mode.<br>Reconnect to the ""22 IDEX"" WiFi network after you see the green or red LED."
 
 
-M98 P"0:/sys/led/statusoff.g"
-M98 P"0:/sys/led/restorewhite.g"
+M98 P"0:/sys/led/resetstatus.g"
 
 M552 I1 S-1
 G4 S1
@@ -70,5 +66,4 @@ else
 		M552 I0 S1
 
 
-M98 P"0:/sys/led/statusoff.g"
-M98 P"0:/sys/led/restorewhite.g"
+M98 P"0:/sys/led/resetstatus.g"

@@ -1,0 +1,17 @@
+if exists(global.xcomp_manual)
+  set global.xcomp_manual = {global.xcomp_manual - 0.05}
+else
+  global xcomp_manual = -0.05
+
+; Update xcomp_manual.g to save the new value
+echo >"0:/user/xcomp_manual.g" "if exists(global.xcomp_manual)"
+echo >>"0:/user/xcomp_manual.g" "  set global.xcomp_manual = "^{global.xcomp_manual}
+echo >>"0:/user/xcomp_manual.g" "else"
+echo >>"0:/user/xcomp_manual.g" "  global xcomp_manual = "^{global.xcomp_manual}
+
+if global.xcomp_manual > 0
+  echo "RHS of Build Plate will move Down by: "^abs(global.xcomp_manual)^" mm"
+elif global.xcomp_manual < 0
+  echo "RHS of Build Plate will move Up by: "^abs(global.xcomp_manual)^" mm"
+else
+  echo "Compensation is set to 0"
