@@ -42,8 +42,9 @@ if exists(param.E)
   M400
   G4 S1
 
+G90
 G1 F12000
-G1 Y{var.brush_min + random({var.brush_max - var.brush_min})}     ; Go to random poit of the brush
+G1 Y{random(var.brush_max - var.brush_min + 1) + var.brush_min}     ; Go to random poit of the brush
 
 
 if var.ttt = 0
@@ -57,7 +58,7 @@ if var.ttt = 0
       G90
       G1 Y{var.brush_max + 5}
       G1 X-999
-      G1 Y{var.brush_min + random({var.brush_max - var.brush_min})} ; Go to random poit of the brush
+      G1 Y{random(var.brush_max - var.brush_min + 1) + var.brush_min} ; Go to random poit of the brush
       M400
 
   ; 2nd cleaning loop (Ramp Cleaning)
@@ -98,7 +99,7 @@ if var.ttt = 1
       G90
       G1 Y{var.brush_max + 5}
       G1 U999
-      G1 Y{var.brush_min + random({var.brush_max - var.brush_min})} ; Go to random poit of the brush
+      G1 Y{random(var.brush_max - var.brush_min + 1) + var.brush_min} ; Go to random poit of the brush
       M400
   
   ; 2nd cleaning loop (Ramp Cleaning)
