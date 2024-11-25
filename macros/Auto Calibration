@@ -21,6 +21,9 @@ if !move.axes[0].homed || !move.axes[1].homed || !move.axes[2].homed || !move.ax
   M98 P"0:/sys/homeall.g" S1
   M291 S0 T15 R"Homing Axes" P"Axes are not homed. Homing now. Please wait..."
 
+if state.currentTool != 0
+  T0
+
 G90
 G1 X-999 U999 Y-75 F18000
 
