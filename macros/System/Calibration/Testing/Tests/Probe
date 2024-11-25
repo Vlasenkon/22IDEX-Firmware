@@ -4,9 +4,9 @@ M98 P"0:/macros/System/Calibration/Testing/Disable Probe"
 
 M291 R"Test Servo?" P" " S3
 
-while iterations < 3
+while iterations < 50
     M98 P"0:/macros/System/Calibration/Z Probe/Rotate holder to a set degree"
-    G4 S1
+    G4 S2
     M98 P"0:/macros/System/Calibration/Z Probe/Rotate holder to 0 degree"
     G4 S1
 
