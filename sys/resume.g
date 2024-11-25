@@ -34,6 +34,6 @@ G1 R4 Z0                                   ; Lower to last print position
 M106 R4                    ; Restore part cooling
 
 set global.filamentbackup = false ; Reset filament runout flag
-M98 P"0:/sys/led/resume.g"                ; Resume LED
+M98 P"0:/sys/led/resetstatus.g"                ; Reset status LEDs
 M98 P"0:/sys/entoolchangeretraction.g"     ; Enable ToolChange Retraction
 M204 T5000                 ; set the accelerations
