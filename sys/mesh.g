@@ -15,7 +15,7 @@ M98 P"0:/user/ProbeOffset.g"                ; det probe offsets
 
 
 ; Check if parameters are provided and set the mesh grid accordingly
-if exists(param.A) && exists(param.B) && exists(param.D) && exists(param.G)
+if exists(param.A) && exists(param.B) && exists(param.D) && exists(param.J)
 
   ; make sure the mesh grid is within the printable area
   var Xmin = param.A
@@ -27,7 +27,7 @@ if exists(param.A) && exists(param.B) && exists(param.D) && exists(param.G)
   var Ymin = param.D
   if var.Ymin < -146
     set var.Ymin = -146
-  var Ymax = param.G
+  var Ymax = param.J
   if var.Ymax > 165
     set var.Ymax = 165
   
