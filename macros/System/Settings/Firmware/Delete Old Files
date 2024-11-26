@@ -54,6 +54,10 @@ M472 P"macros/System/Calibration/Auto Calibration Macros/Reset Mesh Bed Сalibra
 M472 P"macros/Close the Lid"
 M472 P"gcodes/XY - Alignment Test.3mf"
 M472 P"gcodes/Mesh Bed Test.3mf"
+M472 P"macros/System/Calibration/Mesh Calibration/Decrease Manual Compensation"
+M472 P"macros/System/Calibration/Mesh Calibration/Increase Manual Compensation"
+M472 P"macros/System/Calibration/Testing/Tests/Calibration Y Switch Position"
+M472 P"macros/System/Settings/Chamber/Don't Wait for Temp"
 
 
 
@@ -61,8 +65,4 @@ M472 P"gcodes/Mesh Bed Test.3mf"
 M472 R1 P"macros/System/Calibration/FIlament Change"
 M472 R1 P"macros/System/Settings/EventLog"
 M472 R1 P"macros/System/Settings/Filament Sensors"
-M472 R1 P"macros/System/Settings/Job End/Bed Position"
-M472 R1 P"macros/System/Settings/Job End/Bed Temperature"
-M472 R1 P"macros/System/Settings/Job End/Chamber Temperature"
-M472 R1 P"macros/System/Settings/Job End/Power"
 M472 R1 P"macros/System/Settings/Mesh Calibration"
