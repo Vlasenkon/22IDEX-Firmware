@@ -54,7 +54,7 @@ G60 S0                                 ; Save selectrd tool to slot 0
 M98 P"homeall.g" Z1 S1 L1              ; Home the machine
 
 if exists(param.A) && exists(param.B) && exists(param.D) && exists(param.J)
-  M98 P"mesh.g" A{param.A} B{param.B} D{param.D} G{param.J}
+  M98 P"mesh.g" A{param.A} B{param.B} D{param.D} J{param.J}
 else
   M98 P"mesh.g"
 
