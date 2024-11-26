@@ -158,9 +158,6 @@ echo >>"0:/user/xcomp_auto.g" "  set global.xcomp_auto = "^{var.dd}
 echo >>"0:/user/xcomp_auto.g" "else"
 echo >>"0:/user/xcomp_auto.g" "  global xcomp_auto = "^{var.dd}
 
-// Remove the redundant write to xcomp.g
-// (No longer needed)
-
 
 
 

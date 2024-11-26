@@ -1,27 +1,27 @@
 M106 P6 S1
-M291 R"White LED Test" P" " S3
+M291 R"White LED Test" P"Click ""OK"" to confirm that White LED is on." S3
 M106 P6 S0
 
 
 
 M42 P1 S0.1
-M291 R"Red Test" P" " S3
+M291 R"Red LED Test" P"Click ""OK"" to confirm that Red LED is on." S3
 M42 P1 S0
 
 
 M42 P2 S0.1
-M291 R"Green Test" P" " S3
+M291 R"Green LED Test" P"Click ""OK"" to confirm that Green LED is on." S3
 M42 P2 S0
 
 
 M42 P3 S0.1
-M291 R"Blue Test" P" " S3
+M291 R"Blue LED Test" P"Click ""OK"" to confirm that Blue LED is on." S3
 M42 P3 S0
 
 M42 P1 S1
 M42 P2 S1
 M42 P3 S1
-M291 R"All On Test" P" " S3
+M291 R"All LED's Test" P"Click ""OK"" to confirm that all LED's are on." S3
 
 M42 P1 S0
 M42 P2 S0
