@@ -1,12 +1,12 @@
 ; Ensure global variables exist
 if !exists(global.xcomp_mode)
-  M98 P"0:/user/xcomp_mode.g"   ; load compensation mode
+  global xcomp_mode = "manual"
 
 if !exists(global.xcomp_auto)
   M98 P"0:/user/xcomp_auto.g"   ; load auto compensation value
 
 if !exists(global.xcomp_manual)
-  M98 P"0:/user/xcomp_manual.g" ; load manual compensation value
+  global xcomp_manual = 0.0
 
 var mm = 0.0 ; Set default compensation value
 

@@ -1,6 +1,5 @@
 if  exists(global.xcomp_mode) && global.xcomp_mode != "manual"
   set global.xcomp_mode = "manual"
-  echo "Compensation mode set to "^{global.xcomp_mode}
 
 
 if exists(global.xcomp_manual)

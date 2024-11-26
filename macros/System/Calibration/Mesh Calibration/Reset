@@ -1,3 +1,9 @@
+; Reset xcomp_mode to manual Mode
+if exists(global.xcomp_mode)
+  set global.xcomp_mode = "manual"
+else
+  global xcomp_mode = "manual"
+
 ; Reset Manual Compensation to 0
 if exists(global.xcomp_manual)
   set global.xcomp_manual = 0
@@ -10,12 +16,13 @@ if exists(global.xcomp_auto)
 else
   global xcomp_auto = 0
 
-; Reset xcomp_mode to manual Mode
-if exists(global.xcomp_mode)
-  set global.xcomp_mode = "manual"
-else
-  global xcomp_mode = "manual"
 
+
+; Update xcomp_mode.g to save the new mode permanently
+echo >"0:/user/xcomp_mode.g" "if exists(global.xcomp_mode)"
+echo >>"0:/user/xcomp_mode.g" "  set global.xcomp_mode = """^{global.xcomp_mode}^""""
+echo >>"0:/user/xcomp_mode.g" "else"
+echo >>"0:/user/xcomp_mode.g" "  global xcomp_mode = """^{global.xcomp_mode}^""""
 
 ; Update xcomp_manual.g to save the new value
 echo >"0:/user/xcomp_manual.g" "if exists(global.xcomp_manual)"
@@ -23,4 +30,12 @@ echo >>"0:/user/xcomp_manual.g" "  set global.xcomp_manual = "^{global.xcomp_man
 echo >>"0:/user/xcomp_manual.g" "else"
 echo >>"0:/user/xcomp_manual.g" "  global xcomp_manual = "^{global.xcomp_manual}
 
-echo "Compensation is set to 0, Manual Mode"
+
+; Write updated value to xcomp_auto.g
+echo >"0:/user/xcomp_auto.g" "if exists(global.xcomp_auto)"
+echo >>"0:/user/xcomp_auto.g" "  set global.xcomp_auto = "^{global.xcomp_auto}
+echo >>"0:/user/xcomp_auto.g" "else"
+echo >>"0:/user/xcomp_auto.g" "  global xcomp_auto = "^{global.xcomp_auto}
+
+
+echo "Compensation is set to 0 and Manual Mode"
