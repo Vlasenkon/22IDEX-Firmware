@@ -9,6 +9,7 @@ elif state.currentTool == 1
 
 var brush_min = -87
 var brush_max = -59
+var y_center = (var.brush_max + var.brush_min) / 2
 var x_center = -193
 var u_center = 193
 var xu_offset = 3
@@ -26,7 +27,7 @@ if move.axes[0].machinePosition > {move.axes[3].min + 5} || move.axes[3].machine
   
 
 G90
-G1 Y{var.brush_max + var.brush_min}/2                            ; Go to the center of purging bucket
+G1 Y{y_center}                            ; Go to the center of purging bucket
 M400
 
 ; Wait for Temp
@@ -84,7 +85,7 @@ if var.ttt = 0
       M400
   G90
   G1 X-999
-  G1 Y{var.brush_max + var.brush_min}/2                           ; Go to the center of purging bucket
+  G1 Y{y_center}                           ; Go to the center of purging bucket
 
 
 
@@ -125,7 +126,7 @@ if var.ttt = 1
       M400
   G90
   G1 U999
-  G1 Y{var.brush_max + var.brush_min}/2                           ; Go to the center of purging bucket
+  G1 Y{y_center}                           ; Go to the center of purging bucket
 
 
 
