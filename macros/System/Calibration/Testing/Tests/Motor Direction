@@ -1,11 +1,66 @@
 M564 H0
 
 M84
-M291 R"Check Belt Tension" P" " S3
+M291 R"Check Belt Tension" P"Tension on all belts should be 55-60Hz" S4 K{"Good","Skip","Cancel"}
+if result == 1
+    M99
+elif result == 2
+    abort "Test cancelled by user"
 
-M291 R"Move Tools by Hand" P" " S3
+
+M291 R"Move Tools by Hand" P"Movement should be smooth and without binding"" S4 K{"Good","Skip","Cancel"}
+if result == 1
+    M99
+elif result == 2
+    abort "Test cancelled by user"
+
 
 M291 R"Move XYU - Axis" P" " S3 X1 Y1 U1
 
 M302 P0
+M564 H1
+
+M291 R"Z - Motor Connection Test" P"Each motor will move in sequence: Left, Right, Rear" S4 K{"Test","Skip","Cancel"}
+if result == 1
+    M99
+elif result == 2
+    abort "Test cancelled by user"
+
+
+M564 H0
+
+; Move Left lead screw
+M584 Z1.2     ; define driver mapping
+
+G91               ; set to relative positioning
+G1 F18000 Z10    ; move 10mm down
+G1 F18000 Z-20     ; move 20mm up
+G1 F18000 Z10    ; move 10mm down back to original position
+G90               ; set to absolute positioning
+
+M400
+
+; Move Right lead screw
+M584 Z1.0     ; define driver mapping
+
+G91               ; set to relative positioning
+G1 F18000 Z10    ; move 10mm down
+G1 F18000 Z-20     ; move 20mm up
+G1 F18000 Z10    ; move 10mm down back to original position
+G90               ; set to absolute positioning
+
+M400
+
+; Move Rear lead screw
+M584 Z1.1     ; define driver mapping
+
+G91               ; set to relative positioning
+G1 F18000 Z10    ; move 10mm down
+G1 F18000 Z-20     ; move 20mm up
+G1 F18000 Z10    ; move 10mm down back to original position
+G90               ; set to absolute positioning
+
+M400
+M584 Z1.0:1.1:1.2 ; restore original driver mapping
+
 M564 H1

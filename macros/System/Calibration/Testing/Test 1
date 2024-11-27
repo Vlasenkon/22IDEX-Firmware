@@ -22,11 +22,8 @@ M98 P"0:/macros/System/Calibration/Testing/Tests/Fans & Heaters"
 ; Endstop Test
 M98 P"0:/macros/System/Calibration/Testing/Tests/Endstop"
 
-; XYE - Motor Direction & Connection Test
+; XYZ - Motor Direction & Connection Test
 M98 P"0:/macros/System/Calibration/Testing/Tests/Motor Direction"
-
-; Z - Motor Connection Test
-M98 P"0:/macros/System/Calibration/Testing/Tests/Z - Connection"
 
 ; Z - Binding Test
 M98 P"0:/macros/System/Calibration/Testing/Tests/Z - Binding"

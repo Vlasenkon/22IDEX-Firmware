@@ -2,7 +2,11 @@ M98 P"0:/sys/led/resetstatus.g"
 M98 P"0:/macros/System/Calibration/Testing/Disable Probe"
 
 
-M291 R"Test Servo?" P" " S3
+M291 R"Servo Motor Test" P"Servo motor will rotate to 0 degree and then to a set degree" S4 K{"Test","Skip","Cancel"}
+if result == 1
+    M99
+elif result == 2
+    abort "Test cancelled by user"
 
 while iterations < 50
     M98 P"0:/macros/System/Calibration/Z Probe/Rotate holder to a set degree"
@@ -10,6 +14,9 @@ while iterations < 50
     M98 P"0:/macros/System/Calibration/Z Probe/Rotate holder to 0 degree"
     G4 S1
 
+M291 R"Servo Motor Test" P"Was the servo motor able to rotate smoothly?" S4 K{"Yes","No"}
+if result == 1
+    abort "Error: Servo Failed"
 
 M564 H0
 M291 R"Mode build plate close to the nozzle" P"Move the build plate close to the nozzle" Z1 S3
@@ -27,7 +34,7 @@ else
 M98 P"0:/macros/System/Calibration/Testing/Enable Probe"
 G4 S1
 
-var max_iter = 1200
+var max_iter = 1200 ; 120 seconds
 var iter = 0
 
 

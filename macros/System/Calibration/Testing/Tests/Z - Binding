@@ -30,6 +30,7 @@ while var.iter < 5
     set var.iter = var.iter + 1
 
 M913 Z100 ; Reset Z-axis current
+G1 Z-25 F18000
 
 M291 R"Was the motion smooth?" P"Choose an option:" K{"Yes","No"} S4
 
