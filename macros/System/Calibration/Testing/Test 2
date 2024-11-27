@@ -22,7 +22,3 @@ M98 P"0:/macros/System/Calibration/Testing/Tests/TBL & Lube"
 
 ; XY - Movement Test // Add Timer // Add prompt to listen to Noises and watch temp graph
 M98 P"0:/macros/System/Calibration/Testing/Tests/XY - Movement"
-
-; Auto Calibration
-M291 R"Auto Calibration" P"Click ""OK"" to start the Auto Calibration process." S3
-M98 P"0:/macros/Auto Calibration"

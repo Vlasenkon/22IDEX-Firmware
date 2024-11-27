@@ -1,6 +1,14 @@
-M98 P"0:/sys/led/resetstatus.g"
+M291 R"Home Y - Correction Test" P"Do you want to start the Home Y Test?" S4 K{"Test","Skip","Cancel"}
+if result == 1
+    M99
+elif result == 2
+    abort "Test cancelled by user"
+
+M98 P"0:/sys/homey.g"
 
 M84 XYU
+G4 S3
+
 
 M291 R"Home Y Test" P" " S3
 
@@ -11,7 +19,7 @@ var dis1 = global.HomeYDis
 echo "Test 1: The "^{global.HomeYSide}^" side was adjusted by "^{global.HomeYDis}^" mm"
 
 M84 XYU
-G4 S2
+G4 S5
 
 M98 P"0:/sys/homey.g" T1
 M400
@@ -20,7 +28,7 @@ var dis2 = global.HomeYDis
 echo "Test 2: The "^{global.HomeYSide}^" side was adjusted by "^{global.HomeYDis}^" mm"
 
 M84 XYU
-G4 S2
+G4 S5
 
 M98 P"0:/sys/homey.g" T1
 M400

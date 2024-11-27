@@ -1,3 +1,10 @@
+M291 R"Z - Probe Probe Calibration" P"Do you want to start the Z-Probe Calibration?" S4 K{"Test","Skip","Cancel"}
+if result == 1
+    M99
+elif result == 2
+    abort "Test cancelled by user"
+
+
 if !move.axes[1].homed
     G28 Y
 if !move.axes[0].homed

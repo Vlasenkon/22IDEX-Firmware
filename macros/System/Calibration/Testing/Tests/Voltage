@@ -1,6 +1,11 @@
 M98 P"0:/sys/led/resetstatus.g"
 
-M291 R"Voltage Test" P"Are you ready to start the voltage test?" S3
+M291 R"Voltage Test" P"Do you want to start the voltage test?" S4 K{"Test","Skip","Cancel"}
+if result == 1
+    M99
+elif result == 2
+    abort "Test cancelled by user"
+    
 
 var minVoltage = 24
 var maxVoltage = 24.3

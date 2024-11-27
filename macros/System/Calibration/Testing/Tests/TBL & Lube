@@ -1,19 +1,17 @@
-if !move.axes[1].homed
-    G28 Y
-if !move.axes[0].homed
-    G28 X
-if !move.axes[3].homed
-    G28 U
-if !move.axes[2].homed
-    G28 Z
-
 M84 Z
 
-M291 R"True Bed Leveling Test" P"Manually tilt the build plate" S3
-
+M291 R"True Bed Leveling Test" P"Tilt the bed manually to test the True Bed Leveling." S4 K{"Test","Skip","Cancel"}
+if result == 1
+    M99
+elif result == 2
+    abort "Test cancelled by user"
 G28
 
-M291 R"Lubracation will Start" P" " S3
+M291 R"Z - Axis Lubracation" P"Do you want to lubricate the Z-Axis?<br>Press and hold X or U endtop to stop" S4 K{"Test","Skip","Cancel"}
+if result == 1
+    M99
+elif result == 2
+    abort "Test cancelled by user"
 
 G90
 G1 X-999 U999 Y0 F18000
