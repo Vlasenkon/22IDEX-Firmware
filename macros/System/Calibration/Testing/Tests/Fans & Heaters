@@ -1,110 +1,278 @@
 M98 P"0:/sys/led/resetstatus.g"
 
-M140 S50 R50
-M291 R"Bed Heater Test" P"Make sure the Bed Heater is Hot" S3
 M140 S0 R0
-
-
-M141 S50 R50
-M291 R"Chamber Heater & Fan Test" P"Make sure the Chamber Heater is Hot and the Large Chamber Fan starts spinning" S3
 M141 S0 R0
 
+G10 P0 R0 S0
+G10 P1 R0 S0
+G10 P2 R0 S0
+G10 P3 R0 S0
+
+M106 P4 H4 T80 S1 B1                                                                        ; Restore Chamber Main Fan
+M106 P7 H3 T50 S1 B0                                                                        ; Restore CrFan
 
 
-M106 P7 H3 T0 S1 B0
-M291 R"Chamber Right Fan Test" P"Make sure that the small chamber fan (CR fan) starts spinning" S3
-M106 P7 H3 T50 S1 B0
+; ///// Bed Heater Test /////
+var Bed_Min_Temp = 50                                                                       ; Minimum temperature to start the test
+var Bed_Raise_Temp = 10
+var Bed_Max_Heat_Time = 100
 
 
+; Check if the bed is cold enough
+if heat.heaters[2].current > var.Bed_Min_Temp
+  M98 P"0:/sys/led/fault.g"
+  M291 R"Bed Heater Test" P"Bed Heater is already hot, please wait for it to cool down" S3
+  while heat.heaters[2].current > var.Bed_Min_Temp
+    G4 S1
+    if sensors.endstops[0].triggered || sensors.endstops[3].triggered
+      break
+  M98 P"0:/sys/led/resetstatus.g"
+
+M291 R"Bed Heater Test" P"Test if the Bed Heater is Heating up" S3
+
+var Bed_Start_Temp = heat.heaters[2].current                                                ; Save the current bed temperature
+var Bed_Start_Time = state.time                                                             ; Save the current time
+var Bed_Target_Temp = var.Bed_Start_Temp + var.Bed_Raise_Temp                               ; Calculate the target temperature
+
+
+M140 S160 R160                                          ; Set the bed temperature to the target temperature
+M98 P"0:/sys/led/start_cold.g"                                                              ; LED Signalize preheating
+
+while heat.heaters[2].current < var.Bed_Target_Temp
+  G4 P100
+  if sensors.endstops[0].triggered || sensors.endstops[3].triggered
+    break
+
+M140 S0 R0                                                                                  ; Turn off the bed heater
+M98 P"0:/sys/led/end.g"                                                                     ; LED Signalize the end of the test
+
+var Bed_Heat_Time = state.time - var.Bed_Start_Time                                         ; Calculate the time it took to heat up the bed
+echo "Bed Heater took " ^ var.Bed_Heat_Time ^ " seconds to heat up"
+if var.Bed_Heat_Time > var.Bed_Max_Heat_Time
+  M98 P"0:/sys/led/fault.g"
+  M291 R"Bed Heater Test" P"Bed Heater took too long to heat up" S1 T200
+  abort "Error: Bed Heater took too long to heat up"
+M98 P"0:/sys/led/resetstatus.g"
+; ///// Bed Heater Test End /////
+
+
+
+
+
+
+
+; ///// Chamber Heater Test /////
+var ChamberHeater_Min_Temp = 80                                                             ; Minimum temperature to start the test
+var ChamberHeater_Raise_Temp = 30                                                           ; Raise the temperature by 20C
+var ChamberHeater_Max_Heat_Time = 30                                                        ; Maximum time to heat up the Chamber Heater
+
+; Check if the Chamber is cold enough
+if sensors.analog[4].lastReading > var.ChamberHeater_Min_Temp
+  M98 P"0:/sys/led/fault.g"
+  M291 R"Chamber Heater Test" P"Chamber Heater is already hot, please wait for it to cool down" S3
+  while sensors.analog[4].lastReading > var.ChamberHeater_Min_Temp
+    G4 S1
+    if sensors.endstops[0].triggered || sensors.endstops[3].triggered
+      break
+  M98 P"0:/sys/led/resetstatus.g"
+
+M291 R"Chamber Heater Test" P"Chamber Heater will start" S3
+
+var ChamberHeater_Start_Temp = sensors.analog[4].lastReading                                ; Save the current Chamber temperature
+var ChamberHeater_Start_Time = state.time                                                   ; Save the current time
+var ChamberHeater_Target_Temp = var.ChamberHeater_Start_Temp + var.ChamberHeater_Raise_Temp ; Calculate the target temperature
+
+M141 S100 R100                                                                              ; Set the Chamber temperature to the target temperature
+M98 P"0:/sys/led/start_cold.g"                                                              ; LED Signalize preheating
+
+while sensors.analog[4].lastReading < var.ChamberHeater_Target_Temp
+  G4 P100
+  if sensors.endstops[0].triggered || sensors.endstops[3].triggered
+    break
+
+M141 S0 R0                                                                                  ; Turn off the chamber heater
+
+M98 P"0:/sys/led/end.g"                                                                     ; LED Signalize the end of the test
+
+var ChamberHeater_Heat_Time = state.time - var.ChamberHeater_Start_Time                     ; Calculate the time it took to heat up the Chamber
+echo "Chamber Heater took " ^ var.ChamberHeater_Heat_Time ^ " seconds to heat up"
+if var.ChamberHeater_Heat_Time > var.ChamberHeater_Max_Heat_Time
+  M98 P"0:/sys/led/fault.g"
+  M291 R"Chamber Heater Test" P"Chamber Heater took too long to heat up" S1 T200
+  abort "Error: Chamber Heater took too long to heat up"
+M98 P"0:/sys/led/resetstatus.g"
+;// ///// Chamber Heater Test End /////
+
+
+
+; ///// Chamber Fans Test /////
+M106 P4 H4 S1 B1 T300                                                                       ; Turn OFF Chamber Main Fan
+M106 P7 H3 S1 B0 T300                                                                       ; Turn OFF CrFan
+
+M291 R"Chamber Fan Test" P"Are both Chamber Fans are OFF?" S3
+M106 P4 H4 S1 B1 T0                                                                         ; Turn ON Chamber Main Fan
+M106 P7 H3 S1 B0 T300                                                                       ; Turn OFF CrFan
+
+M291 R"Chamber Fan Test" P"Is the main Chamber Fan spinning?" S3
+M106 P7 H3 S1 B0 T0                                                                         ; Turn ON CrFan
+M106 P4 H4 S1 B1 T300                                                                       ; Turn OFF Chamber Main Fan
+
+M291 R"Chamber Fan Test" P"Is CrFan spinning?" S3
+
+M106 P4 H4 T80 S1 B1                                                                        ; Restore Chamber Main Fan
+M106 P7 H3 T50 S1 B0                                                                        ; Restore CrFan
+;// ///// Chamber Fans Test End /////
+
+
+
+
+
+; ///// T0 Fans Test /////
+M106 P3 S0
+M106 P2 H0 S1 B0 T300
+M291 R"T0 Fans Test" P"Are both T0 Fans are OFF?" S3
 
 M106 P3 S1
-M291 R"Left Tool Fan Test" P"Left Part Cooling Fan should start spinning" S3
-M106 P3 S0
+M291 R"T0 Fans Test" P"Is the T0 Part Cooling Fan spinning?" S3
 
+M106 P3 S0
+M106 P2 H0 S1 B0 T0
+M291 R"T0 Fans Test" P"Is the T0 Hotend Fan spinning?" S3
+
+M106 P3 S0
+M106 P2 H0 T70 S1 B0
+;// ///// T0 Fans Test End /////
+
+
+; ///// T0 Heat Test /////
+T0 P0
+
+var T0_Min_Temp = 60                                                                            ; Minimum temperature to start the test
+var T0_Raise_Temp = 30                                                                          ; Raise the temperature
+var T0_Max_Heat_Time = 60                                                                       ; Maximum time to heat up the T0 Heater
+
+; Check if T0 is cold enough
+if heat.heaters[0].current > var.T0_Min_Temp
+  M98 P"0:/sys/led/fault.g"
+  M291 R"T0 Heater Test" P"T0 Heater is already hot, please wait for it to cool down" S3
+  while heat.heaters[0].current > var.T0_Min_Temp
+    G4 S1
+    if sensors.endstops[0].triggered || sensors.endstops[3].triggered
+      break
+  M98 P"0:/sys/led/resetstatus.g"
+
+M291 R"T0 Heater Test" P"T0 Heater will start" S3
+
+var T0_Start_Temp = heat.heaters[0].current                                                     ; Save the current T0 temperature
+var T0_Start_Time = state.time                                                                  ; Save the current time
+var T0_Target_Temp = var.T0_Start_Temp + var.T0_Raise_Temp                                      ; Calculate the target temperature
+
+G10 P0 R200 S200                                              ; Set the T0 temperature to the target temperature
+M98 P"0:/sys/led/start_cold.g"                                                                  ; LED Signalize preheating
+
+while heat.heaters[0].current < var.T0_Target_Temp
+  G4 P100
+  if sensors.endstops[0].triggered || sensors.endstops[3].triggered
+    break
+
+G10 P0 R0 S0                                                                                    ; Turn off the T0 heater
+M98 P"0:/sys/led/end.g"                                                                         ; LED Signalize the end of the test
+
+var T0_Heat_Time = state.time - var.T0_Start_Time                                               ; Calculate the time it took to heat up T0
+echo "T0 Heater took " ^ var.T0_Heat_Time ^ " seconds to heat up"
+if var.T0_Heat_Time > var.T0_Max_Heat_Time
+  M98 P"0:/sys/led/fault.g"
+  M291 R"T0 Heater Test" P"T0 Heater took too long to heat up" S1 T200
+  abort "Error: T0 Heater took too long to heat up"
+M98 P"0:/sys/led/resetstatus.g"
+; ///// T0 Heater Test End /////
+
+; ///// T0 Extruder Motor Direction Test /////
+M291 R"T0 Extruder Motor Direction Test" P" " S3
+M302 P1 ; Allow cold extrudes
+T0 P0
+M83 ; Extruder to relative mode
+G1 E100 F1000 ; Feed filament
+M400
+M302 P0 ; Disallow cold extrudes
+; ///// T0 Extruder Motor Direction Test End /////
+
+
+
+
+
+; ///// T1 Fans Test /////
+M106 P1 S0
+M106 P0 H1 S1 B0 T300
+M291 R"T1 Fans Test" P"Are both T1 Fans OFF?" S3
 
 M106 P1 S1
-M291 R"Right Tool Fan Test" P"Right Part Cooling Fan should start spinning" S3
+M291 R"T1 Fans Test" P"Is the T1 Part Cooling Fan spinning?" S3
+
 M106 P1 S0
+M106 P0 H1 S1 B0 T0
+M291 R"T1 Fans Test" P"Is the T1 Hotend Fan spinning?" S3
+
+M106 P1 S0
+M106 P0 H1 T70 S1 B0
+; ///// T1 Fans Test End /////
 
 
-if heat.heaters[0].current >= 60
-  abort "Error: Temperature detected too high for tool 0."
-
-if heat.heaters[1].current >= 60
-  abort "Error: Temperature detected too high for tool 1."
-
-
-
-
-
-; Left Tool Heater Test
-M98 P"0:/sys/led/start_cold.g"
-M291 R"Feel if T0 is heating up" P" " S0 T10
-
-T0 P0
-G10 P0 R100 S100
-var initialTempL = heat.heaters[0].current
-echo "Waiting for T0 to reach 80C"
-
-; Check if the temperature is raising
-G4 S10
-if {heat.heaters[0].current - var.initialTempL} < 10
-  M98 P"0:/sys/led/fault.g"
-  echo {heat.heaters[0].current - var.initialTempL}
-  G10 P0 R0 S0
-  abort "Error: T0 Temperature raising too slowly."
-else
-  echo "T0 Temperature raising correctly."
-
-
-while heat.heaters[0].current < 80
-  G4 P100
-  if iterations >= 300
-    M98 P"0:/sys/led/fault.g"
-    abort "Error: T0 Temperature not reaching 80C"
-
-M98 P"0:/sys/led/end.g"
-echo "T0 Temperature reached 80C"
-M292
-M291 R"Left Tool Heater & Fan Test" P" " S3
-G10 P0 R0 S0
-
-
-
-
-
-
-; Right Tool Heater Test
-M98 P"0:/sys/led/start_cold.g"
-M291 R"Feel if T1 is heating up" P" " S0 T10
-
+; ///// T1 Heat Test /////
 T1 P0
-G10 P1 R100 S100
-var initialTempR = heat.heaters[1].current
-echo "Waiting for T1 to reach 80C"
 
-; Check if the temperature is raising
-G4 S10
-if {heat.heaters[1].current - var.initialTempR} < 10
+var T1_Min_Temp = 60                                                                          ; Minimum temperature to start the test
+var T1_Raise_Temp = 30                                                                        ; Temperature increase
+var T1_Max_Heat_Time = 60                                                                     ; Maximum heating time
+
+; Check if T1 is cold enough
+if heat.heaters[1].current > var.T1_Min_Temp
   M98 P"0:/sys/led/fault.g"
-  echo {heat.heaters[1].current - var.initialTempR}
-  G10 P1 R0 S0
-  abort "Error: T1 Temperature raising too slowly."
-else
-  echo "T1 Temperature raising correctly."
+  M291 R"T1 Heater Test" P"T1 Heater is already hot, please wait for it to cool down" S3
+  while heat.heaters[1].current > var.T1_Min_Temp
+    G4 S1
+    if sensors.endstops[0].triggered || sensors.endstops[3].triggered
+      break
+  M98 P"0:/sys/led/resetstatus.g"
 
-while heat.heaters[1].current < 80
+M291 R"T1 Heater Test" P"T1 Heater will start" S3
+
+var T1_Start_Temp = heat.heaters[1].current                                                   ; Save current T1 temperature
+var T1_Start_Time = state.time                                                                ; Save current time
+var T1_Target_Temp = var.T1_Start_Temp + var.T1_Raise_Temp                                    ; Calculate target temperature
+
+G10 P1 R200 S200                                            ; Set T1 temperature
+M98 P"0:/sys/led/start_cold.g"                                                                ; LED Signalize preheating
+
+while heat.heaters[1].current < var.T1_Target_Temp
   G4 P100
-  if iterations >= 300
-    M98 P"0:/sys/led/fault.g"
-    abort "Error: T1 Temperature not reaching 80C"
+  if sensors.endstops[0].triggered || sensors.endstops[3].triggered
+    break
 
-M98 P"0:/sys/led/end.g"
-echo "T1 Temperature reached 80C"
-M292
-M291 R"Right Tool Heater & Fan Test" P" " S3
-G10 P1 R0 S0
+G10 P1 R0 S0                                                                                  ; Turn off T1 heater
+M98 P"0:/sys/led/end.g"                                                                       ; LED Signalize end of test
 
-
+var T1_Heat_Time = state.time - var.T1_Start_Time                                             ; Calculate heating time
+echo "T1 Heater took " ^ var.T1_Heat_Time ^ " seconds to heat up"
+if var.T1_Heat_Time > var.T1_Max_Heat_Time
+  M98 P"0:/sys/led/fault.g"
+  M291 R"T1 Heater Test" P"T1 Heater took too long to heat up" S1 T200
+  abort "Error: T1 Heater took too long to heat up"
 M98 P"0:/sys/led/resetstatus.g"
+; ///// T1 Heater Test End /////
+
+; ///// T1 Extruder Motor Direction Test /////
+M291 R"T1 Extruder Motor Direction Test" P" " S3
+M302 P1
+T1 P0
+M83 ; Extruder to relative mode
+G1 E100 F1000 ; Feed filament
+M400
+M302 P0 ; Disallow cold extrudes
+T0 P0 
+; ///// T1 Extruder Motor Direction Test End /////
+
+
+
 T0 P0
+M98 P"0:/sys/led/resetstatus.g"

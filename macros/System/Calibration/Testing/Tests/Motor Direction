@@ -1,17 +1,3 @@
-M291 R"Left Extruder Motor Direction Test" P" " S3
-M302 P1
-T0 P0
-M83 ; Extruder to relative mode
-G1 E100 F1000 ; Feed filament
-
-
-M291 R"Right Extruder Motor Direction Test" P" " S3
-M302 P1
-T1 P0
-M83 ; Extruder to relative mode
-G1 E100 F1000 ; Feed filament
-T0 P0
-
 M564 H0
 
 M84
