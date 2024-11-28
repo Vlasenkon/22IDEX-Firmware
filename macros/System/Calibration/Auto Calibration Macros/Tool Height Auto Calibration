@@ -59,6 +59,26 @@ if !exists(param.S)
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 M98 P"0:/sys/nozzlewipe.g" T0
 
 
@@ -87,7 +107,7 @@ M98 P"0:/sys/nozzlewipe.g" T1
 G90
 G1 X-999 F18000
 
-G1 U{0}-{global.uoffset} Y{var.y_test_pos - global.yoffset}
+G1 U{0-global.uoffset} Y{var.y_test_pos - global.yoffset}
 
 G90
 G1 Z3
@@ -118,7 +138,7 @@ echo >>"0:/user/rtzoffset.g" "  global rtzoffset = "^{var.ddd}
 
 ; Generate tooloffset.g
 echo >"0:/user/tooloffset.g" "; Set tool offsets"
-echo >>"0:/user/tooloffset.g" "G10 P1 U"^{global.uoffset}^" Y"^{global.yoffset}^" Z"^{var.ddd}
+echo >>"0:/user/tooloffset.g" "G10 P1 U"^{global.uoffset}^" Y"^{global.yoffset}^" Z"^{global.rtzoffset}
 
 
 if abs(var.ddd) < 0.05 ; ===If delta is less than allowed value===
@@ -132,7 +152,6 @@ else ; ===If delta is more than allowed value===
     M291 S2 R"Calibration Process" P"You will be asked to: Loosen heat break and lower it. The build plate will push the nozzle up to match the other nozzle's level.<br>Click ""OK"" when ready to start."
     ;====Left is Lower====
     if var.ddd > 0
-
       G90
       G1 U-100 X-999 Z200 F18000
       M400
@@ -157,7 +176,6 @@ else ; ===If delta is more than allowed value===
     
     ;====Right is Lower====
     if var.ddd < 0
-
       G90
       G1 X100 U999 Z200 F18000    
       M400
@@ -177,18 +195,49 @@ else ; ===If delta is more than allowed value===
       
       G90
       G1 X100 Z200 F18000
+
     
     M291 S2 R"Confirm Tightening" P"Ensure the heat break is fully tightened to maintain alignment.<br>Click ""OK"" to confirm."
+    
+    G90
+    G1 X-999 U999 F18000
+    M98 P"0:/macros/System/Calibration/Auto Calibration Macros/Tool Height Auto Calibration" S1
+
+  
   elif input == 1 ; User chose "Skip Calibration"
     echo "Skipping calibration as per user request."
+  
   elif input == 2 ; User chose "Cancel Calibration"
     abort "Calibration cancelled by user."
 
 G90
 G1 X-999 U999 F18000
 
-if abs(var.ddd) > 0.05 && input == 0
-  M98 P"0:/macros/System/Calibration/Auto Calibration Macros/Tool Height Auto Calibration" S1
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
