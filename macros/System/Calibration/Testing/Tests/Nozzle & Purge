@@ -1,6 +1,10 @@
 M291 S5 J1 F350 R"Nozzle Tightening" P"Set the temperature for the Test"
 var temp = input
 
+G10 P0 S{var.temp} R{var.temp}
+G10 P1 S{var.temp} R{var.temp}
+G10 P2 S{var.temp} R{var.temp}
+G10 P3 S{var.temp} R{var.temp}
 
 M564 H1 ; Disable movement without homing
 
@@ -20,10 +24,6 @@ G1 Y0 F18000
 G1 X-999 U999 F18000
 G1 Y-75 F18000
 
-G10 P0 S{var.temp} R{var.temp}
-G10 P1 S{var.temp} R{var.temp}
-G10 P2 S{var.temp} R{var.temp}
-G10 P3 S{var.temp} R{var.temp}
 
 M116 P0 S5
 M116 P1 S5
