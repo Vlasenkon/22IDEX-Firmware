@@ -6,7 +6,6 @@ elif state.currentTool == 0 || state.currentTool == 2 || state.currentTool == 3
 elif state.currentTool == 1
   set var.ttt = 1
 
-
 var brush_min = -87
 var brush_max = -59
 var y_center = (var.brush_max + var.brush_min) / 2
@@ -16,7 +15,6 @@ var xu_offset = 3
 var xu_step = 1
 var num_wipes = 2
 
-
 G1 F18000
 G90
 if move.axes[0].machinePosition > {move.axes[3].min + 5} || move.axes[3].machinePosition < {move.axes[3].max - 5}
@@ -24,7 +22,6 @@ if move.axes[0].machinePosition > {move.axes[3].min + 5} || move.axes[3].machine
     G1 Y{var.brush_max + 50} X-999
   else
     G1 Y{var.brush_max + 50} X-999 U999
-  
 
 G90
 G1 Y{var.y_center}                            ; Go to the center of purging bucket
@@ -46,7 +43,6 @@ if exists(param.E)
 G90
 G1 F12000
 G1 Y{random(var.brush_max - var.brush_min + 1) + var.brush_min}     ; Go to random poit of the brush
-
 
 if var.ttt = 0
 
@@ -87,8 +83,6 @@ if var.ttt = 0
   G1 X-999
   G1 Y{var.y_center}                           ; Go to the center of purging bucket
 
-
-
 if var.ttt = 1
 
   ; 1st cleaning loop (Staright Left to Right moves)
@@ -128,6 +122,6 @@ if var.ttt = 1
   G1 U999
   G1 Y{var.y_center}                           ; Go to the center of purging bucket
 
+G1 Y{var.y_center}                           ; Go to the center of purging bucket
 
-
-  echo >"0:/sys/resetzbabystep.g" "; do nothing"
+echo >"0:/sys/resetzbabystep.g" "; do nothing"
