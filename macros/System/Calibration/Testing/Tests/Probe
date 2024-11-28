@@ -3,9 +3,9 @@ M98 P"0:/macros/System/Calibration/Testing/Disable Probe"
 
 
 M291 R"Servo Motor Test" P"Servo motor will rotate to 0 degree and then to a set degree" S4 K{"Test","Skip","Cancel"}
-if result == 1
+if input == 1
     M99
-elif result == 2
+elif input == 2
     abort "Test cancelled by user"
 
 while iterations < 50
@@ -15,7 +15,7 @@ while iterations < 50
     G4 S1
 
 M291 R"Servo Motor Test" P"Was the servo motor able to rotate smoothly?" S4 K{"Yes","No"}
-if result == 1
+if input == 1
     abort "Error: Servo Failed"
 
 M564 H0

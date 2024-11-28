@@ -1,7 +1,7 @@
 M291 R"Home Y - Correction Test" P"Do you want to start the Home Y Test?" S4 K{"Test","Skip","Cancel"}
-if result == 1
+if input == 1
     M99
-elif result == 2
+elif input == 2
     abort "Test cancelled by user"
 
 M98 P"0:/sys/homey.g"

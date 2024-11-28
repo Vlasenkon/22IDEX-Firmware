@@ -29,9 +29,9 @@ if heat.heaters[2].current > var.Bed_Min_Temp
   M98 P"0:/sys/led/resetstatus.g"
 
 M291 R"Bed Heater Test" P"Test if the Bed Heater is Heating up" S4 K{"Test","Skip","Cancel"}
-if result == 1
+if input == 1
     M99
-elif result == 2
+elif input == 2
     abort "Test cancelled by user"
 
 var Bed_Start_Temp = heat.heaters[2].current                                                ; Save the current bed temperature
@@ -165,7 +165,9 @@ if heat.heaters[0].current > var.T0_Min_Temp
       break
   M98 P"0:/sys/led/resetstatus.g"
 
-M291 R"T0 Heater Test" P"T0 Heater will start" S3
+M291 R"T0 Heater Test" P"Make sure is is heating UP my hand" S4 K{"Test","Cancel"}
+if input == 1
+    abort "Test cancelled by user"
 
 var T0_Start_Temp = heat.heaters[0].current                                                     ; Save the current T0 temperature
 var T0_Start_Time = state.time                                                                  ; Save the current time
@@ -192,7 +194,7 @@ M98 P"0:/sys/led/resetstatus.g"
 ; ///// T0 Heater Test End /////
 
 ; ///// T0 Extruder Motor Direction Test /////
-M291 R"T0 Extruder Motor Direction Test" P" " S3
+M291 R"T0 Extruder Motor Direction Test" P"Make Sure the T0 Extruder Gear is rotating Upwards ↑" S3
 M302 P1 ; Allow cold extrudes
 T0 P0
 M83 ; Extruder to relative mode
@@ -239,7 +241,9 @@ if heat.heaters[1].current > var.T1_Min_Temp
       break
   M98 P"0:/sys/led/resetstatus.g"
 
-M291 R"T1 Heater Test" P"T1 Heater will start" S3
+M291 R"T1 Heater Test" P"Make sure is is heating UP my hand" S4 K{"Test","Cancel"}
+if input == 1
+    abort "Test cancelled by user"
 
 var T1_Start_Temp = heat.heaters[1].current                                                   ; Save current T1 temperature
 var T1_Start_Time = state.time                                                                ; Save current time
@@ -266,7 +270,7 @@ M98 P"0:/sys/led/resetstatus.g"
 ; ///// T1 Heater Test End /////
 
 ; ///// T1 Extruder Motor Direction Test /////
-M291 R"T1 Extruder Motor Direction Test" P" " S3
+M291 R"T1 Extruder Motor Direction Test" P"Make Sure the T1 Extruder Gear is rotating Upwards ↑" S3
 M302 P1
 T1 P0
 M83 ; Extruder to relative mode

@@ -1,7 +1,7 @@
 M291 R"Endstop Test" P"Do you want to start the endstop test?" S4 K{"Test","Skip","Cancel"}
-if result == 1
+if input == 1
     M99
-elif result == 2
+elif input == 2
     abort "Test cancelled by user"
 
 

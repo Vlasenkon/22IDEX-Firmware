@@ -1,6 +1,6 @@
 M291 S4 P"Chamber Temperature Wait" R"Select Option" K{"Wait","Don't Wait"} F0
 
-if result = 0
+if input = 0
     echo >"0:/user/chamberwait.g" "M116 C0 S5 ; Wait for Chamber Temp"
     echo "Wait for Chamber Temp selected"
 else
