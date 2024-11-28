@@ -7,7 +7,7 @@ elif input == 2
     abort "Test cancelled by user"
 G28
 
-M291 R"Z - Axis Lubracation" P"Do you want to lubricate the Z-Axis?<br>Press and hold X or U endtop to stop" S4 K{"Test","Skip","Cancel"}
+M291 R"Z - Axis Lubracation" P"Do you want to lubricate the Z-Axis?<br>Press and hold X or U endtop to stop" S4 K{"Start","Skip","Cancel"}
 if input == 1
     M99
 elif input == 2

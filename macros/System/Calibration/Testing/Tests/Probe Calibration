@@ -155,18 +155,6 @@ if input == 1
     M291 S3 P"Press ""OK"" to save new X pos (Y jogging only for convenience)" X1 Y1
 
 
-    M98 P"place.g"
-    G4 S1
-
-    M98 P"pick.g"
-    G4 S1
-    M98 P"pick.g"
-    G4 S1
-    M98 P"pick.g"
-
-    G4 S1
-    M98 P"place.g"
-    
     
 set global.probePickX = move.axes[0].machinePosition
 ; Generate pickupposition.g
@@ -175,5 +163,19 @@ echo >>"0:/user/pickupposition.g" "if exists(global.probePickX)"
 echo >>"0:/user/pickupposition.g" "  set global.probePickX = "^{global.probePickX}
 echo >>"0:/user/pickupposition.g" "else"
 echo >>"0:/user/pickupposition.g" "  global probePickX = "^{global.probePickX}
+
+
+M98 P"place.g"
+G4 S1
+
+M98 P"pick.g"
+G4 S1
+M98 P"pick.g"
+G4 S1
+M98 P"pick.g"
+
+G4 S1
+M98 P"place.g"
+
 
 M564 H1 ; Disable movement without homing
