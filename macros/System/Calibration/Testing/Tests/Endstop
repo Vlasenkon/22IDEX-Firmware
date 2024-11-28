@@ -2,7 +2,7 @@ M291 R"Endstop Test" P"Do you want to start the endstop test?" S4 K{"Test","Skip
 if input == 1
     M99
 elif input == 2
-    abort "Test cancelled by user"
+    abort "Error: Test cancelled by user"
 
 
 
@@ -11,6 +11,9 @@ M84
 
 ; Test Left-hand side Y-axis endstop (io1.in)
 M574 Y1 S1 P"io1.in"                              ; Configure Y-axis to use only io1.in
+if sensors.endstops[1].triggered == true
+    M291 R"Error: Left Y-axis endstop is already triggered" P"Please release the endstop and try again." S2
+    abort "Error: Left Y-axis endstop is already triggered. Please release the endstop and try again."
 M291 R"Testing Left Y-axis Endstop" P"Please press the Left Y-axis endstop" S1 T60
 while !sensors.endstops[1].triggered
     G4 P100
@@ -18,6 +21,9 @@ M292                                             ; Close the message window
 
 ; Test Right-hand side Y-axis endstop (io2.in)
 M574 Y1 S1 P"io2.in"                              ; Configure Y-axis to use only io2.in
+if sensors.endstops[1].triggered == true
+    M291 R"Error: Right Y-axis endstop is already triggered." P"Please release the endstop and try again." S2
+    abort "Error: Right Y-axis endstop is already triggered. Please release the endstop and try again."
 M291 R"Testing Right Y-axis Endstop" P"Please press the Right Y-axis endstop" S1 T60
 while !sensors.endstops[1].triggered
     G4 P100
@@ -27,24 +33,36 @@ M292                                             ; Close the message window
 M574 Y1 S1 P"io1.in+io2.in"                       ; Restore original Y-axis endstop configuration
 
 ; Test X-axis endstop (io4.in)
+if sensors.endstops[0].triggered == true
+    M291 R"Error: X-axis endstop is already triggered." P"Please release the endstop and try again." S2
+    abort "Error: X-axis endstop is already triggered. Please release the endstop and try again."
 M291 R"Testing X-axis Endstop" P"Please press the X-axis endstop" S1 T60
 while !sensors.endstops[0].triggered
     G4 P100
 M292                                             ; Close the message window
 
 ; Test U-axis endstop (io5.in)
+if sensors.endstops[3].triggered == true
+    M291 R"Error: U-axis endstop is already triggered." P"Please release the endstop and try again." S2
+    abort "Error: U-axis endstop is already triggered. Please release the endstop and try again."
 M291 R"Testing U-axis Endstop" P"Please press the U-axis endstop" S1 T60
 while !sensors.endstops[3].triggered
     G4 P100
 M292                                             ; Close the message window
 
 ; Test Left Filament Sensor
+if sensors.filamentMonitors[0].status == "ok"
+    M291 R"Error: Left Filament Sensor is already triggered." P"Please release the sensor and try again." S2
+    abort "Error: Left Filament Sensor is already triggered. Please release the sensor and try again."
 M291 R"Testing Left Filament Sensor" P"Please trigger the Left Filament Sensor" S1 T60
 while sensors.filamentMonitors[0].status != "ok"
     G4 P100
 M292                                             ; Close the message window
 
 ; Test Right Filament Sensor
+if sensors.filamentMonitors[1].status == "ok"
+    M291 R"Error: Right Filament Sensor is already triggered." P"Please release the sensor and try again." S2
+    abort "Error: Right Filament Sensor is already triggered. Please release the sensor and try again."
 M291 R"Testing Right Filament Sensor" P"Please trigger the Right Filament Sensor" S1 T60
 while sensors.filamentMonitors[1].status != "ok"
     G4 P100
