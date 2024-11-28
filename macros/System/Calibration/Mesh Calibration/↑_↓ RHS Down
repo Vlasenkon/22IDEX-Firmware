@@ -1,11 +1,16 @@
+M400
+
+var step = 0.05
+
+
 if  exists(global.xcomp_mode) && global.xcomp_mode != "manual"
   set global.xcomp_mode = "manual"
 
 
 if exists(global.xcomp_manual)
-  set global.xcomp_manual = {global.xcomp_manual + 0.05}
+  set global.xcomp_manual = {global.xcomp_manual + var.step}
 else
-  global xcomp_manual = 0.05
+  global xcomp_manual = var.step
 
 ; Update xcomp_manual.g to save the new value
 echo >"0:/user/xcomp_manual.g" "if exists(global.xcomp_manual)"
