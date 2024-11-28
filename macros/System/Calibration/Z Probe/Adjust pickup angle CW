@@ -1,7 +1,7 @@
-if global.probePickAngle > 0
+if global.probePickAngle > 155
   set global.probePickAngle = global.probePickAngle - 1
 else
-  echo "Reached minimum of 0 degree"
+  echo "Error: Reached minimum of 155 degree"
   M99
 
 M280 P0 S{global.probePickAngle}     ; Move probe holder to the 'pick/place' position

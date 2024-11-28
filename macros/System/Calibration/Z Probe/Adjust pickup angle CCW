@@ -1,7 +1,7 @@
 if global.probePickAngle < 180
   set global.probePickAngle = global.probePickAngle + 1
 else
-  echo "Reached maximum of 180 degrees"
+  echo "Error: Reached maximum of 180 degrees"
   M99
 
 M280 P0 S{global.probePickAngle}     ; Move probe holder to the 'pick/place' position
