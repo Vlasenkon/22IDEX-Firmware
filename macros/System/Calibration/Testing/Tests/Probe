@@ -3,20 +3,20 @@ M98 P"0:/macros/System/Calibration/Testing/Disable Probe"
 
 
 M291 R"Servo Motor Test" P"Servo motor will rotate to 0 degree and then to a set degree" S4 K{"Test","Skip","Cancel"}
-if input == 1
-    M99
+if input == 0
+    while iterations < 50
+        M98 P"0:/macros/System/Calibration/Z Probe/Rotate holder to a set degree"
+        G4 S2
+        M98 P"0:/macros/System/Calibration/Z Probe/Rotate holder to 0 degree"
+        G4 S1
+
+    M291 R"Servo Motor Test" P"Was the servo motor able to rotate smoothly?" S4 K{"Yes","No"}
+    if input == 1
+        abort "Error: Servo Failed"
+elif input == 1
+    ; Skipping
 elif input == 2
     abort "Test cancelled by user"
-
-while iterations < 50
-    M98 P"0:/macros/System/Calibration/Z Probe/Rotate holder to a set degree"
-    G4 S2
-    M98 P"0:/macros/System/Calibration/Z Probe/Rotate holder to 0 degree"
-    G4 S1
-
-M291 R"Servo Motor Test" P"Was the servo motor able to rotate smoothly?" S4 K{"Yes","No"}
-if input == 1
-    abort "Error: Servo Failed"
 
 M564 H0
 M291 R"Mode build plate close to the nozzle" P"Move the build plate close to the nozzle" Z1 S3

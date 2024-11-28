@@ -7,5 +7,8 @@ G28 X
 M291 R"Home U" P" " S3
 G28 U
 
-M291 R"Was Homing OK?" P" " S3
+M291 R"Was Homing OK?" P" " S4 K{"Yes","No"}
+if input == 1
+    abort "Error: Homing failed."
+
 G1 F18000 Y-999 X-100 U100

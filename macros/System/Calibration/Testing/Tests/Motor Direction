@@ -8,7 +8,7 @@ elif input == 2
     abort "Test cancelled by user"
 
 
-M291 R"Move Tools by Hand" P"Movement should be smooth and without binding"" S4 K{"Good","Skip","Cancel"}
+M291 R"Move Tools by Hand" P"Movement should be smooth and without binding" S4 K{"Good","Skip","Cancel"}
 if input == 1
     M99
 elif input == 2

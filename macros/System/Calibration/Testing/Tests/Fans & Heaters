@@ -117,11 +117,11 @@ M291 R"Chamber Fan Test" P"Are both Chamber Fans are OFF?" S3
 M106 P4 H4 S1 B1 T0                                                                         ; Turn ON Chamber Main Fan
 M106 P7 H3 S1 B0 T300                                                                       ; Turn OFF CrFan
 
-M291 R"Chamber Fan Test" P"Is the main Chamber Fan spinning?" S3
+M291 R"Main Chamber Fan Test" P"Is the main Chamber Fan spinning?" S3
 M106 P7 H3 S1 B0 T0                                                                         ; Turn ON CrFan
 M106 P4 H4 S1 B1 T300                                                                       ; Turn OFF Chamber Main Fan
 
-M291 R"Chamber Fan Test" P"Is CrFan spinning?" S3
+M291 R"CrFan Fan Test" P"Is CrFan spinning?" S3
 
 M106 P4 H4 T80 S1 B1                                                                        ; Restore Chamber Main Fan
 M106 P7 H3 T50 S1 B0                                                                        ; Restore CrFan
@@ -137,11 +137,11 @@ M106 P2 H0 S1 B0 T300
 M291 R"T0 Fans Test" P"Are both T0 Fans are OFF?" S3
 
 M106 P3 S1
-M291 R"T0 Fans Test" P"Is the T0 Part Cooling Fan spinning?" S3
+M291 R"T0 Part Cooling Fan Test" P"Is the T0 Part Cooling Fan spinning?" S3
 
 M106 P3 S0
 M106 P2 H0 S1 B0 T0
-M291 R"T0 Fans Test" P"Is the T0 Hotend Fan spinning?" S3
+M291 R"T0 Hotend Fan Test" P"Is the T0 Hotend Fan spinning?" S3
 
 M106 P3 S0
 M106 P2 H0 T70 S1 B0
@@ -165,7 +165,7 @@ if heat.heaters[0].current > var.T0_Min_Temp
       break
   M98 P"0:/sys/led/resetstatus.g"
 
-M291 R"T0 Heater Test" P"Make sure is is heating UP my hand" S4 K{"Test","Cancel"}
+M291 R"T0 Heater Test will start" P"Make sure is is heating UP my hand" S4 K{"Test","Cancel"}
 if input == 1
     abort "Test cancelled by user"
 
@@ -213,11 +213,11 @@ M106 P0 H1 S1 B0 T300
 M291 R"T1 Fans Test" P"Are both T1 Fans OFF?" S3
 
 M106 P1 S1
-M291 R"T1 Fans Test" P"Is the T1 Part Cooling Fan spinning?" S3
+M291 R"T1 Part Cooling Fan Test" P"Is the T1 Part Cooling Fan spinning?" S3
 
 M106 P1 S0
 M106 P0 H1 S1 B0 T0
-M291 R"T1 Fans Test" P"Is the T1 Hotend Fan spinning?" S3
+M291 R"T1 Hotend Fan Test" P"Is the T1 Hotend Fan spinning?" S3
 
 M106 P1 S0
 M106 P0 H1 T70 S1 B0
@@ -241,7 +241,7 @@ if heat.heaters[1].current > var.T1_Min_Temp
       break
   M98 P"0:/sys/led/resetstatus.g"
 
-M291 R"T1 Heater Test" P"Make sure is is heating UP my hand" S4 K{"Test","Cancel"}
+M291 R"T1 Heater Test will start" P"Make sure is is heating UP my hand" S4 K{"Test","Cancel"}
 if input == 1
     abort "Test cancelled by user"
 

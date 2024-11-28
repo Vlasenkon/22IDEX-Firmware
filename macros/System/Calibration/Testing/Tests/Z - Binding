@@ -1,4 +1,8 @@
-M291 R"Move Z-Axis" P"Choose an option:" K{"Move Down","Done","Cancel"} S4
+M291 R"Z-Binding Test" P"Choose an option:" K{"Start","Skip","Cancel"} S4
+if input == 1
+    M99
+elif input == 2
+    abort "Error: Z - Binding test cancelled by user."
 
 M564 H0
 G91
@@ -38,7 +42,7 @@ G90
 if input == 0
     G1 Z50 F18000
 elif input == 1
-    M291 R"Perform Z - Motor alignment" P" "
+    M291 R"Perform Z - Motor alignment Required" P"Perform Z - Motor alignment Required" S1 T120
     abort "Error: Z - Motor binding reported."
 
 M564 H1
