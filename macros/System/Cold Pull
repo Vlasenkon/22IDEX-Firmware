@@ -36,6 +36,9 @@ G10 P{var.tool} R{var.temp} S{var.temp}
 if !move.axes[0].homed || !move.axes[1].homed || !move.axes[2].homed || !move.axes[3].homed
     M98 P"0:/sys/homeall.g" S1
 
+G91
+G1 Z400 F6000
+
 ; Deselect any active tool
 T-1
 
