@@ -116,6 +116,13 @@ while true
 
 M291 S3 P"Press ""OK"" to save new X pos (Y jogging only for convenience)" X1 Y1
 
+set global.probePickX = move.axes[0].machinePosition
+; Generate pickupposition.g
+echo >"0:/user/pickupposition.g" "; Set X probe pickup position"
+echo >>"0:/user/pickupposition.g" "if exists(global.probePickX)"
+echo >>"0:/user/pickupposition.g" "  set global.probePickX = "^{global.probePickX}
+echo >>"0:/user/pickupposition.g" "else"
+echo >>"0:/user/pickupposition.g" "  global probePickX = "^{global.probePickX}
 
 M98 P"place.g"
 G4 S1
