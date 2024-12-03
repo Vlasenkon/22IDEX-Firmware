@@ -31,10 +31,10 @@ M569 P1.1 S0
 M569 P1.2 S0                                         
 
 
-M584 X0.2 Y0.1:0.4 U0.3 Z1.0:1.1:1.2 E0.0:0.5                    ; set motor mapping
+M584 X0.2 Y0.1:0.4 U0.3 Z1.0:1.1:1.2 E0.0:0.5                    ; set motor mapping (Z: Right, Rear, Left)
 
 M669 K0 Y1:1:0:1                                                 ; set kinematics parameters
-M671 X222.5:0:-222.5 Y-170.5:193.5:-170.5 S100                   ; leadscrews at left, right and rear
+M671 X222.5:0:-222.5 Y-170.5:193.5:-170.5 S100                   ; leadscrews at Right, Rear, Left
 
 M350 X16 Y16 U16 Z16 E16:16 I1                                   ; configure microstepping
 M92 X80 Y80 U80 Z400 E400:400                                    ; set steps per mm
