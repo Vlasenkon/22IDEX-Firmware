@@ -82,7 +82,7 @@ M950 H2 C"1.out0" Q10 T2                                         ; configure hea
 M98 P"0:/user/PIDBedHead.g"                                      ; configure PID parameters
 M140 H2                                                          ; map heated bed to heater
 M143 H2 S210                                                     ; configure temperature limit for the heater
-M570 H2 P10 T5 R3                                                ; configure heater fault detection
+M570 H2 P30 T25 R3                                                ; configure heater fault detection
 
 M308 S3 A"Chamber Air" P"1.temp0" Y"thermistor" T200000 B3100    ; configure temperature sensor
 M950 H3 C"1.out1" Q10 T3                                         ; configure heater
