@@ -4,7 +4,7 @@ M98 P"0:/macros/System/Calibration/Testing/Disable Probe"
 
 M291 R"Servo Motor Test" P"Servo motor will rotate to 0 degree and then to a set degree" S4 K{"Test","Skip","Cancel"}
 if input == 0
-    while iterations < 50
+    while iterations < 30
         M98 P"0:/macros/System/Calibration/Z Probe/Rotate holder to a set degree"
         G4 S2
         M98 P"0:/macros/System/Calibration/Z Probe/Rotate holder to 0 degree"

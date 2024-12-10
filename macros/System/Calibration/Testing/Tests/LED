@@ -1,5 +1,10 @@
 M106 P6 S1
-M291 R"White LED Test" P"Click ""OK"" to confirm that White LED is on." S3
+M291 R"White LED Test" P"Click ""OK"" to confirm that White LED is on." S4 K{"OK","Skip","Cancel"}
+if input == 1
+    M99
+elif input == 2
+    abort "Test cancelled by user"
+
 M106 P6 S0
 
 

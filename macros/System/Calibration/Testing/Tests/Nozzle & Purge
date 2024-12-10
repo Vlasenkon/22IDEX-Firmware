@@ -43,6 +43,11 @@ G10 P3 S0 R0
 
 ; Purging Bucket Clearance Height Adjustment
 G1 X-190 U190 Y-73
-M291 R"Adjust Purgin Buckets" P"Click ""OK"" when ready to test clearance height." S3
+M291 R"Adjust Purgin Buckets" P"Click ""OK"" when ready to test clearance height." S4 K{"Test","Skip","Cancel"}
+if input == 1
+    M99
+elif input == 2
+    abort "Test cancelled by user"
+
 M98 P"0:/sys/nozzlewipe.g" T0 C1
 M98 P"0:/sys/nozzlewipe.g" T1 C1

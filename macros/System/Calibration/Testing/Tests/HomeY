@@ -9,9 +9,6 @@ M98 P"0:/sys/homey.g"
 M84 XYU
 G4 S3
 
-
-M291 R"Home Y Test" P" " S3
-
 M98 P"0:/sys/homey.g" T1
 M400
 G4 P500
