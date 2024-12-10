@@ -1,0 +1,33 @@
+name: Sync V3 Changes to V3_New and V3_Old
+
+on:
+  push:
+    branches:
+      - V3
+
+jobs:
+  sync-branches:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout V3 branch
+        uses: actions/checkout@v2
+        with:
+          ref: V3
+
+      - name: Set up Git
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+
+      - name: Sync changes to V3_New
+        run: |
+          git checkout V3_New
+          git merge V3 --no-edit
+          git push origin V3_New
+
+      - name: Sync changes to V3_Old
+        run: |
+          git checkout V3_Old
+          git merge V3 --no-edit
+          git push origin V3_Old
