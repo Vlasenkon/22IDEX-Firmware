@@ -30,3 +30,10 @@
 *.exe
 *.out
 *.app
+www/.DS_Store
+sys/.DS_Store
+macros/System/.DS_Store
+macros/.DS_Store
+firmware/.DS_Store
+filaments/.DS_Store
+.DS_Store
