@@ -24,6 +24,3 @@ else
 
   M84 XYU
   M81 S1
-
-
-  ; Test
