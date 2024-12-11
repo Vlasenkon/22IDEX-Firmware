@@ -23,11 +23,11 @@ jobs:
       - name: Sync changes to V3_New
         run: |
           git checkout V3_New
-          git merge V3 --no-edit
+          git merge V3 --allow-unrelated-histories --no-edit
           git push origin V3_New
 
       - name: Sync changes to V3_Old
         run: |
           git checkout V3_Old
-          git merge V3 --no-edit
+          git merge V3 --allow-unrelated-histories --no-edit
           git push origin V3_Old
