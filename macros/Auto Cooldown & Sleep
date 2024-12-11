@@ -19,8 +19,8 @@ else
   G10 P2 S0 R0
   G10 P3 S0 R0
 
-  M140 S0       ;; turn off bed heater
-  M141 S0       ;; turn off chamber heater
+  M140 S0       ; turn off bed heater
+  M141 S0       ; turn off chamber heater
 
   M84 XYU
   M81 S1
