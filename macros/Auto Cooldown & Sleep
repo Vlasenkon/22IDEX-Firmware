@@ -22,5 +22,5 @@ else
   M140 S0       ; turn off bed heater
   M141 S0       ; turn off chamber heater
 
-  M84 XYU      ; disable motors
-  M81 S1       ; turn off power supply
+  M84 XYU
+  M81 S1
