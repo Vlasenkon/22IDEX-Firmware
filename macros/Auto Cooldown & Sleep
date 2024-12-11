@@ -23,4 +23,4 @@ else
   M141 S0       ; turn off chamber heater
 
   M84 XYU
-  M81 S1       ; turn off power supply
+  M81 S1
