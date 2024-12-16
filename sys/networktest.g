@@ -9,7 +9,9 @@ while network.interfaces[0].actualIP = "0.0.0.0" && network.interfaces[1].actual
   G4 S1                                     ; Wait
   echo "L0: "^{iterations}
 
+; Check if network connection was established before the test started
 if network.interfaces[0].actualIP != "0.0.0.0" || network.interfaces[1].actualIP != "0.0.0.0"
+  echo >"0:/IP_address.txt" "Network Connection was established before the test started. IP: "^{network.interfaces[0].actualIP != "0.0.0.0" ? network.interfaces[0].actualIP : network.interfaces[1].actualIP}
   abort "Network Connection was established before the test started"
 
 ; Initialize variable to store the network module state
@@ -51,7 +53,6 @@ if network.interfaces[{var.module}].actualIP != "0.0.0.0"
   echo >"0:/IP_address.txt" "Last Connected IP is: "^{network.interfaces[{var.module}].actualIP}
   M99                                       ; Exit the script
   abort "IF 1 Passed with Module: "^{var.module}                                     ; Abort if the network connection is successful
-echo "IF 1 No Connection with Module: "^{var.module}
 
 ; Reverse var.module to test the other network mode
 if var.module = 1
@@ -81,7 +82,6 @@ if network.interfaces[{var.module}].actualIP != "0.0.0.0"
   M291 S1 T600 R"Network Mode was automaticaly switched" P" "
   M99                                       ; Exit the script
   abort "IF 2 Passed with Module: "^{var.module}                                     ; Abort if the network connection is successful
-echo "IF 2 No Connection with Module: "^{var.module}
 
 ; If no connection was successful, set LED status and configure AP mode
 M98 P"0:/sys/led/statusoff.g"               ; Turn off status LEDs
@@ -137,10 +137,8 @@ if result != 0
 else
   echo "M552: WiFi AP Mode started"
 G4 S5                                       ; Wait
-
 if network.interfaces[1].actualIP != "0.0.0.0"
-  echo >"0:/IP_address.txt" "WiFI was switched to AP Mode, the IP is: "^{network.interfaces[{var.module}].actualIP}
-
+  echo >"0:/IP_address.txt" "WiFi was switched to AP Mode. IP: "^{network.interfaces[1].actualIP}
 
 M291 S2 R"Connection was not established" P"WiFi module was automatically switched to Access Point Mode"
 ; Display message indicating that WiFi has been switched to Access Point mode due to failed connection attempts
