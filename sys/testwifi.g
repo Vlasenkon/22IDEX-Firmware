@@ -29,7 +29,7 @@ else
 G4 S5                                       ; Wait
 
 
-M589 S"22 IDEX" P"1234567890"92.168.0.1  ; Configure WiFi Access Point
+M589 S"22 IDEX" P"1234567890" I192.168.0.1  ; Configure WiFi Access Point
 if result != 0
   echo "Failed 4"
 else
