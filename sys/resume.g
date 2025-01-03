@@ -9,7 +9,6 @@ M568 P2 A1
 M568 P3 A1
 
 T-1
-T0
 T R4                 ; select the tool that was active last time the print was paused
 M400
 
@@ -23,7 +22,6 @@ G1 E50 F{60}*{3}     ; extrude filament
 M400
 
 T-1
-T0
 T R4                 ; select the tool that was active last time the print was paused
 
 
