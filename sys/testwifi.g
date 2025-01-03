@@ -1,10 +1,21 @@
-while network.interfaces[0].actualIP = "0.0.0.0" && iterations < 30
-  G4 S1
+echo "_"
+echo "_"
+echo "Started WiFi Test"
+echo "_"
+echo "_"
 
-if network.interfaces[0].actualIP = "0.0.0.0"
+; Wait for any network to apear
+while network.interfaces[0].actualIP = "0.0.0.0" && iterations < 15
+  G4 S1                                     ; Wait
+  echo "L0: "^{iterations}
+
+if network.interfaces[0].actualIP == "0.0.0.0"
+  echo "IF 1 - Network is down"
   M98 P"0:/sys/led/statusoff.g"
   M98 P"0:/sys/led/dimmwhite.g"
-  M98 P"0:/sys/led/red.g"
+  M98 P"0:/sys/led/pause.g"
+else
+  echo "IF 1 - Network is up"
 
 
 M552 S0                                  ; Disable Ethernet
@@ -53,4 +64,4 @@ else
 G4 S5                                       ; Wait
 
   
-  M291 S0 R"Connection was not established" P"WiFi module was automatically switched to Access Point Mode"
+M291 S0 R"Connection was not established" P"WiFi module was automatically switched to Access Point Mode" T999
