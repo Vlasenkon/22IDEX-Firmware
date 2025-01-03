@@ -13,9 +13,10 @@ if network.interfaces[0].actualIP == "0.0.0.0"
   echo "IF 1 - Network is down"
   M98 P"0:/sys/led/statusoff.g"
   M98 P"0:/sys/led/dimmwhite.g"
-  M98 P"0:/sys/led/pause.g"
+  M98 P"0:/sys/led/red.g"
 else
-  echo "IF 1 - Network is up"
+  M99
+  abort "IF 1 - Network is up"
 
 
 M552 S0                                  ; Disable Ethernet
