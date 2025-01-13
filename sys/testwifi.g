@@ -9,14 +9,14 @@ while network.interfaces[0].actualIP = "0.0.0.0" && iterations < 15
   G4 S1                                     ; Wait
   echo "L0: "^{iterations}
 
-if network.interfaces[0].actualIP == "0.0.0.0"
+if network.interfaces[0].actualIP != "0.0.0.0"
+  M99
+  abort "IF 1 - Network is up"
+else
   echo "IF 1 - Network is down"
   M98 P"0:/sys/led/statusoff.g"
   M98 P"0:/sys/led/dimmwhite.g"
   M98 P"0:/sys/led/red.g"
-else
-  M99
-  abort "IF 1 - Network is up"
 
 
 M552 S0                                  ; Disable Ethernet
