@@ -9,7 +9,7 @@ M550 P"22IDEX"                                     ; set printer name
 if boards[0].shortName = "2Ethernet"
   echo >"0:/sys/runonce.g" "M98 P""0:/user/ethernet.g"""
 else
-  M98 P"0:/user/wifimode.g" 
+  M98 P"0:/user/wifimode.g"
   
 M586 P0 S1                                         ; HTTP or HTTPS
 M586 P1 S0                                         ; FTP or SFTP
@@ -166,9 +166,8 @@ while boards[0].vIn.current < 22 && iterations < 20
   G4 P250
 
 M17 Z            ; Hold Z motors with idle current
+M98 P"0:/sys/led/startup.g"                        ; startup LED
 
 ; test internet connection
-if boards[0].shortName = "2WiFi"
+if boards[0].shortName != "2Ethernet"
   echo >"0:/sys/runonce.g" "M98 P""0:/sys/testwifi.g"""
-
-M98 P"0:/sys/led/startup.g"                        ; startup LED
