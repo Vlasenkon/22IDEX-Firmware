@@ -15,6 +15,8 @@ var xu_offset = 3
 var xu_step = 1
 var num_wipes = 2
 
+M98 P"0:/sys/detachedcheck.g" ; Check if the probe is detached
+
 G1 F18000
 G90
 if move.axes[0].machinePosition > {move.axes[3].min + 5} || move.axes[3].machinePosition < {move.axes[3].max - 5}

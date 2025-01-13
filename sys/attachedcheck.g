@@ -6,6 +6,7 @@ M400
 if sensors.probes[0].value[0] > 200
   M98 P"pick.g"
   
+M400
 G4 P500              ; Wait for Probe value to stabilize
 
 ; If probe is still unavailable, open safety relay and return
