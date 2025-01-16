@@ -2,8 +2,8 @@
 M42 P4 S1
 G4 P500
 if sensors.probes[0].value[0] > 500
-  echo "Error: IF 1 - No probe detected"
-  echo >>"0:/sys/eventlog.txt" "Error: IF 1 - No probe detected"
+  echo "Error: Probe not detected at start of placing"
+  echo >>"0:/sys/eventlog.txt" "Error: Probe not detected at start of placing"
 ;else
 ;  echo "IF 1 - Present"
 M42 P4 S0
@@ -25,8 +25,8 @@ G1 F3000 Y{move.axes[1].max}           ; Place the probe
 M42 P4 S1
 G4 P500
 if sensors.probes[0].value[0] > 500
-  echo "Error: IF 2 - No probe detected"
-  echo >>"0:/sys/eventlog.txt" "Error: IF 2 - No probe detected"
+  echo "Error: Probe wasn't detected at the dock after placing"
+  echo >>"0:/sys/eventlog.txt" "Error: Probe wasn't detected at the dock after placing"
 ;else
 ;  echo "IF 2 - Present"  
 M42 P4 S0
@@ -51,8 +51,8 @@ G4 P500
 if sensors.probes[0].value[0] < 500
   M42 P4 S0   		 ; Turn off relay
   M98 P"0:/sys/led/fault.g"
-  echo >>"0:/sys/eventlog.txt" "Error: IF 3 - Z probe was not placed"
-  abort "Error: IF 3 - Z probe was not placed"
+  echo >>"0:/sys/eventlog.txt" "Error: Probe removal failed"
+  abort "Error: Probe removal failed"
 ;else
 ;  echo "IF 3 - Placed"
 M42 P4 S0
