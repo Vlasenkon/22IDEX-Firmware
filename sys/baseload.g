@@ -37,10 +37,11 @@ M291 R"Feed the filament, material will be extruded" P" " S4 K{"Extrude","Cancel
 G60 S0 ; Remember last tool selected
 T-1  ; Deselect all tools
 T R0 ; Select tool from memory slot
+M84 E0:1
 
 
-if state.status == "processing" || state.status == "pausing" || state.status == "paused" || state.status == "resuming"
-  ; Skip
-else
+if state.status != "processing" || state.status != "pausing" || state.status != "paused" || state.status != "resuming"
   G10 S0 R0 ; Turn off the heater
-  M84 E0:1
+else
+  M568 P{state.currentTool} A0
+  M291 R"Please set the nozzle temperature" P"Manually return the nozzle temperature that is optimal for printing new filament." S1 T15
