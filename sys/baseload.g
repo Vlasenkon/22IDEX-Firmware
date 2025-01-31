@@ -60,7 +60,10 @@ M291 R"Do you see new filament extruding?" P"Press ""Yes"" if filament is extrud
     M400
 
 M98 P"0:/sys/nozzlewipe.g" ; wipe curently active nozzle
+M84 E0:1
 
 if state.status != "processing" || state.status != "pausing" || state.status != "paused" || state.status != "resuming"
   G10 S0 R0 ; Turn off the heater
-  M84 E0:1
+else
+  M568 P{state.currentTool} A0
+  M291 R"Please set the nozzle temperature" P"Manually return the nozzle temperature that is optimal for printing new filament." S1 T15
