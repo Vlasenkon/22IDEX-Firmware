@@ -16,18 +16,21 @@ if var.S0 > 0 && var.S1 > 0
   M568 P1 S{var.S1 - var.div} R{var.S0 - var.div}
   M568 P2 S{{var.S0 - var.div}, {var.S1 - var.div}} R{{var.S0 - var.div}, {var.S1 - var.div}}
   M568 P3 S{{var.S0 - var.div}, {var.S1 - var.div}} R{{var.S0 - var.div}, {var.S1 - var.div}}
+  M568 P3 A1
 elif var.S0 > 0
   T0 P0
   M568 P0 S{var.S0 - var.div} R{var.S0 - var.div}
   M568 P1 S{0} R{0}
   M568 P2 S{0} R{0}
   M568 P3 S{0} R{0}
+  M568 P0 A1
 elif var.S1 > 0
   T1 P0
   M568 P0 S{0} R{0}
   M568 P1 S{var.S1 - var.div} R{var.S1 - var.div}
   M568 P2 S{0} R{0}
   M568 P3 S{0} R{0}
+  M568 P1 A1
 else
   M98 P"0:/sys/led/fault.g"
   echo >>"0:/sys/eventlog.txt" "Error: Print cancelled due to Selected Temperature"
@@ -37,6 +40,7 @@ else
   M568 P1 S{0} R{0}
   M568 P2 S{0} R{0}
   M568 P3 S{0} R{0}
+  M568 P0 A1
 
 
 ; Wait for Bed and (Chamber - Optionally)
