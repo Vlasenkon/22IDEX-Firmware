@@ -26,9 +26,5 @@ G1 E10 F600 ; Extrude
 G1 E-20 F{var.ss} ; Retract
 G1 E-100 F{var.ss} ; Retract
 M400 ; Wait for the moves to finish
-
-if state.status == "processing" || state.status == "pausing" || state.status == "paused" || state.status == "resuming"
-  ; Skip
-else
-  G10 S0 R0 ; Turn off the heater
-  M84 E0:1
+M84 E0:1
+G10 S0 R0 ; Turn off the heater
