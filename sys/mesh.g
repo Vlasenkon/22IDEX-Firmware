@@ -52,7 +52,7 @@ if move.compensation.meshDeviation.deviation > 0.25
   echo >>"0:/sys/eventlog.txt" "Mesh Compensation is too high"
 if result !=0
   M98 P"0:/sys/led/fault.g"
-  echo >>"0:/sys/eventlog.txt" "Print cancelled due to Mesh Compensation Error"
+  echo >>"0:/sys/eventlog.txt" "Error: Print cancelled due to Mesh Compensation Error"
   abort "Print cancelled due to Mesh Compensation Error"
 
 M376 H40                                    ; enable compensation taper

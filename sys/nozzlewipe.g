@@ -1,15 +1,10 @@
 var ttt = 0
-var return = false
 if exists(param.T)
   set var.ttt = (param.T)
-elif state.currentTool == 0 || state.currentTool == 3
+elif state.currentTool == 0 || state.currentTool == 2 || state.currentTool == 3
   set var.ttt = 0
 elif state.currentTool == 1
   set var.ttt = 1
-elif state.currentTool == 2
-  set var.ttt = 0
-  set var.return = true
-  T3
 
 var brush_min = -87
 var brush_max = -59
@@ -19,6 +14,8 @@ var u_center = 193
 var xu_offset = 3
 var xu_step = 1
 var num_wipes = 2
+
+M98 P"0:/sys/detachedcheck.g" ; Check if the probe is detached
 
 G1 F18000
 G90
@@ -130,6 +127,3 @@ if var.ttt = 1
 G1 Y{var.y_center}                           ; Go to the center of purging bucket
 
 echo >"0:/sys/resetzbabystep.g" "; do nothing"
-
-if var.return == true
-  T2
