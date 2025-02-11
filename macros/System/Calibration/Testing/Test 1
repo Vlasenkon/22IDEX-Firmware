@@ -11,7 +11,7 @@ if var.pp != "vmawt"
 ; Check voltage for both boards
 if boards[0].vIn.current < 23 || boards[0].vIn.current > 24.8
 	M98 P"0:/sys/led/fault.g"
-	abort "Board 0 voltage out of range: " ^ boards[0].vIn.current ^ "V"
+	abort "Error: Board 0 voltage out of range: " ^ boards[0].vIn.current ^ "V"
 
 ; LED Test
 M98 P"0:/macros/System/Calibration/Testing/Tests/LED"
