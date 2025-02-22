@@ -25,8 +25,8 @@ G1 F3000 Y{move.axes[1].max}           ; Place the probe
 M42 P4 S1
 G4 P500
 if sensors.probes[0].value[0] > 500
-  echo "Error: Probe wasn't detected at the dock after placing"
-  echo >>"0:/sys/eventlog.txt" "Error: Probe wasn't detected at the dock after placing"
+  echo "Error: Probe was not detected at the dock after placing"
+  echo >>"0:/sys/eventlog.txt" "Error: Probe was not detected at the dock after placing"
 ;else
 ;  echo "IF 2 - Present"  
 M42 P4 S0

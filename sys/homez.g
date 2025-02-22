@@ -10,7 +10,9 @@ if !exists(param.Z)
   G1 H2 Z25 F18000   ; lift Z relative to current position
   G90                 ; absolute positioning
 
-M98 P"0:/sys/probetest.g" ; Test the Z - Probe to ensure it is not shorted
+if !exists(param.T)
+  M98 P"0:/sys/probetest.g" ; Test the Z - Probe to ensure it is not shorted
+
 M98 R1 P"0:/sys/attachedcheck.g" ; make sure probe is conected, pick if negative and leave relay active
 
 ; Fast home Z
@@ -62,3 +64,4 @@ M204 T5000
 ;F1 - Do a fast 1st Probe
 ;C1 - Do a slow 2nd Probe
 ;L1 - Do not Place the Probe
+;T1 - Do not Test if GND Wire isn't Shorted
