@@ -16,7 +16,7 @@ M92 A300 B300 C300           ; set steps per mm
 M566 A600 B600 C600          ; set maximum jerk (mm/min)
 M203 A3600 B3600 C3600       ; set maximum speeds (mm/min)
 M201 A200 B200 C200          ; set accelerations (mm/s^2)
-M906 A1000 B1000 C1000 I20   ; set motor currents (mA) and motor idle factor in per cent
+M906 A850 B850 C850 I20      ; set motor currents (mA) and motor idle factor in per cent
 M204 P15000 T15000
 
 ; Axis Limits
