@@ -59,21 +59,21 @@ if result !=0
   abort "Error: G32 failed"
 
 if exists(param.L) && exists(param.S) && exists(param.Z)
-  M98 P"homez.g" L1 S1 Z1 F1
+  M98 P"homez.g" L1 S1 Z1 F1 T1
 elif exists(param.L) && exists(param.S)
-  M98 P"homez.g" L1 S1 F1
+  M98 P"homez.g" L1 S1 F1 T1
 elif exists(param.S) && exists(param.Z)
-  M98 P"homez.g" S1 Z1 F1
+  M98 P"homez.g" S1 Z1 F1 T1
 elif exists(param.L) && exists(param.Z)
-  M98 P"homez.g" L1 Z1 F1
+  M98 P"homez.g" L1 Z1 F1 T1
 elif exists(param.L)
-  M98 P"homez.g" L1 F1
+  M98 P"homez.g" L1 F1 T1
 elif exists(param.S)
-  M98 P"homez.g" S1 F1
+  M98 P"homez.g" S1 F1 T1
 elif exists(param.Z)
-  M98 P"homez.g" Z1 F1
+  M98 P"homez.g" Z1 F1 T1
 else
-  M98 P"homez.g" F1
+  M98 P"homez.g" F1 T1
 
 if !exists(param.S)
   G1 X{move.axes[0].min} U{move.axes[3].max} Y150 Z100 F18000

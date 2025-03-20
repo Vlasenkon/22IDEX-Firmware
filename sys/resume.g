@@ -10,7 +10,7 @@ M568 P3 A1
 
 T-1
 ; Check if resuming after filament runout
-if exists(global.filamenterror) && exists(global.filamentbackup) && global.filamenterror == true && global.filamentbackup == true
+if exists(global.filamenterror) && exists(global.filamentbackup) && global.filamenterror == true && global.filamentbackup == true && state.currentTool != 2 && state.currentTool != 3
   ; Prepare new tool after filament runout  
   T{global.nextTool}                         ; Select the tool active before pause
 else

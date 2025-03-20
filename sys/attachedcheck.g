@@ -1,6 +1,6 @@
 M42 P4 S1
-G4 P500              ; Wait for Probe value to stabilize
 M400
+G4 P500              ; Wait for Probe value to stabilize
 
 ; If probe unavailable, try to pick it up
 if sensors.probes[0].value[0] > 200
