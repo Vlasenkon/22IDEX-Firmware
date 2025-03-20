@@ -1,3 +1,7 @@
+if !exists(global.probePickY)
+  global probePickY = {move.axes[1].max}
+
+
 ; Test if the probe is present
 M42 P4 S1
 G4 P500
@@ -17,7 +21,11 @@ G1 F18000 Y135 X{global.probePickX} U{move.axes[3].max-10} ; Go to position
 M400
 M280 P0 S{global.probePickAngle}         ; Move probe holder to the 'pick/place' position
 G4 S1
-G1 F3000 Y{move.axes[1].max}           ; Place the probe
+
+M564 S0
+G90
+G1 F18000 Y{global.probePickY}   ; Pick the probe
+M564 S1
 
 
 

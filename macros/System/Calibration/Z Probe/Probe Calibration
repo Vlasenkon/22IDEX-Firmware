@@ -1,3 +1,7 @@
+if !exists(global.probePickY)
+  global probePickY = {move.axes[1].max}
+
+
 G28 Y
 G28 X
 G28 U
@@ -113,9 +117,27 @@ while true
     elif input == 4
         abort "Calibration cancelled by user"
 
-G1 F3000 Y{move.axes[1].max} X{global.probePickX} U{move.axes[3].max-10}
+G1 F3000 Y{global.probePickY} X{global.probePickX} U{move.axes[3].max-10}
 
-M291 S3 R"Press ""OK"" to save the new X position." P"Y-axis jogging is available for fine adjustment." X1 Y1
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+M208 Y{move.axes[1].max+5}
+
+
+
+M291 S3 R"Press ""OK"" to save new ""X"" and ""Y"" position" P" " X1 Y1
 
 set global.probePickX = move.axes[0].machinePosition
 ; Generate pickupposition.g
@@ -124,6 +146,45 @@ echo >>"0:/user/pickupposition.g" "if exists(global.probePickX)"
 echo >>"0:/user/pickupposition.g" "  set global.probePickX = "^{global.probePickX}
 echo >>"0:/user/pickupposition.g" "else"
 echo >>"0:/user/pickupposition.g" "  global probePickX = "^{global.probePickX}
+
+
+
+M291 S4 R"Do you want to save Y position" P" " K{"Yes, Save Y","No, do not Save Y"}
+
+if input == 0
+    if exists(global.probePickY)
+        set global.probePickY = move.axes[1].machinePosition
+    else
+        global probePickY = move.axes[1].machinePosition
+
+    ; Generate pickuppositiony.g
+    echo >"0:/user/pickuppositiony.g" "; Set X probe pickup position"
+    echo >>"0:/user/pickuppositiony.g" "if exists(global.probePickY)"
+    echo >>"0:/user/pickuppositiony.g" "  set global.probePickY = "^{global.probePickY}
+    echo >>"0:/user/pickuppositiony.g" "else"
+    echo >>"0:/user/pickuppositiony.g" "  global probePickY = "^{global.probePickY}
+
+
+
+M208 Y{move.axes[1].max-5}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 M98 P"place.g"
 G4 S1

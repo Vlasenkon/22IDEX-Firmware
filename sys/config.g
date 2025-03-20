@@ -41,7 +41,7 @@ M92 X80 Y80 U80 Z400 E400:400                                    ; set steps per
 M566 X600 U600 Y600 Z200 E600:600                                ; set maximum jerk (mm/min)
 M203 X18000 U18000 Y18000 Z1200 E12000:12000                     ; set maximum speeds (mm/min)
 M201 X10000 U10000 Y10000 Z500 E5000:5000                        ; set accelerations (mm/s^2)
-M906 X1800 U1800 Y1800:1800 Z850 E600:600 I35                   ; set motor currents (mA) and motor idle factor in per cent
+M906 X1800 U1800 Y1800:1800 Z850 E600:600 I35                    ; set motor currents (mA) and motor idle factor in per cent
 M84 S10                                                          ; set idle timeout
 M204 P5000 T5000
 
@@ -82,7 +82,7 @@ M950 H2 C"1.out0" Q10 T2                                         ; configure hea
 M98 P"0:/user/PIDBedHead.g"                                      ; configure PID parameters
 M140 H2                                                          ; map heated bed to heater
 M143 H2 S210                                                     ; configure temperature limit for the heater
-M570 H2 P30 T25 R3                                                ; configure heater fault detection
+M570 H2 P30 T25 R3                                               ; configure heater fault detection
 
 M308 S3 A"Chamber Air" P"1.temp0" Y"thermistor" T200000 B3100    ; configure temperature sensor
 M950 H3 C"1.out1" Q10 T3                                         ; configure heater
@@ -149,9 +149,13 @@ M98 P"0:/user/zoffset.g"                                         ; load global v
 M98 P"0:/user/probeoffset.g"                                     ; load global variables
 M98 P"0:/user/rtzoffset.g"                                       ; load global variables
 M98 P"0:/user/pickupposition.g"                                  ; load global variables
+
+if fileexists("0:/user/pickuppositiony.g")
+  M98 P"0:/user/pickuppositiony.g"                               ; load global variables
+
 M98 P"0:/user/pickupangle.g"                                     ; load global variables
 M98 P"0:/user/eventlogging.g"                                    ; load global variables
-M98 P"0:/user/filamentbackup.g"                          ; load filament runout tool swap variable
+M98 P"0:/user/filamentbackup.g"                                  ; load filament runout tool swap variable
 M98 P"0:/user/xcomp_auto.g"                                      ; load auto calibration value
 M98 P"0:/user/xcomp_manual.g"                                    ; load manual calibration value
 M98 P"0:/user/xcomp_mode.g"                                      ; load compensation mode

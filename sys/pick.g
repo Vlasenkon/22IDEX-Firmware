@@ -1,3 +1,7 @@
+if !exists(global.probePickY)
+  global probePickY = {move.axes[1].max}
+
+
 M204 T5000                 ; set the accelerations
 T0               ; Select first tool
 G90              ; Absolute positioning
@@ -10,7 +14,12 @@ M204 T1000 ; Lower the accelerations a little
 M280 P0 S{global.probePickAngle}     ; Move probe holder to the 'pick/place' position
 G4 S1
 
-G1 F18000 Y{move.axes[1].max}   ; Pick the probe
+
+M564 S0
+G90
+G1 F18000 Y{global.probePickY}   ; Pick the probe
+M564 S1
+
 M400
 G4 P500
 
