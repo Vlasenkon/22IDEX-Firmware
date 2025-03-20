@@ -1,0 +1,205 @@
+if !exists(global.probePickY)
+  global probePickY = {move.axes[1].max}
+
+
+G28 Y
+G28 X
+G28 U
+
+; Loosen the Screws
+G90
+G1 Y0 X-999 U999 F18000
+if move.axes[2].homed
+    G1 Z200 F18000
+else
+    G91
+    G1 H2 Z25
+    G90
+
+
+; Part 1 "Height Adjustment"
+
+; Ask if the user wants to calibrate the pickup height.
+M291 R"Pickup Height Calibration" P"Would you like to calibrate the probe pickup height?" S4 K{"Yes, Calibrate","No, Skip","Cancel"}
+
+if input == 0
+    ; Lower the servo to start the calibration.
+    M280 P0 S0
+    M291 R"Loosen Servo Screws" P"Please loosen three servo screws by about one full turn each, then press OK." S2
+    M280 P0 S180
+
+    M291 R"Loosen Additional Screw" P"Loosen the remaining servo screw by about one full turn, then press OK." S2
+
+    M98 P"0:/macros/System/Calibration/Z Probe/Rotate holder to a set degree"
+
+    M291 R"Lower Servo Fully" P"Slide the servo down completely. Press OK once it’s fully lowered." S2
+
+    M98 P"0:/macros/System/Calibration/Z Probe/Rotate holder to 0 degree"
+    G4 S1
+    M98 P"0:/macros/System/Calibration/Z Probe/Rotate holder to a set degree"
+    G4 S1
+
+    M291 R"Verify Probe Installation" P"Ensure the probe is installed in its holder at the back. If not, install it manually with the magnets facing up." S3
+
+    G90
+    G1 F18000 Y{move.axes[1].max-30} X{global.probePickX} U{move.axes[3].max-10}
+
+    while true
+        M291 R"Adjust Probe Angle" P"Rotate the probe until it is horizontal relative to the tool. Select an option:" S4 K{"Turn CCW","Turn CW","Test","Done","Cancel"}
+        if input == 0
+            M98 P"0:/macros/System/Calibration/Z Probe/Adjust pickup angle CCW"
+        elif input == 1
+            M98 P"0:/macros/System/Calibration/Z Probe/Adjust pickup angle CW"
+        elif input == 2
+            while iterations < 1
+                M98 P"0:/macros/System/Calibration/Z Probe/Rotate holder to 0 degree"
+                G4 S1
+                M98 P"0:/macros/System/Calibration/Z Probe/Rotate holder to a set degree"
+                G4 S1
+        elif input == 3
+            break
+        elif input == 4
+            abort "Calibration cancelled by user"
+
+    G90
+    G1 F3000 Y{move.axes[1].max} X{global.probePickX} U{move.axes[3].max-10}
+
+    M291 S3 R"Raise Servo for Probe Attachment" P"If needed, reposition the toolhead using Y-axis jogging (for convenience) and then press OK to save the new X position." X1 Y1
+
+    set global.probePickX = move.axes[0].machinePosition
+    ; Generate pickupposition.g file
+    echo >"0:/user/pickupposition.g" "; Set X probe pickup position"
+    echo >>"0:/user/pickupposition.g" "if exists(global.probePickX)"
+    echo >>"0:/user/pickupposition.g" "  set global.probePickX = "^{global.probePickX}
+    echo >>"0:/user/pickupposition.g" "else"
+    echo >>"0:/user/pickupposition.g" "  global probePickX = "^{global.probePickX}
+
+    M291 R"Tighten Servo Screws (Partial)" P"Tighten at least two of the servo screws, then press OK." S2
+
+    G91
+    G1 X-200 F12000
+    M400
+
+    G90
+    G1 Y0 F18000
+    M280 P0 S0
+    M291 R"Tighten All Screws" P"Secure all three screws and press OK when done." S2
+    M280 P0 S180
+    M291 R"Final Check" P"Double-check that all screws are firmly tightened. Press OK when confirmed." S2
+elif input == 2
+    abort "Test cancelled by user"
+
+
+M98 P"0:/macros/System/Calibration/Z Probe/Rotate holder to 0 degree"
+G4 S1
+M98 P"0:/macros/System/Calibration/Z Probe/Rotate holder to a set degree"
+G4 S1
+
+G90
+G1 F18000 Y{move.axes[1].max-30} X{global.probePickX} U{move.axes[3].max-10} F18000
+
+
+; Part 2 "Calibration"
+while true
+    M291 R"Probe Angle Calibration" P"Adjust the angle if needed." S4 K{"Adjust CCW","Adjust CW","Test","Done","Cancel"}
+    if input == 0
+        M98 P"0:/macros/System/Calibration/Z Probe/Adjust pickup angle CCW"
+    elif input == 1
+        M98 P"0:/macros/System/Calibration/Z Probe/Adjust pickup angle CW"
+    elif input == 2
+        while iterations < 1
+            M98 P"0:/macros/System/Calibration/Z Probe/Rotate holder to 0 degree"
+            G4 S1
+            M98 P"0:/macros/System/Calibration/Z Probe/Rotate holder to a set degree"
+            G4 S1
+    elif input == 3
+        break
+    elif input == 4
+        abort "Calibration cancelled by user"
+
+G1 F3000 Y{global.probePickY} X{global.probePickX} U{move.axes[3].max-10}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+M208 Y{move.axes[1].max+5}
+
+
+
+M291 S3 R"Press ""OK"" to save new ""X"" and ""Y"" position" P" " X1 Y1
+
+set global.probePickX = move.axes[0].machinePosition
+; Generate pickupposition.g
+echo >"0:/user/pickupposition.g" "; Set X probe pickup position"
+echo >>"0:/user/pickupposition.g" "if exists(global.probePickX)"
+echo >>"0:/user/pickupposition.g" "  set global.probePickX = "^{global.probePickX}
+echo >>"0:/user/pickupposition.g" "else"
+echo >>"0:/user/pickupposition.g" "  global probePickX = "^{global.probePickX}
+
+
+
+M291 S4 R"Do you want to save Y position" P" " K{"Yes, Save Y","No, do not Save Y"}
+
+if input == 0
+    if exists(global.probePickY)
+        set global.probePickY = move.axes[1].machinePosition
+    else
+        global probePickY = move.axes[1].machinePosition
+
+    ; Generate pickuppositiony.g
+    echo >"0:/user/pickuppositiony.g" "; Set X probe pickup position"
+    echo >>"0:/user/pickuppositiony.g" "if exists(global.probePickY)"
+    echo >>"0:/user/pickuppositiony.g" "  set global.probePickY = "^{global.probePickY}
+    echo >>"0:/user/pickuppositiony.g" "else"
+    echo >>"0:/user/pickuppositiony.g" "  global probePickY = "^{global.probePickY}
+
+
+
+M208 Y{move.axes[1].max-5}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+M98 P"place.g"
+G4 S1
+
+M98 P"pick.g"
+G4 S1
+M98 P"pick.g"
+G4 S1
+M98 P"pick.g"
+
+G4 S1
+M98 P"place.g"
+
+M291 R"Probe Placement" P"Was the probe picked and placed correctly?" S4 K{"Yes","No"}
+if input == 0
+    M291 R"Success" P"Probe calibration successful." S2
+else
+    M291 R"Calibration Retry" P"Please repeat the procedure." S2

@@ -144,6 +144,7 @@ M472 P"user/macros/System/Settings/Network/Enable Ethernet Mode"
 M472 P"user/macros/System/Settings/Network/Enable WiFi - Access Point Mode"
 M472 P"user/macros/System/Settings/Network/Enable WiFi - Client Mode"
 M472 P"user/macros/System/Settings/Network/Reset Network Settings"
+M472 P"user/macros/System/Calibration/Z Probe/Adjust Pickup Position"
 
 
 
