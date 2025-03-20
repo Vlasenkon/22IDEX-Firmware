@@ -1,3 +1,5 @@
+var activetool = {state.currentTool}
+
 var ttt = 0
 if exists(param.T)
   set var.ttt = (param.T)
@@ -5,6 +7,9 @@ elif state.currentTool == 0 || state.currentTool == 2 || state.currentTool == 3
   set var.ttt = 0
 elif state.currentTool == 1
   set var.ttt = 1
+
+if var.activetool == 2
+  T3
 
 var brush_min = -87
 var brush_max = -59
@@ -126,4 +131,6 @@ if var.ttt = 1
 
 G1 Y{var.y_center}                           ; Go to the center of purging bucket
 
+if var.activetool != state.currentTool
+  T2
 echo >"0:/sys/resetzbabystep.g" "; do nothing"

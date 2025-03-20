@@ -59,4 +59,4 @@ M376 H40                                    ; enable compensation taper
 M98 P"0:/sys/compensatex.g"                 ; run X - rail twist compensation
 M98 P"0:/sys/compensatey.g"                 ; run X - rail twist compensation
 G29 S1                                      ; enable MBC
-M98 P"homez.g" Z1 S1 F1                     ; fine home z to get final reference
+M98 P"homez.g" Z1 S1 F1 T1                    ; fine home z to get final reference
