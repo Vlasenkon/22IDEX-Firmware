@@ -143,7 +143,7 @@ M98 P"0:/user/uoffset.g"                           ; load global variables
 M98 P"0:/user/yoffset.g"                           ; load global variables
 M98 P"0:/user/zoffset.g"                           ; load global variables
 M98 P"0:/user/eventlogging.g"                      ; load global variables
-M98 P"0:/user/xcomp.g"                             ; load global variables
+M98 P"0:/user/xcomp_manual.g"                      ; load global variables
 
 echo >"0:/user/toolchangeretraction.g" "; ToolChange Retraction Disabled"
 echo >"0:/user/resetzbabystep.g" "; do nothing"
