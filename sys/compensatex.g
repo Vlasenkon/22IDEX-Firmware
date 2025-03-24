@@ -15,4 +15,4 @@ G90                           ; set to relative positioning
 M569 P5 S0                    ; return motor direction
 M584 Z5:6:7                   ; return driver mapping
 
-echo "Mesh bed adjusted for "^{var.mm}^" mm in "^{global.xcomp_mode}^" mode"
+echo "Mesh bed adjusted for "^{var.mm}^" mm"
