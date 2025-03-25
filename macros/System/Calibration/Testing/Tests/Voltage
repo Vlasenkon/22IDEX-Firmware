@@ -7,30 +7,44 @@ elif input == 2
     abort "Test cancelled by user"
     
 
-var minVoltage = 24
+var minVoltage = 24.0
 var maxVoltage = 24.3
 var iter = 0
 
-if boards[0].vIn.current < var.minVoltage && boards[0].vIn.current > var.maxVoltage
-    echo "Board 0 voltage OK: " ^ boards[0].vIn.current ^ "V"
+if (boards[0].vIn.current < var.maxVoltage && boards[0].vIn.current > var.minVoltage)
+    M291 R"Correct" P{"The voltage of the 24-volt power supply is within acceptable limits. Current voltage: "^ {boards[0].vIn.current} ^ "V"} S2
+    echo "Current voltage: " ^ {boards[0].vIn.current}
     M99
 
 M98 P"0:/sys/led/dimmwhite.g"
 G1 S2
 
-while true && iterations < 900 && var.iter < 100
+while true
+    if var.iter >= 300
+        M291 R"Warning" P{"The voltage value has been outside the normal range for a long time!. Current voltage: "^ {boards[0].vIn.current} ^ "V"} S2
+        M291 R"Test stopped" P"Test will be stopped to resolve issues" S1
+        M99
     G4 P100
-    M42 P1 S0
-    M42 P2 S0
-    M42 P3 S0
+
     if boards[0].vIn.current > var.maxVoltage
         M42 P1 S1
+        M42 P2 S0
+        M42 P3 S0
+        M291 R"Higher voltage" P"The voltage value is higher than required. Turn the potentiometer counterclockwise. When the value is within the normal range, the LEDs will be green" S0
+        
     elif boards[0].vIn.current < var.minVoltage
+        M42 P1 S0
+        M42 P2 S0
         M42 P3 S1
+        M291 R"Lower  voltage" P"The voltage is below the required value. Turn the potentiometer clockwise. When the value is within the normal range, the LEDs will be green" S0  
+    
     else
+        M42 P1 S0
         M42 P2 S1
-        set var.iter = var.iter + 1
-
-
-
+        M42 P3 S0
+        M291 R"Correct" P{"The voltage of the 24-volt power supply is within acceptable limits. Current voltage: "^ {boards[0].vIn.current} ^ "V"} S2
+        echo "Current voltage: " ^ {boards[0].vIn.current}
+        break
+    set var.iter = var.iter + 1
+M42 P2 S0
 M98 P"0:/sys/led/resetstatus.g"

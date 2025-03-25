@@ -26,8 +26,8 @@ M98 P"0:/sys/led/red.g"
 M303 T1 S{var.tt} A{heat.heaters[3].current} F0.5
 if result != 0
     M291 R"PID Tune Failed" P"PID tuning has failed." S1 T10
-    abort "Error: PID tuning has failed."
     M99
+    abort
 
 while heat.heaters[1].state = "tuning"
         G4 S10

@@ -1,10 +1,12 @@
-M106 P6 S1
-M291 R"White LED Test" P"Click ""OK"" to confirm that White LED is on." S4 K{"OK","Skip","Cancel"}
+M291 R"LEDs Test" P"Do you want to start the LEDs test?" S4 K{"Test","Skip","Cancel"}
 if input == 1
     M99
 elif input == 2
-    abort "Test cancelled by user"
+    abort "Error: Test cancelled by user"
 
+
+M106 P6 S1
+M291 R"White LED Test" P"Click ""OK"" to confirm that White LED is on." S3
 M106 P6 S0
 
 
@@ -33,3 +35,11 @@ M42 P2 S0
 M42 P3 S0
 
 M106 P6 S1
+
+M291 R"Do LEDs work correctly?" P"Click “No” to stop the test and fix the problem:" K{"Yes", "No"} S4
+
+if input == 1
+    M98 P"0:/macros/System/Calibration/Testing/Tests/LED"
+
+if input == 0
+    M291 R"LEDs are working fine" P"Proceeding with the next step." S2

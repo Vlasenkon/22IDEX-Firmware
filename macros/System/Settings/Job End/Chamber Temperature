@@ -1,5 +1,5 @@
 
-M291 P"Select Chamber Temperature Option" R"Chamber Temperature" S4 K{"Keep Temperature", "Disable Chamber Heater"}
+M291 P"Select Chamber Temperature Option" R"Chamber Temperature" S3 K{"Keep Temperature", "Disable Chamber Heater"}
 
 if input = 0
   echo >"0:/user/chamberfinishbehavior.g" "; Please edit contents of macro file"

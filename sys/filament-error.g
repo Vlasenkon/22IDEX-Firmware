@@ -15,7 +15,12 @@ if exists(global.filamentbackup) && global.filamentbackup == true
   M400
   M24 ; Resume the print
 else
-  M291 R"Filament runout was detected" P"Change the filament, verify temperatures, close the door and resume the print." S2 T999
+  M291 R"Do you want to change the filament?" P"Filament Runout was detected" S3 K{"Change Filament","Do not change"}
+  if input == 0
+    M702 ; Unload the filament
+    M400
+    M701 ; Load the filament
+
 
 
 ; Reset the filamenterror flag

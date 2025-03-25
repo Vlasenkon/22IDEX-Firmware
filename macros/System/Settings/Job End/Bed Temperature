@@ -1,4 +1,4 @@
-M291 S4 R"Bed Temperature After Job End" P"Select an option:" K{"Reset to 0C", "Keep at 110C", "Keep at 150C", "Keep current temperature"} H1
+M291 S3 R"Bed Temperature After Job End" P"Select an option:" K{"Reset to 0C", "Keep at 110C", "Keep at 150C", "Keep current temperature"} H1
 
 if input = 0
     echo >"0:/user/bedfinishbehavior.g" "M140 S0 ; Keep the Bed at 0°C after print is finished"

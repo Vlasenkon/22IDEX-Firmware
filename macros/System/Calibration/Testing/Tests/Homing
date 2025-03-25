@@ -1,8 +1,4 @@
-M291 R"Home Y" P" " S4 K{"Test","Skip","Cancel"}
-if input == 1
-    M99
-elif input == 2
-    abort "Test cancelled by user"
+M291 R"Home Y" P" " S3
 G28 Y
 
 M291 R"Home X" P" " S3

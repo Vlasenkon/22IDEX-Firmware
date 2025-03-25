@@ -37,6 +37,8 @@ M400 ; Wait for the moves to finish
 
 M98 P"0:/sys/nozzlewipe.g" ; wipe curently active nozzle
 
-
-G10 S0 R0 ; Turn off the heater
-M84 E0:1
+if state.status == "processing" || state.status == "pausing" || state.status == "paused" || state.status == "resuming"
+  ; Skip
+else
+  G10 S0 R0 ; Turn off the heater
+  M84 E0:1
