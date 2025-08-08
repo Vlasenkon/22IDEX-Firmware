@@ -1,0 +1,55 @@
+M564 H0
+
+while true
+    M291 J1 R"Move Z Down?" P"Move the Build Plate down unit all 3 motors reach bottom and the bed is leveled, expect to hear grinding noise" S4 K{"Move Z Down","Already at the bottom",}
+    if input = 0
+        M84 Z
+        G91
+        G1 Z25 F18000
+        G90
+        M400
+    else
+        break
+
+G91
+G1 Z-25 F18000
+G90
+
+M291 R"Did all 3 motors move up normally?" P" " S4 K{"Yes","No",}
+if input = 0
+    M291 R"Should machine be homed?" P" " S4 K{"Yes","No",}
+    if input = 0
+        G91
+        G1 Z-100 F18000
+        G90
+        G28
+    else
+else
+    ;move down
+    G91
+    G1 Z30 F18000
+    G90
+    G4 S1
+    ;increse Z motor current
+    var zcurrent = move.axes[2].current
+    M906 Z{var.zcurrent}*1.5
+    ;move up with increased current
+    G91
+    G1 Z-25 F18000
+    G90
+    ;return Z motor current
+    M906 Z{var.zcurrent}
+    ;ask if moved. up with increased current, home all if YES
+    M291 R"Did all 3 motors move up normally?" P" " S4 K{"Yes","No",}
+    if input = 0
+        M291 R"Should machine be homed?" P" " S4 K{"Yes","No",}
+        if input = 0
+            G91
+            G1 Z-100 F18000
+            G90
+            G28
+    else
+        M291 R"Z motor alignment should be performed" P"Please check the manual or contact support" S2
+    
+
+M564 H1

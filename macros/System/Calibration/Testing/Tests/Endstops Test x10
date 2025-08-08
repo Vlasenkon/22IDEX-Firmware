@@ -1,0 +1,246 @@
+M291 R"Endstop Test" P"Do you want to start the endstop test?" S4 K{"Test","Skip","Cancel"}
+if input == 1
+    M99
+elif input == 2
+    abort "Error: Test cancelled by user"
+
+var timeout = 120
+var press_count = 10;
+
+
+; Endstop Test Macro
+M84
+
+; Test Left-hand side Y-axis endstop (io1.in)
+M291 R"Left Y-axis endstop Test" P"Do you want to start test?" S4 K{"Test","Next","Cancel"}
+if input == 2
+    abort "Error: Test cancelled by user"
+elif input == 0
+
+    M574 Y1 S1 P"io1.in"                              ; Configure Y-axis to use only io1.in
+    if sensors.endstops[1].triggered == true
+        M291 R"Error: Left Y-axis endstop is already triggered" P"Please release the endstop and try again." S2
+        abort "Error: Left Y-axis endstop is already triggered. Please release the endstop and try again."
+    M291 R"Testing Left Y-axis Endstop" P"Please press the Left Y-axis endstop 10x and wait for light signal" S1 T60
+    set var.press_count = 10;
+    var start_time = state.upTime
+
+
+    while var.press_count > 0
+        if sensors.endstops[1].triggered
+            set var.press_count = var.press_count - 1
+            echo "Left Y-axis Pressed! Remaining: " ^{10 - var.press_count}
+            G4 S0.03
+            while sensors.endstops[1].triggered
+                G4 S0.01
+        if (state.upTime - var.start_time) > var.timeout
+            M98 P"0:/sys/led/fault.g"
+            M291 R"Error" P"Time for press the Left Y-axis endstop has expired" S0
+            abort "Error: Time for press the Left Y-axis endstop has expired"
+
+    M98 P"0:/sys/led/end.g"
+    M98 P"0:/sys/led/resetstatus.g"
+    M291 R"Success" P"The Left Y-axis endstop test completed successfully.<br> Do you want to continue the endstop test?" S4 K{"yes","no"}
+    if input == 1
+        abort "Error: Test cancelled by user"
+
+
+
+
+
+; Test Right-hand side Y-axis endstop (io2.in)
+M291 R"Right Y-axis endstop Test" P"Do you want to start test?" S4 K{"Test","Next","Cancel"}
+if input == 2
+    abort "Error: Test cancelled by user"
+elif input == 0
+
+    M574 Y1 S1 P"io2.in"                              ; Configure Y-axis to use only io2.in
+    if sensors.endstops[1].triggered == true
+        M291 R"Error: Right Y-axis endstop is already triggered" P"Please release the endstop and try again." S2
+        abort "Error: Right Y-axis endstop is already triggered. Please release the endstop and try again."
+    M291 R"Testing Right Y-axis Endstop" P"Please press the Right Y-axis endstop 10x and wait for light signal" S1 T60
+    set var.press_count = 10;
+    var start_time = state.upTime
+
+
+    while var.press_count > 0
+        if sensors.endstops[1].triggered
+            set var.press_count = var.press_count - 1
+            echo "Right Y-axis Pressed! Remaining: " ^{10 - var.press_count}
+            G4 S0.03
+            while sensors.endstops[1].triggered
+                G4 S0.01
+        if (state.upTime - var.start_time) > var.timeout
+            M98 P"0:/sys/led/fault.g"
+            M291 R"Error" P"Time for press the Right Y-axis endstop has expired" S0
+            abort "Error: Time for press the Right Y-axis endstop has expired"
+
+    M98 P"0:/sys/led/end.g"
+    M98 P"0:/sys/led/resetstatus.g"
+    M291 R"Success" P"The Right Y-axis endstop test completed successfully.<br> Do you want to continue the endstop test?" S4 K{"yes","no"}
+    if input == 1
+        abort "Error: Test cancelled by user"                                           ; Close the message window
+
+; Restore Y-axis endstop configuration
+M574 Y1 S1 P"io1.in+io2.in"                       ; Restore original Y-axis endstop configuration
+
+
+
+
+
+
+; Test X-axis endstop (io4.in)
+M291 R"X-axis endstop Test" P"Do you want to start test?" S4 K{"Test","Next","Cancel"}
+if input == 2
+    abort "Error: Test cancelled by user"
+elif input == 0
+
+    if sensors.endstops[0].triggered == true
+        M291 R"Error: X-axis endstop is already triggered" P"Please release the endstop and try again." S2
+        abort "Error: X-axis endstop is already triggered. Please release the endstop and try again."
+    M291 R"Testing X-axis Endstop" P"Please press the X-axis endstop 10x and wait for light signal" S1 T60
+    set var.press_count = 10;
+    var start_time = state.upTime
+
+
+    while var.press_count > 0
+        if sensors.endstops[0].triggered
+            set var.press_count = var.press_count - 1
+            echo "X-axis Pressed! Remaining: " ^{10 - var.press_count}
+            G4 S0.03
+            while sensors.endstops[0].triggered
+                G4 S0.01
+        if (state.upTime - var.start_time) > var.timeout
+            M98 P"0:/sys/led/fault.g"
+            M291 R"Error" P"Time for press the X-axis endstop has expired" S0
+            abort "Error: Time for press the X-axis endstop has expired"
+
+    M98 P"0:/sys/led/end.g"
+    M98 P"0:/sys/led/resetstatus.g"
+    M291 R"Success" P"The X-axis endstop test completed successfully.<br> Do you want to continue the endstop test?" S4 K{"yes","no"}
+    if input == 1
+        abort "Error: Test cancelled by user"
+
+
+
+
+
+
+; Test U-axis endstop (io5.in)
+M291 R"U-axis endstop Test" P"Do you want to start test?" S4 K{"Test","Next","Cancel"}
+if input == 2
+    abort "Error: Test cancelled by user"
+elif input == 0
+
+    if sensors.endstops[3].triggered == true
+        M291 R"Error: U-axis endstop is already triggered" P"Please release the endstop and try again." S2
+        abort "Error: U-axis endstop is already triggered. Please release the endstop and try again."
+    M291 R"Testing U-axis Endstop" P"Please press the U-axis endstop 10x and wait for light signal" S1 T60
+    set var.press_count = 10;
+    var start_time = state.upTime
+
+
+    while var.press_count > 0
+        if sensors.endstops[3].triggered
+            set var.press_count = var.press_count - 1
+            echo "U-axis Pressed! Remaining: " ^{10 - var.press_count}
+            G4 S0.03
+            while sensors.endstops[3].triggered
+                G4 S0.01
+        if (state.upTime - var.start_time) > var.timeout
+            M98 P"0:/sys/led/fault.g"
+            M291 R"Error" P"Time for press the U-axis endstop has expired" S0
+            abort "Error: Time for press the U-axis endstop has expired"
+
+    M98 P"0:/sys/led/end.g"
+    M98 P"0:/sys/led/resetstatus.g"
+    M291 R"Success" P"The U-axis endstop test completed successfully.<br> Do you want to continue the endstop test?" S4 K{"yes","no"}
+    if input == 1
+        abort "Error: Test cancelled by user"
+
+
+
+
+
+
+; Test Left Filament Sensor
+M291 R"Left Filament Sensor Test" P"Do you want to start test?" S4 K{"Test","Next","Cancel"}
+if input == 2
+    abort "Error: Test cancelled by user"
+elif input == 0
+
+    var currentButtonState = 0
+    var lastButtonState = 0
+
+    while sensors.filamentMonitors[0].status == "ok"
+        M291 R"Error: Left Filament Sensor is already triggered" P"Please release the endstop and try again." S2
+    M291 R"Testing Left Filament Sensor" P"Please load filament to the Left Filament Sensor 10x and wait for light signal" S1 T60
+    set var.press_count = 10;
+    var start_time = state.upTime
+
+
+    while var.press_count > 0
+        set var.lastButtonState = var.currentButtonState
+        while sensors.filamentMonitors[0].status == "ok"
+            set var.currentButtonState = 1
+        while sensors.filamentMonitors[0].status != "ok"
+            set var.currentButtonState = 0
+
+        if var.lastButtonState == 1 || var.currentButtonState == 0
+            set var.press_count = var.press_count - 1
+            echo "Left Filament Sensor Pressed! Remaining: " ^{10 - var.press_count}
+
+        if (state.upTime - var.start_time) > var.timeout
+            M98 P"0:/sys/led/fault.g"
+            M291 R"Error" P"Time for press the Left Filament Sensor has expired" S0
+            abort "Error: Time for press the Left Filament Sensor has expired"
+
+    M98 P"0:/sys/led/end.g"
+    M98 P"0:/sys/led/resetstatus.g"
+    M291 R"Success" P"The Left Filament Sensor test completed successfully.<br> Do you want to continue the endstop test?" S4 K{"yes","no"}
+    if input == 1
+        abort "Error: Test cancelled by user"
+
+
+
+
+
+; Test Right Filament Sensor
+M291 R"Right Filament Sensor Test" P"Do you want to start test?" S4 K{"Test","Next","Cancel"}
+if input == 2
+    abort "Error: Test cancelled by user"
+elif input == 0
+
+    var secondCurrentButtonState = 0
+    var secondLastButtonState = 0
+
+    while sensors.filamentMonitors[1].status == "ok"
+        M291 R"Error: Right Filament Sensor is already triggered" P"Please release the endstop and try again." S2
+    M291 R"Testing Right Filament Sensor" P"Please load filament to the Right Filament Sensor 10x and wait for light signal" S1 T60
+    set var.press_count = 10;
+    var start_time = state.upTime
+
+
+    while var.press_count > 0
+        set var.secondLastButtonState = var.secondCurrentButtonState
+        while sensors.filamentMonitors[1].status == "ok"
+            set var.secondCurrentButtonState = 1
+        while sensors.filamentMonitors[1].status != "ok"
+            set var.secondCurrentButtonState = 0
+
+        if var.secondLastButtonState == 1 || var.secondCurrentButtonState == 0
+            set var.press_count = var.press_count - 1
+            echo "Right Filament Sensor Pressed! Remaining: " ^{10 - var.press_count}
+
+        if (state.upTime - var.start_time) > var.timeout
+            M98 P"0:/sys/led/fault.g"
+            M291 R"Error" P"Time for press the Left Filament Sensor has expired" S0
+            abort "Error: Time for press the Left Filament Sensor has expired"
+
+    M98 P"0:/sys/led/end.g"
+    M98 P"0:/sys/led/resetstatus.g"
+    M291 R"Success" P"The Right Filament Sensor test completed successfully." S2
+M291 R"Complete" P"Test execution complete" S2
+
+
+

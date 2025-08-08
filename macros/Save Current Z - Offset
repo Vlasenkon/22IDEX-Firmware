@@ -1,0 +1,39 @@
+; Save Z - offset
+
+
+if {state.status == "processing" || state.status == "pausing" || state.status == "paused" || state.status == "resuming"} && !exists(param.S)
+  echo >"0:/sys/resetzbabystep.g" "if move.axes[2].machinePosition < 10"
+  echo >>"0:/sys/resetzbabystep.g" " G90"
+  echo >>"0:/sys/resetzbabystep.g" " G1 Z10"
+  
+  echo >>"0:/sys/resetzbabystep.g" "set global.zoffset = global.zoffset - move.axes[2].babystep  ; Apply babystepping to zoffset"
+  
+  echo >>"0:/sys/resetzbabystep.g" "echo >""0:/user/probeoffset.g"" ""; Set Z probe trigger value, offset and trigger height"""
+  echo >>"0:/sys/resetzbabystep.g" "echo >>""0:/user/probeoffset.g"" ""G31 P500 X0 Y28.50 Z""^{global.zoffset}"
+  
+  echo >>"0:/sys/resetzbabystep.g" "echo >""0:/user/zoffset.g"" ""if exists(global.zoffset)"""
+  echo >>"0:/sys/resetzbabystep.g" "echo >>""0:/user/zoffset.g"" ""  set global.zoffset = ""^{global.zoffset}"
+  echo >>"0:/sys/resetzbabystep.g" "echo >>""0:/user/zoffset.g"" ""else"""
+  echo >>"0:/sys/resetzbabystep.g" "echo >>""0:/user/zoffset.g"" ""  global zoffset = ""^{global.zoffset}"
+  
+  echo >>"0:/sys/resetzbabystep.g" "M290 R0 S0"
+  M291 R"Z-Offset Save Pending" P"The Z-offset will be saved after the print is finished." S1 T15
+
+else
+  if move.axes[2].machinePosition < 10
+    G90
+    G1 Z10
+  
+  set global.zoffset = global.zoffset - move.axes[2].babystep  ; Apply babystepping to zoffset
+
+  echo >"0:/user/probeoffset.g" "; Set Z probe trigger value, offset and trigger height"
+  echo >>"0:/user/probeoffset.g" "G31 P500 X0 Y28.50 Z"^{global.zoffset}
+  
+  echo >"0:/user/zoffset.g" "if exists(global.zoffset)"
+  echo >>"0:/user/zoffset.g" "  set global.zoffset = "^{global.zoffset}
+  echo >>"0:/user/zoffset.g" "else"
+  echo >>"0:/user/zoffset.g" "  global zoffset = "^{global.zoffset}
+
+  M290 R0 S0
+
+  M291 R"Z offset is saved" P" " S1 T15

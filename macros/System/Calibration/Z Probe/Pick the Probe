@@ -1,0 +1,8 @@
+; Homing XYU axis if they are not homed
+if !move.axes[1].homed || !move.axes[0].homed || !move.axes[3].homed
+  G28 Y
+  G28 X
+  G28 U
+
+; Pick the Probe using standart macro
+M98 P"pick.g"
