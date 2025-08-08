@@ -1,10 +1,10 @@
 # VISION MINER
 
-# 3D Printer IDEX22
+# 3D Printer IDEX22 V4
 
 ## General Information
 
-This repository contains the firmware for the 3D printer IDEX22 with the following configuration:
+This repository contains the firmware for the 3D printer IDEX22 V4 swith the following configuration:
 
 - **Power supply voltage**: 110V  
 - **Mainboard**: Duet 3 6HC 1.02a  
