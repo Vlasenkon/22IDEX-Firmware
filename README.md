@@ -164,5 +164,5 @@ There you’ll find detailed guides on printer usage, configuration, materials, 
 
 ---
 
-**Last updated:** 10.2025
+**Last updated:** 07.2025
 
