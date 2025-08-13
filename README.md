@@ -1,10 +1,10 @@
 # VISION MINER
 
-# 3D Printer IDEX22 V4
+# 3D Printer IDEX22
 
 ## General Information
 
-This repository contains the firmware for the 3D printer IDEX22 V4 swith the following configuration:
+This repository contains the firmware for the 3D printer IDEX22 with the following configuration:
 
 - **Power supply voltage**: 110V  
 - **Mainboard**: Duet 3 6HC 1.02a  
@@ -73,30 +73,43 @@ This repository contains the firmware for the 3D printer IDEX22 V4 swith the fol
 - **Path** `0:/macros/System/Calibration/Testing/Tests/`  
   - **Endstops Test x10** – Endstop check using ten repeated trigger presses.  
   - **Hepo Fan Test** – Filter test.  
+  - **Chamber Heating Test**  – Chamber heating test.  
 - **Path** `0:/macros/System/Settings/Chamber/`  
   - **Hepa Fan Adjustment**  – Filter speed setting.  
+- **Path** `0:/macros/System/Settings/Faults/`  
+  - **Heater Fault**  – Automatic shutdown after heater fault setting.  
+  - **Bed Fault Detection**  – Enables and disables heater fault for the bed.  
+- **Path** `0:/macros/Troubleshooting/`  
+  - **Chamber Heating Test**  – Calls the chamber heating test.  
 - **Path** `0:/user/`  
   - **periodic\_wiping** – Global variable for toggling nozzle cleaning during printing mode.  
   - **ethernetToPCmode** – Global variable for toggling Ethernet to PC mode.  
   - **ip\_ethernettopc** – Saves the IP address for Ethernet to PC mode.  
   - **hepafan** – Global variable for setting the filter speed.  
+  - **heaterfault\_timer** – Global variable for toggling and setting the automatic shutdown after heater fault.  
+  - **bedfaultdetection** – Configure bed heater fault detection.  
 - **Path** `0:/gcodes/Slicer/Tests/`  
   - **Temp Tower Test\_1h5m** – New test.  
   - **Pressure Advanced Tuning Test\_13m** – New test.  
   - **Retraction Test\_6m** – New test.  
-  - **Flow Rate Tuning Test\_3h3m** – New test.
+  - **Flow Rate Tuning Test\_3h3m** – New test.  
+- **Path** `0:/sys/`  
+  - **filament\_change** – Filament change.
 
 #### **Updated Macros**
 
 - **Path** `0:/macros/System/Calibration/Auto Calibration Macros/`  
   - **Mesh Bed calibration** – Disabled the ability to run the macro separately from the Auto Calibration Macro. Disabled heating during nozzle cleaning.  
   - **XY \- Offset Calibration** – Disabled the ability to run the macro separately from the Auto Calibration Macro. Disabled heating during nozzle cleaning.  
-  - **Z \- Offset Calibration** – Added nozzle height check and adjustment. Disabled the ability to run the macro separately from the Auto Calibration Macro. Disabled heating during nozzle cleaning.  
-  - **Tool Height Auto Calibration** – Updated macro logic: the toolheads are now aligned at the center of their respective halves of the bed, and the height difference measured at the center is saved to a global variable. Added nozzle height check and adjustment. Disabled the ability to run the macro separately from the Auto Calibration Macro. Disabled heating during nozzle cleaning.  
+  - **Z \- Offset Calibration** – Added nozzle height check and adjustment. Disabled the ability to run the macro separately from the Auto Calibration Macro. Disabled heating during nozzle cleaning. Added yellow indication when settings are required.  
+  - **Tool Height Auto Calibration** – Updated macro logic: the toolheads are now aligned at the center of their respective halves of the bed, and the height difference measured at the center is saved to a global variable. Added nozzle height check and adjustment. Disabled the ability to run the macro separately from the Auto Calibration Macro. Disabled heating during nozzle cleaning. Added yellow indication when settings are required.  
+- **Path** `0:/macros/System/Calibration/Testing/Tests/`  
+  - **Chamber Heater \+ Fan** – Removed the chamber fan test.  
 - **Path** `0:/macros/`  
   - **Auto Calibration** – Added an extra parameter A1 when calling the macros to prevent them from being run separately from the Auto Calibration Macro. Disabled heating during nozzle cleaning.  
 - **Path** `0:/macros/System/Settings/Chamber/`  
   - **Wait for Chamber Temp** – Added a 5-minute wait after heating.  
+  - **Fault Detection** – Renamed to Chamber Fault Detection and moved to 0:/macros/System/Settings/Faults/.  
 - **Path:** `0:/macros/System/Settings/Network/`  
   - **Connect to new WiFi network** – Disables Ethernet to PC mode.  
   - **Enable Ethernet Mode** – Disables Ethernet to PC mode.  
@@ -104,14 +117,16 @@ This repository contains the firmware for the 3D printer IDEX22 V4 swith the fol
   - **Enable WiFi \- Client Mode** – Disables Ethernet to PC mode.  
 - **Path** `0:/user/`  
   - **chamberwait** – Now enabled by default.  
+  - **faultdetection** – Renamed to chamberfaultdetection.  
 - **Path** `0:/sys/`  
-  - **config** – Switching to Ethernet to PC mode is now automatic. Added filter configuration. New global variables are declared: periodic\_wiping, ethernetToPCmode   
+  - **config** – Switching to Ethernet to PC mode is now automatic. Added filter configuration. New global variables are declared: periodic\_wiping, ethernetToPCmode, hepafan. Bed heater fault detection is now configured via the bedfaultdetection.g macro.  
   - **initial** – Added filter activation.  
-  - **end** – Added filter deactivation.  
+  - **end** – Added filter deactivation. Added filter fault message.  
   - **pause** – Added filter speed reduction.  
   - **resume** – Added filter activation. Added a check for whether the temperature is set; if not, the user is prompted to enter it.  
   - **cancel** – Added filter deactivation.  
   - **baseload** – Fixed the bug.  
+  - **filament-error** – Added filament change.  
 - **Path** `0:/gcodes/Slicer/Tests/`  
   - **Mesh Bed Test** – Added manual configuration for temperatures, nozzle selection, etc.  
   - **Mirror Mode Test** – Added manual configuration for temperatures, nozzle selection, etc.  
@@ -164,5 +179,5 @@ There you’ll find detailed guides on printer usage, configuration, materials, 
 
 ---
 
-**Last updated:** 07.2025
+**Last updated:** 10.2025
 

@@ -1791,32 +1791,69 @@
 ; printing object Body1.stl id:0 copy 0
 ; stop printing object Body1.stl id:0 copy 0
 
+
+
+
+
+
+
+
 ;TYPE:Custom
-M291 S5 J1 F230 L150 H450 R"Enter temperature for Left nozzle (°C):"
-var temp_t0 = input
+; If any prompt is cancelled, we abort cleanly before using undefined vars.
 
-M291 S5 J1 F{var.temp_t0} L150 H450 R"Enter temperature for Right nozzle (°C):"
-var temp_t1 = input
+; --- Tool 0 (left) ---
+M291 R"Temperatures" P"Enter Left nozzle (°C)" S5 L200 H500 F230 J2
+if result == -1
+  abort "User cancelled at Left nozzle prompt"
+var t0 = input
 
-M291 S5 J1 F110 L0 H200 R"Enter build plate temperature (°C):"
-var temp_bed = input
+; --- Tool 1 (right), default to t0 ---
+M291 R"Temperatures" P"Enter Right nozzle (°C)" S5 L200 H500 F{var.t0} J2
+if result == -1
+  abort "User cancelled at Right nozzle prompt"
+var t1 = input
 
-;M291 S5 J1 F0 L0 H150 R"Set Chamber Temperature" P"Please set the temperature for the Chamber"
-;var temp_cham = input
+; --- Bed ---
+M291 R"Temperatures" P"Enter Bed (°C)" S5 L0 H200 F60 J2
+if result == -1
+  abort "User cancelled at Bed prompt"
+var bed = input
 
-;M291 S5 J1 F100 L50 H200 R"Set FLow Rate" P"Please set the flow rate for the your filament in percentage (%)"
-;var flow_rate = input
+; --- Chamber (optional) ---
+M291 R"Temperatures" P"Enter Chamber (°C) — or 0 to skip" S5 L0 H100 F0 J2
+if result == -1
+  abort "User cancelled at Chamber prompt"
+var chamber = input
+
+; --- Fan speed (% 0–100) ---
+M291 R"Cooling" P"Enter part-cooling fan (% 0–100)" S5 L0 H100 F0 J2
+if result == -1
+  abort "User cancelled at Fan prompt"
+var fanpct = input
+var fan = var.fanpct / 100.0      ; M106 accepts 0.0–1.0 (or 0–255)
+
+; ===== Apply settings =====
+M140 S{var.bed}                   ; bed temp (non-blocking)
+if var.chamber > 0
+  M141 S{var.chamber}             ; chamber temp (non-blocking)
+
+; Tool temperatures (keep your M568s)
+M568 P0 S{var.t0} R{var.t0}
+M568 P1 S{var.t1} R{var.t1}
+
+; Fan
+M106 S{var.fan}
 
 
-M140 S{var.temp_bed}
 
-M568 P0 S{var.temp_t0} R{var.temp_t0}
 
-M568 P1 S{var.temp_t1} R{var.temp_t1}
 
-;M141 S{var.temp_cham}
 
-;M221 S{var.flow_rate}
+
+
+
+
+
 
 
 
@@ -3194,12 +3231,13 @@ G1 X-9.894 Y-53.768 E.17335
 G1 X-10.347 Y-53.58 E.02221
 G1 X-12.468 Y-55.701 E.1358
 M204 P2500
-M106 S252.45
 ;LAYER_CHANGE
 ;Z:0.44
 ;HEIGHT:0.2
 
+
 T1
+M106 S{var.fan}                    ; part-cooling fan to requested speed
 
 G1 E-.4 F6000
 ;WIPE_START
@@ -4040,6 +4078,7 @@ M204 P2500
 ;HEIGHT:0.2
 
 T0
+M106 S{var.fan}                    ; part-cooling fan to requested speed
 
 G1 E-.4 F6000
 ;WIPE_START
@@ -4785,12 +4824,12 @@ M204 P1500
 G1 F5286
 G1 X8.827 Y-72.721 E.02607
 M204 P2500
-M106 S255
 ;LAYER_CHANGE
 ;Z:0.84
 ;HEIGHT:0.2
 
 T1
+M106 S{var.fan}                    ; part-cooling fan to requested speed
 
 G1 E-.4 F6000
 ;WIPE_START
@@ -5084,6 +5123,7 @@ M204 P2500
 ;HEIGHT:0.2
 
 T0
+M106 S{var.fan}                    ; part-cooling fan to requested speed
 
 G1 E-.4 F6000
 ;WIPE_START

@@ -119,6 +119,7 @@ if exists(param.A)
   var dd = var.zp - var.zn
   
   if abs(var.dd) < 8 || {abs(var.dd) + abs(global.rtzoffset)} < 8
+    M98 P"0:/sys/led/pause.g"
     M291 S4 K{"Calibrate","Skip Calibration","Cancel Calibration"} R{"The nozzle is too low"} P"To avoid damaging your machine, callibrate the nozzle.<br>Please select an option to proceed"
     if input = 0
       M291 S2 R"Calibration Process" P"You will be asked to: Loosen heat break and raise it.<br>Click ""OK"" when ready to start."
@@ -142,6 +143,7 @@ if exists(param.A)
    
       G90
       G1 X-999 U999 F18000
+      M98 P"0:/sys/led/resetstatus.g"
       M98 P"place.g"
       M98 P"0:/macros/System/Calibration/Auto Calibration Macros/Tool Height Auto Calibration" C1
 

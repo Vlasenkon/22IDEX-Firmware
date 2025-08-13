@@ -151,6 +151,7 @@ if !exists(param.A)
   echo "Left head pos = "^{var.lll}^" mm"
 
   if {abs(var.probe_heigh - var.lll)} < 8 || {abs(var.probe_heigh - var.lll) + abs(global.rtzoffset)} < 8
+    M98 P"0:/sys/led/pause.g"
     M291 S4 K{"Calibrate","Skip Calibration","Cancel Calibration"} R{"The nozzle is too low"} P"To avoid damaging your machine, callibrate the nozzle.<br>Please select an option to proceed"
     if input = 0
       M291 S2 R"Calibration Process" P"You will be asked to: Loosen heat break and raise it.<br>Click ""OK"" when ready to start."
@@ -174,13 +175,16 @@ if !exists(param.A)
    
       G90
       G1 X-999 U999 F18000
+      M98 P"0:/sys/led/resetstatus.g"
       M98 P"0:/macros/System/Calibration/Auto Calibration Macros/Tool Height Auto Calibration" S1 C1
 
     elif input == 1 ; User chose "Skip Calibration"
+      M98 P"0:/sys/led/resetstatus.g"
       M98 P"place.g"
       echo "Skipping calibration as per user request."
     
     elif input == 2 ; User chose "Cancel Calibration"
+      M98 P"0:/sys/led/resetstatus.g"
       M98 P"place.g"
       abort "Calibration cancelled by user."
 
@@ -250,7 +254,6 @@ if !exists(param.A)
       G1 X-999 U999 F18000
 
       var mid_dev = {var.mid_lll - var.mid_rrr}
-      echo "Middle Deviation = "^{var.mid_dev}
 
       if exists(global.rtzoffset)
         set global.rtzoffset = var.mid_dev
@@ -272,6 +275,7 @@ if !exists(param.A)
       echo "Middle deviation = "^{var.mid_dev}
 
     else ; ===If delta is more than allowed value===
+      M98 P"0:/sys/led/pause.g"
       M291 S4 K{"Calibrate","Skip Calibration","Cancel Calibration"} R{"Nozzles are deviated by "^var.ddd^" mm"} P"Please select an option to proceed"
   
       if input == 0 ; User chose "Calibrate"
@@ -329,13 +333,16 @@ if !exists(param.A)
     
           G90
           G1 X-999 U999 F18000
-          M98 P"0:/macros/System/Calibration/Auto Calibration Macros/New Tool Height Auto Calibration" S1
+        M98 P"0:/sys/led/resetstatus.g"
+        M98 P"0:/macros/System/Calibration/Auto Calibration Macros/New Tool Height Auto Calibration" S1
 
   
       elif input == 1 ; User chose "Skip Calibration"
+        M98 P"0:/sys/led/resetstatus.g"
         echo "Skipping calibration as per user request."
   
       elif input == 2 ; User chose "Cancel Calibration"
+        M98 P"0:/sys/led/resetstatus.g"
         abort "Calibration cancelled by user."
 
 
