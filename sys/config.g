@@ -84,6 +84,7 @@ M143 H1 S510                                                     ; configure tem
 M570 H1 P30 T50 R10                                              ; configure heater fault detection
 
 M308 S2 A"Bed Heater" P"1.temp1" Y"thermistor" T100000 B3950     ; configure temperature sensor
+M98 P"0:/user/BedTempCalibration.g"                              ; configure C coef
 M950 H2 C"1.out0" Q10 T2                                         ; configure heater
 M98 P"0:/user/PIDBedHead.g"                                      ; configure PID parameters
 M140 H2                                                          ; map heated bed to heater
@@ -93,7 +94,6 @@ M98 P"0:/user/bedfaultdetection.g"                               ; configure hea
 M308 S3 A"Chamber Air" P"1.temp0" Y"thermistor" T200000 B3100    ; configure temperature sensor
 M98 P"0:/user/ChamberTempSensor.g"                               ; configure C coef
 M950 H3 C"1.out1" Q10 T3                                         ; configure heater
-M98 P"0:/user/PIDChamber.g"                                      ; configure PID parameters
 M307 H3 R0.1 K0.895 D55 S1.00 B1                                 ; configure PID parameters
 M141 H3                                                          ; map chamber to heater
 M143 H3 S110                                                     ; configure temperature limit for the heater
@@ -169,7 +169,7 @@ M98 P"0:/user/xcomp_auto.g"                                      ; load auto cal
 M98 P"0:/user/xcomp_manual.g"                                    ; load manual calibration value
 M98 P"0:/user/xcomp_mode.g"                                      ; load compensation mode
 
-M98 P"0:/user/periodic_wiping.g" 				 ; load global variables 
+M98 P"0:/user/periodic_wiping.g" 				                         ; load global variables 
 M98 P"0:/user/hepafan.g"                                         ; load hepa fan speed
 
 echo >"0:/user/toolchangeretraction.g" "                         ; ToolChange Retraction Disabled"
