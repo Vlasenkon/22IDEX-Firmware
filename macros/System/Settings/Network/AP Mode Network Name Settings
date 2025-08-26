@@ -1,0 +1,15 @@
+M291 S4 R"Changing the printer’s network name in Access Point mode" P"Press Standard Name to keep the default name ""22 IDEX""<br>Press Custom Name to set your own." K{"Standart Name", "Custom Name"}
+
+if input == 0
+    echo >"0:/user/APname.g" "if exists(global.APname)"
+    echo >>"0:/user/APname.g" "  set global.APname = ""22 IDEX"""
+    echo >>"0:/user/APname.g" "else"
+    echo >>"0:/user/APname.g" "  global APname = ""22 IDEX"""
+    echo "Access Point network name is ""22 IDEX"""
+elif input == 1
+    M291 S7 F"22 IDEX" R"Access Point network name" P"Enter the network name." H20 
+    echo >"0:/user/APname.g" "if exists(global.APname)"
+    echo >>"0:/user/APname.g" "  set global.APname = """^input^""""
+    echo >>"0:/user/APname.g" "else"
+    echo >>"0:/user/APname.g" "  global APname = """^input^""""
+    echo "Access Point network name is """^input^""""

@@ -1,0 +1,41 @@
+if !move.axes[1].homed
+    G28 Y
+if !move.axes[0].homed
+    G28 X
+if !move.axes[3].homed
+    G28 U
+if !move.axes[2].homed
+    G28 Z
+
+if heat.heaters[0].current > 35 || heat.heaters[1].current > 35 ||heat.heaters[2].current > 35 || heat.heaters[3].current > 35
+    M291 S2 R"Open the Lid and Door" P"Please Open the Lid and Door" S2
+
+G1 F8000 X-208 Y175 U208 Z350
+M568 P3 A0
+M140 S0
+M141 S0
+
+if heat.heaters[0].current > 35 && heat.heaters[1].current > 35 && heat.heaters[2].current > 35 && heat.heaters[3].current > 35
+    M291 R"Wait for Heater to Cool Down" P"The temperature of all heaters must be below 35°C." S1 T10
+    while heat.heaters[0].current > 35 && heat.heaters[1].current > 35 && heat.heaters[2].current > 35 && heat.heaters[3].current > 35
+        G4 S5
+
+M291 S2 R"Attention!" P"Please take the low-temperature filament from the chamber" S2
+M291 S2 R"Close the Lid and Door" P"Please Close the Lid and Door" S2
+
+M140 S150
+M141 S90
+M116 H2 C0
+G4 S1200
+var midTemp = (heat.heaters[0].current+heat.heaters[1].current)/2
+var offset = var.midTemp - heat.heaters[3].current
+echo "Mid Temp: "^ var.midTemp ^"<br> Chamber Temp: "^ heat.heaters[3].current ^"<br> Deviation: "^var.offset
+
+M308 S3 A"Chamber Air" P"1.temp0" Y"thermistor" T200000 B3100 O{var.offset}
+echo >"0:/user/PIDChamber.g" "M308 S2 A""Bed Heater"" P""1.temp1"" Y""thermistor"" T100000 B4000 O"^{var.offset}
+
+M140 S0
+M141 S0
+M98 P"0:/sys/led/end.g"
+M291 R"PID tune has been finished" P"New values were saved" S1 T10
+M98 P"0:/sys/led/resetstatus.g"
