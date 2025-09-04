@@ -1,1 +1,0 @@
-M98 P"0:/sys/led/resetstatus.g"
