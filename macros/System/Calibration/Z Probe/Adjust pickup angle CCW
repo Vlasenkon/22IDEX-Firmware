@@ -1,0 +1,16 @@
+if global.probePickAngle < 180
+  set global.probePickAngle = global.probePickAngle + 1
+else
+  echo "Error: Reached maximum of 180 degrees"
+  M99
+
+M280 P0 S{global.probePickAngle}     ; Move probe holder to the 'pick/place' position
+; Generate pickupangle.g
+echo >"0:/user/pickupangle.g" "; Set Z-Probe servo angle"
+echo >>"0:/user/pickupangle.g" "if exists(global.probePickAngle)"
+echo >>"0:/user/pickupangle.g" "  set global.probePickAngle = "^{global.probePickAngle}
+echo >>"0:/user/pickupangle.g" "else"
+echo >>"0:/user/pickupangle.g" "  global probePickAngle = "^{global.probePickAngle}
+
+
+echo "New active pick/place angle: "^{global.probePickAngle}

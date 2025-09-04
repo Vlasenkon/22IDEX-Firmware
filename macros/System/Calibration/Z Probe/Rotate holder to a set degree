@@ -1,0 +1,2 @@
+echo "Curent active pick/place angle: "^{global.probePickAngle}
+M280 P0 S{global.probePickAngle} ; Move probe holder to the 'pick/place' position

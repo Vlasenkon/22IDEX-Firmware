@@ -1,0 +1,26 @@
+M291 R"Do you want to go to sleep mode now?" P"Machine will cool down, lower the build plate, and shut itself down." S3
+
+if {state.status == "processing" || state.status == "pausing" || state.status == "paused" || state.status == "resuming"}
+  M291 R"Please Wait for Print to Finish" P"Use Print End Behaviour Macros to change post-print behaviour." S1 T15
+else
+  if !move.axes[0].homed || !move.axes[1].homed || !move.axes[2].homed || !move.axes[3].homed
+    M98 P"homeall.g"
+  G90
+  if move.axes[2].machinePosition < 420
+    G1 Z420
+  G1 Y150  F18000
+  ; Disable Fans
+  M106 P3 S0
+  M106 P1 S0
+  
+  ;Cool Down Tools
+  G10 P0 S0 R0
+  G10 P1 S0 R0
+  G10 P2 S0 R0
+  G10 P3 S0 R0
+
+  M140 S0       ; turn off bed heater
+  M141 S0       ; turn off chamber heater
+
+  M84 XYU
+  M81 S1
