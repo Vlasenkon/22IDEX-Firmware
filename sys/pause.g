@@ -5,8 +5,6 @@ M400
 G60 S4
 M204 T5000
 
-; Disable ToolChange Retraction
-echo >"0:/user/toolchangeretraction.g" "                                                    ; ToolChange Retraction Disabled"
 
 M83                                                                                         ; relative extruder moves
 G1 E-20 F{60}*{50}                                                                          ; retract filament

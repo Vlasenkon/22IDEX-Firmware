@@ -38,9 +38,6 @@ M400
 if exists(param.W) && sensors.analog[{state.currentTool}].lastReading < tools[{state.currentTool}].active[0]
   M116 S10 P{state.currentTool}
 
-; Purge fillament
-M98 P"0:/user/toolchangeretraction.g" E1
-
 if exists(param.E)
   M83                                                             ; Relative extruder moves
   G1 E{(param.E)} F{60}*{3}                                       ; extrude filament

@@ -13,7 +13,7 @@ var div = 100                          ; Diviation for Nozzle Temp During Wait f
 if var.S0 > 0 && var.S1 > 0
   T3 P0
   M568 P0 S{var.S0 - var.div} R{var.S0 - var.div}
-  M568 P1 S{var.S1 - var.div} R{var.S0 - var.div}
+  M568 P1 S{var.S1 - var.div} R{var.S1 - var.div}
   M568 P2 S{{var.S0 - var.div}, {var.S1 - var.div}} R{{var.S0 - var.div}, {var.S1 - var.div}}
   M568 P3 S{{var.S0 - var.div}, {var.S1 - var.div}} R{{var.S0 - var.div}, {var.S1 - var.div}}
   M568 P3 A1
@@ -101,8 +101,6 @@ M98 P"0:/sys/nozzlewipe.g" E50 W1
 if exists(param.E)
   T{param.E}
 
-
-M98 P"0:/sys/entoolchangeretraction.g" ; Enable ToolChange Retraction
 
 M208 Z-1 S1                            ; set axis minima to allow for wider range of Z - Offset
 M204 P5000 T5000                       ; set the accelerations

@@ -1,6 +1,3 @@
-; Disable ToolChange Retraction
-echo >"0:/user/toolchangeretraction.g" "; ToolChange Retraction Disabled"
-
 M204 P5000 T5000  ; reset accelerations
 M208 Z-1 S1       ; set axis minima to default
 

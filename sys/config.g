@@ -1,4 +1,4 @@
-; Configuration file for AddWise IDEX
+; Configuration file for 22IDEX V3
 
 ; General preferences
 G90                                                              ; absolute coordinates
@@ -11,12 +11,16 @@ M80 C"pson"                                                      ; define PS_ON 
 G4 S2
 
 ; Network
-M98 P"0:/user/networkmode.g"
+;M98 P"0:/user/networkmode.g"          ; Load network mode settings
+M586 P0 S1                            ; Enable HTTP (Web interface)
+M586 P1 S0                            ; Disable FTP
+M586 P2 S0                            ; Disable Telnet
 
-M586 P0 S1                                                       ; configure HTTP 
-M586 P1 S0                                                       ; configure FTP 
-M586 P2 S0                                                       ; configure Telnet
-
+; Set network configuration
+M552 P192.168.1.50                    ; Set static IP address
+M553 P255.255.255.0                   ; Set subnet mask
+M554 P192.168.1.1                     ; Set gateway (optional)
+M552 S1                               ; Enable network interface
 
 
 ; Drives
@@ -160,7 +164,6 @@ M98 P"0:/user/xcomp_auto.g"                                      ; load auto cal
 M98 P"0:/user/xcomp_manual.g"                                    ; load manual calibration value
 M98 P"0:/user/xcomp_mode.g"                                      ; load compensation mode
 
-echo >"0:/user/toolchangeretraction.g" "                         ; ToolChange Retraction Disabled"
 echo >"0:/sys/resetzbabystep.g" "                                ; do nothing"
 
 ; Custom settings

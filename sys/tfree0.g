@@ -1,6 +1,8 @@
 G90
 
-M98 P"0:/user/toolchangeretraction.g" R1
+if state.status == "processing"
+	M83
+	G1 E-5 F3000
 
 G60 S3
 M106 S0

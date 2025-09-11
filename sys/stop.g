@@ -1,6 +1,3 @@
-; Disable ToolChange Retraction
-echo >"0:/user/toolchangeretraction.g" "; ToolChange Retraction Disabled"
-
 M106 P3 S0
 M106 P1 S0
 
