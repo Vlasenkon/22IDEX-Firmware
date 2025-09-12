@@ -1,17 +1,44 @@
 ; ============================================================
 ; Chamber Heating Test
-; - Confirms start
-; - Sets temps to 0, cools if any heater ≥35C (blue LED macro)
-; - Prompts to close door/lid, then heats chamber/bed (yellow LED macro)
-; - Logs temps every second to 0:/sys/Testing/Chamber_Heatet
-; - Stops when X or U endstop is held OR chamber reaches 100C
-; - Green if within target time, Red if slower than expected
+; 
+; This test validates the chamber heating performance by:
+; 1. Prompting user to remove low-melting materials and choose test mode
+;    - Normal mode: keeps fault detection enabled
+;    - Disabled fault mode: temporarily disables chamber fault detection
+; 2. Cooling phase if any heater is ≥35°C (blue LED indicates cooling)
+;    - Monitors all heaters (T0, T1, bed, chamber)
+;    - Times out after 1 hour if cooling fails
+; 3. Heating phase starts after cooling complete (yellow LED indicates heating)
+;    - Sets chamber to 100°C and bed to 130°C (bed assists chamber heating)
+;    - Logs temperature data every second to CSV file
+; 4. Test ends when:
+;    - Chamber reaches 100°C (success)
+;    - X or U endstop is triggered (user abort)
+;    - Test exceeds 1 hour timeout (failure)
+; 5. Results evaluation:
+;    - Green LED if chamber reached 100°C within 10 minutes
+;    - Red LED if it took longer than expected
+;    - CSV file saved to 0:/sys/Testing/Chamber_Heatet.csv
+; 
+; Emergency stop: Hold X or U endstop at any time to abort test
 ; ============================================================
 
 ; ---- User confirmation ----
-;M291 S4 K{"Start test","Cancel"} R"Chamber Heating Test" P"The printer will heat up to high temperatures.<br>Remove any low-melting materials from the chamber.<br>You can end the test early by holding down the X or U endstops."
-;if input == 1
-;  abort "Test cancelled by user."
+M291 S4 K{"Start test","Start (No fault detection)","Cancel"} R"Chamber Heating Test" P"The printer will heat to high temps.<br>Remove low-melting materials.<br>Hold X or U endstop to abort."
+
+; Variable to track fault detection state
+var disableFaultDetection = false
+
+if input == 0
+  ; Start test normally - fault detection remains enabled
+  echo "Starting chamber heating test with normal fault detection"
+elif input == 1
+  ; Start test with disabled chamber fault detection
+  set var.disableFaultDetection = true
+  echo "Starting chamber heating test with disabled fault detection"
+  M570 H3 P999999 T999999 R50    ; Disable chamber fault detection
+else
+  abort "Test cancelled by user."
 
 ; ---- Ensure all heaters are off ----
 M140 S0                          ; bed heater OFF
@@ -20,7 +47,6 @@ M568 P0 R0 S0 A0
 M568 P1 R0 S0 A0
 M568 P2 R0 S0 A0
 M568 P3 R0 S0 A0
-M568 P4 R100 S100 A2
 
 ; ---- Variables ----
 var coolElapsed = 0              ; seconds spent cooling (for timeout only)
@@ -30,45 +56,56 @@ var heatDuration = 0
 var tookTooLong = false
 var elapsed = 0                  ; seconds since heating started
 
-; ---- CSV header (now includes elapsed column) ----
-echo >"0:/sys/Testing/Chamber_Heatet.csv" "Time,Elapsed_s,Tool0_Temp,Tool1_Temp,Bed_Temp,Chamber_Temp"
+; ---- CSV header (now includes elapsed column and Chamber Heater temp) ----
+echo >"0:/sys/Testing/Chamber_Heatet.csv" "Time,Elapsed_s,Tool0_Temp,Tool1_Temp,Bed_Temp,Chamber_Air_Temp,Chamber_Heater_Temp"
 
 ; ---- Helper scratch ----
 var t0 = 0
 var t1 = 0
 var bed = 0
 var chamber = 0
+var chamberHeater = 0
 
 ; ---- If anything is ≥35C, show cooling popup + BLUE LED macro ----
-;if (heat.heaters[0].current >= 35) || (heat.heaters[1].current >= 35) || (heat.heaters[2].current >= 35) || (heat.heaters[3].current >= 35)
-;  M291 S1 R"Printer cooling" P"Wait for the printer to cool down and the temperature to stabilize.<br>To speed it up, open the door and lid."
-;  M98 P"0:/sys/led/start_cold.g" ; BLUE
-;
-;                                 ; Cooling loop: check every second until ALL heaters <35C
-;  while true
-;    if sensors.endstops[0].triggered || sensors.endstops[3].triggered
-;      M98 P"0:/sys/led/fault.g"  ; RED
-;      abort "Test canceled due to triggered X/U endstop during cooling."
-;
-;    set var.t0 = heat.heaters[0].current
-;    set var.t1 = heat.heaters[1].current
-;    set var.bed = heat.heaters[2].current
-;    set var.chamber = heat.heaters[3].current
-;
-;    if var.t0 < 35 && var.t1 < 35 && var.bed < 35 && var.chamber < 35
-;      break
-;
-;    if mod(iterations, 30) == 0
-;      echo "Cooling... T0:" ^ var.t0 ^ "  T1:" ^ var.t1 ^ "  Bed:" ^ var.bed ^ "  Chamber:" ^ var.chamber ^ "  (°C)"
-;
-;    G4 S1
-;    set var.coolElapsed = var.coolElapsed + 1
-;    if var.coolElapsed > 3600
-;      M98 P"0:/sys/led/fault.g"  ; RED
-;      abort "Error: the printer took too long to cool down."
+if (sensors.analog[0].lastReading >= 35) || (sensors.analog[1].lastReading >= 35) || (sensors.analog[2].lastReading >= 35) || (sensors.analog[3].lastReading >= 35)
+  M98 P"0:/sys/led/start_cold.g" ; BLUE
+  M291 S1 R"Printer cooling" P"Wait for the printer to cool down and the temperature to stabilize.<br>To speed it up, open the door and lid."
+
+                                 ; Cooling loop: check every second until ALL heaters <35C
+  while true
+    if sensors.endstops[0].triggered || sensors.endstops[3].triggered
+      ; Restore fault detection if it was disabled
+      if var.disableFaultDetection
+        M570 H3 P600 T70 R5     ; Restore chamber fault detection to normal
+      M98 P"0:/sys/led/fault.g"  ; RED
+      abort "Test canceled due to triggered X/U endstop during cooling."
+
+    set var.t0 = sensors.analog[0].lastReading
+    set var.t1 = sensors.analog[1].lastReading
+    set var.bed = sensors.analog[2].lastReading
+    set var.chamber = sensors.analog[3].lastReading
+
+    if var.t0 < 35 && var.t1 < 35 && var.bed < 35 && var.chamber < 35
+      break
+
+    if mod(iterations, 60) == 0
+      echo "Cooling... T0:" ^ var.t0 ^ "  T1:" ^ var.t1 ^ "  Bed:" ^ var.bed ^ "  Chamber:" ^ var.chamber ^ "  (°C)"
+
+    G4 S1
+    set var.coolElapsed = var.coolElapsed + 1
+    if var.coolElapsed > 3600
+      ; Restore fault detection if it was disabled
+      if var.disableFaultDetection
+        M570 H3 P600 T70 R5     ; Restore chamber fault detection to normal
+      M98 P"0:/sys/led/fault.g"  ; RED
+      abort "Error: the printer took too long to cool down."
+
+  ; ---- Cooling complete - show success (green LED) ----
+  M98 P"0:/sys/led/end.g" ; GREEN success - cooling complete
+  M291 S2 R"Cooling Complete" P"The printer has cooled down successfully.<br>Ready to start chamber heating test."
 
 ; ---- Prompt to close up, then start heating (switch to YELLOW LED macro) ----
-;M291 S2 R"Close the door and lid" P"The printer will start heating the chamber.<br>Make sure the door and lid are closed."
+M291 S2 R"Close the door and lid" P"The printer will start heating the chamber.<br>Make sure the door and lid are closed."
 M98 P"0:/sys/led/pause.g"        ; YELLOW = active / heating
 
 ; Start heaters for the test (adjust as needed)
@@ -84,28 +121,35 @@ while true
   if sensors.endstops[0].triggered || sensors.endstops[3].triggered
     M141 S0
     M140 S0
+    ; Restore fault detection if it was disabled
+    if var.disableFaultDetection
+      M570 H3 P600 T70 R5       ; Restore chamber fault detection to normal
     M98 P"0:/sys/led/fault.g"    ; RED
     abort "Test canceled due to triggered X/U endstop."
 
                                  ; Sample temps
   var now = state.time
   set var.elapsed = floor(var.now - var.startTime)
-  set var.t0 = heat.heaters[0].current
-  set var.t1 = heat.heaters[1].current
-  set var.bed = heat.heaters[2].current
-  set var.chamber = heat.heaters[3].current
+  set var.t0 = sensors.analog[0].lastReading
+  set var.t1 = sensors.analog[1].lastReading
+  set var.bed = sensors.analog[2].lastReading
+  set var.chamber = sensors.analog[3].lastReading
+  set var.chamberHeater = sensors.analog[4].lastReading
 
-                                 ; Append to CSV (Time, Elapsed, T0, T1, Bed, Chamber)
-  echo >>"0:/sys/Testing/Chamber_Heatet.csv" {var.now ^ "," ^ var.elapsed ^ "," ^ var.t0 ^ "," ^ var.t1 ^ "," ^ var.bed ^ "," ^ var.chamber}
+                                 ; Append to CSV (Time, Elapsed, T0, T1, Bed, Chamber Air, Chamber Heater)
+  echo >>"0:/sys/Testing/Chamber_Heatet.csv" {var.now ^ "," ^ var.elapsed ^ "," ^ var.t0 ^ "," ^ var.t1 ^ "," ^ var.bed ^ "," ^ var.chamber ^ "," ^ var.chamberHeater}
 
                                  ; Console heartbeat every ~30s
-  if mod(iterations, 30) == 0
+  if mod(iterations, 60) == 0
     echo "Heating... Chamber: " ^ var.chamber ^ " °C"
 
     ; ---- Hard timeout guard
   if var.elapsed > 3600
     M141 S0
     M140 S0
+    ; Restore fault detection if it was disabled
+    if var.disableFaultDetection
+      M570 H3 P600 T70 R5       ; Restore chamber fault detection to normal
     M98 P"0:/sys/led/fault.g"
     abort "Timeout: heating took too long."
   
@@ -120,16 +164,20 @@ while true
 M141 S0
 M140 S0
 
+; Restore fault detection if it was disabled
+if var.disableFaultDetection == true
+  echo "Restoring chamber fault detection to normal settings"
+  M570 H3 P600 T70 R5           ; Restore chamber fault detection to normal
+
 ; Compute duration and evaluate target (no per-second elapsed logged)
 set var.heatDuration = floor(state.time - var.startTime)
 if var.heatDuration > var.expectedHeatSeconds
   set var.tookTooLong = true
 
 ; ---- Final LEDs + message ----
-if var.tookTooLong
+if var.tookTooLong == true
   M98 P"0:/sys/led/fault.g"      ; RED
   M291 S2 R"Chamber heating test complete (SLOW)" P:"Chamber reached 100°C, but exceeded the target " ^ var.expectedHeatSeconds ^ " s (actual " ^ var.heatDuration ^ " s).<br>Results: Settings → Testing → PA.csv"
 else
-                                 ; If you have a green LED macro, replace the next line with: M98 P"0:/sys/led/success.g"
-  M150 R0 U255 B0                ; GREEN success (Neopixel)
-  M291 S2 R"Chamber heating test complete" P:"Chamber reached 100°C in " ^ var.heatDuration ^ " s.<br>Results saved to Settings → Testing → PA.csv"
+  M98 P"0:/sys/led/end.g" ; Success - Green
+  echo "Chamber heating test complete: Chamber reached 100°C in " ^ var.heatDuration ^ " s. Results saved to Settings → Testing → PA.csv"
