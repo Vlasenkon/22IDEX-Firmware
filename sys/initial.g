@@ -13,7 +13,7 @@ var div = 100                          ; Diviation for Nozzle Temp During Wait f
 if var.S0 > 0 && var.S1 > 0
   T3 P0
   M568 P0 S{var.S0 - var.div} R{var.S0 - var.div}
-  M568 P1 S{var.S1 - var.div} R{var.S1 - var.div}
+  M568 P1 S{var.S1 - var.div} R{var.S0 - var.div}
   M568 P2 S{{var.S0 - var.div}, {var.S1 - var.div}} R{{var.S0 - var.div}, {var.S1 - var.div}}
   M568 P3 S{{var.S0 - var.div}, {var.S1 - var.div}} R{{var.S0 - var.div}, {var.S1 - var.div}}
   M568 P3 A1
@@ -43,6 +43,9 @@ else
   M568 P0 A1
 
 
+M106 P7 H-1
+M106 P7 S{global.hepafan}
+
 ; Wait for Bed and (Chamber - Optionally)
 if !exists(param.W)
   M116 H2 S10
@@ -55,17 +58,24 @@ M98 P"0:/sys/led/start_hot.g"
 
 G60 S0                                 ; Save selectrd tool to slot 0
 
-M98 P"homeall.g" Z1 S1 L1              ; Home the machine
+M84 Y
+G4 S2
+
+M98 P"homeall.g" Z1 S1 L1              ; Home the machine  
 
 if exists(param.A) && exists(param.B) && exists(param.D) && exists(param.J)
   M98 P"mesh.g" A{param.A} B{param.B} D{param.D} J{param.J}
 else
   M98 P"mesh.g"
 
-;Clean the nozzles ===========================================================================
-T R0                                   ; Load previously selected tool
-M98 P"0:/sys/nozzlewipe.g" C1 W1
 
+;Clean the nozzles ===========================================================================
+T{param.E}                                  ; Load previously selected tool
+
+
+M98 P"0:/sys/nozzlewipe.g" C1 W1
+M42 P4 S0
+M98 P"0:/user/extrusion_value.g"
 ; Get Nozzles up to Temp ===========================================================================
 if var.S0 > 0 && var.S1 > 0
   M568 P0 S{var.S0} R{var.R0}
@@ -95,7 +105,7 @@ else
 
 ;Purge and Clean the nozzles ===========================================================================
 M98 P"0:/sys/nozzlewipe.g" E50 W1
-
+M42 P4 S0
 
 ; Select the tool before ToolChange Retraction Enabled
 if exists(param.E)
@@ -104,3 +114,5 @@ if exists(param.E)
 
 M208 Z-1 S1                            ; set axis minima to allow for wider range of Z - Offset
 M204 P5000 T5000                       ; set the accelerations
+
+M42 P4 S0

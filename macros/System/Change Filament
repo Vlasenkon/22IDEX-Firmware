@@ -1,0 +1,306 @@
+M291 S4 K{"Left Tool - T0", "Right Tool - T1"} R"Choose the head where you want to change filament" P" "
+if input == 0
+  M568 P0 A2
+  T0
+else   
+  M568 P1 A2
+  T1
+M291 S5 J1 F250 L150 H450 R"Unloading filament" P"Enter loaded filament printing temperature"
+G10 P{state.currentTool} S{input} R{input}
+
+M291 R"Please wait while the nozzle is being heated up" P"This may take a few minutes." S1 T15
+M98 P"0:/sys/led/start_cold.g"
+var previous_tooltemp = heat.heaters[state.currentTool].active
+
+if var.previous_tooltemp < 380
+  ;Unload Speed
+  var ss = 0
+  if !exists(param.S)
+    set var.ss = 1200
+  else
+    set var.ss = 200
+  
+  
+  M400
+  G60 S0 ; Remember last tool selected
+  
+  if {state.status != "processing" || state.status != "pausing" || state.status != "paused" || state.status != "resuming"} && {!move.axes[0].homed || !move.axes[1].homed || !move.axes[2].homed || !move.axes[3].homed}
+    G28
+  
+  
+  T R0 ; Select tool from memory slot
+  if move.axes[0].homed && move.axes[1].homed && move.axes[2].homed && move.axes[3].homed
+    G90
+    if move.axes[2].machinePosition < 420
+      G1 F18000 Z420
+    G1 F18000
+  
+  M116 P{state.currentTool} S15; Wait for the temperatures to be reached
+  M98 P"0:/sys/led/start_hot.g"
+    
+  M291 R"Retracting Filament" P" " S1 T15 ; Display  message
+  
+  M83 ; Extruder to relative mode
+  G1 E20 F{var.ss} ; Extrude
+  G1 E-20 F600 ; Retract
+  G1 E-100 F1800 ; Retract
+  M400 ; Wait for the moves to finish
+
+  M98 P"0:/sys/nozzlewipe.g" ; wipe curently active nozzle
+
+  if state.status != "processing" || state.status != "pausing" || state.status != "paused" || state.status != "resuming"
+    G10 S0 R0 ; Turn off the heater
+  M84 E0:1
+else
+  M98 P"0:/macros/System/Cold Pull" A{var.previous_tooltemp}
+
+; Loading -------------------------------------------------------------------------------------------------------------------------------------
+
+M291 S5 J1 F250 L150 H450 R"Loading filament" P"Enter new filament printing temperature"
+var current_temp = input
+G10 P{state.currentTool} S{var.current_temp} R{var.current_temp}
+
+M291 R"Please wait while the nozzle is being heated up" P"This may take a few minutes." S1 T15
+
+M98 P"0:/sys/led/resetstatus.g"
+M98 P"0:/sys/led/start_cold.g"
+
+
+;Load Speed
+var ss = 0
+if !exists(param.S)
+  set var.ss = 300
+else
+  set var.ss = 100
+
+if var.previous_tooltemp <= var.current_temp || var.previous_tooltemp - var.current_temp <= 70
+
+  M400
+  G60 S0 ; Remember last tool selected
+  
+  if {state.status != "processing" || state.status != "pausing" || state.status != "paused" || state.status != "resuming"} && {!move.axes[0].homed || !move.axes[1].homed || !move.axes[2].homed || !move.axes[3].homed}
+    G28
+    M98 P"0:/sys/led/statusoff.g"
+    M98 P"0:/sys/led/restorewhite.g"
+    M98 P"0:/sys/led/start_cold.g"
+  
+  
+  T R0 ; Select tool from memory slot
+  if move.axes[0].homed && move.axes[1].homed && move.axes[2].homed && move.axes[3].homed
+    G90
+    if move.axes[2].machinePosition < 420
+      G1 F18000 Z420
+    
+    if state.currentTool == 0
+      G1 Y0 X0 U999 F18000
+    elif state.currentTool == 1
+      G1 Y0 U0 X-999 F18000
+  
+  M291 R"Please wait while the nozzle is being heated up" P"This may take a few minutes." S1 T15
+  M116 P{state.currentTool} S15; Wait for the temperatures to be reached
+  M98 P"0:/sys/led/start_hot.g"
+  M83 ; Extruder to relative mode
+  
+  
+  
+  M291 R"Feed the filament, material will be extruded" P"Press ""Extrude"" to start or ""Cancel"" to stop." S4 K{"Extrude","Cancel"}
+  if input == 0
+    G1 E200 F{var.ss} ; Extrude
+  else
+    if state.status != "processing" || state.status != "pausing" || state.status != "paused" || state.status != "resuming"
+      G10 S0 R0 ; Turn off the heater
+      M84 E0:1
+    M99
+  
+  
+  M400
+  
+  M291 R"Do you see new filament extruding?" P"Press ""Yes"" if filament is extruding or ""No"" to extrude more." S4 K{"Yes","No"}
+    while input == 1
+      G1 E50 F{var.ss} ; Extrude
+      M400
+      M291 R"Do you see new filament extruding?" P"Press ""Yes"" if filament is extruding or ""No"" to extrude more." S4 K{"Yes","No"}
+  
+  M98 P"0:/sys/nozzlewipe.g" ; wipe curently active nozzle
+  M84 E0:1
+  
+  if state.status != "processing" || state.status != "pausing" || state.status != "paused" || state.status != "resuming"
+    G10 S0 R0 ; Turn off the heater
+
+elif var.previous_tooltemp - var.current_temp <= 160
+
+  G10 P{state.currentTool} S{var.previous_tooltemp} R{var.previous_tooltemp}
+
+  G60 S0
+
+  if {state.status != "processing" || state.status != "pausing" || state.status != "paused" || state.status != "resuming"} && {!move.axes[0].homed || !move.axes[1].homed || !move.axes[2].homed || !move.axes[3].homed}
+    G28
+    M98 P"0:/sys/led/statusoff.g"
+    M98 P"0:/sys/led/restorewhite.g"
+    M98 P"0:/sys/led/start_cold.g"
+  
+  T R0
+
+  if move.axes[0].homed && move.axes[1].homed && move.axes[2].homed && move.axes[3].homed
+    G90
+    if move.axes[2].machinePosition < 420
+      G1 F18000 Z420
+    
+    if state.currentTool == 0
+      G1 Y0 X0 U999 F18000
+    elif state.currentTool == 1
+      G1 Y0 U0 X-999 F18000
+
+  M291 R"Please wait while the nozzle is being heated up" P"This may take a few minutes." S1 T15
+  M116 P{state.currentTool} S5; Wait for the temperatures to be reached
+  M98 P"0:/sys/led/start_hot.g"
+  M83 ; Extruder to relative mode
+
+  M291 R"Feed the filament, material will be extruded" P"Press ""Extrude"" to start or ""Cancel"" to stop." S4 K{"Extrude","Cancel"}
+  if input == 0
+    G10 P{state.currentTool} S{var.current_temp} R{var.current_temp}
+    while true
+      G1 E10 F300; Extrude
+      if heat.heaters[state.currentTool].current <= var.current_temp + 5
+        break
+    G1 E20 F300
+  else
+    if state.status != "processing" || state.status != "pausing" || state.status != "paused" || state.status != "resuming"
+      G10 S0 R0 ; Turn off the heater
+      M84 E0:1
+    M99
+  
+  
+  M400
+
+  M291 R"Do you see new filament extruding?" P"Press ""Yes"" if filament is extruding or ""No"" to extrude more." S4 K{"Yes","No"}
+    while input == 1
+      G1 E50 F{var.ss} ; Extrude
+      M400
+      M291 R"Do you see new filament extruding?" P"Press ""Yes"" if filament is extruding or ""No"" to extrude more." S4 K{"Yes","No"}
+  
+  M98 P"0:/sys/nozzlewipe.g" ; wipe curently active nozzle
+  M84 E0:1
+  
+  if state.status != "processing" || state.status != "pausing" || state.status != "paused" || state.status != "resuming"
+    G10 S0 R0 ; Turn off the heater
+
+else
+
+  M291 S5 J1 F250 L250 H300 R"Big difference between filaments temperature." P"You need intermediate filament with 250 - 300 melting temperature(e.g. Nylon).<br>Please enter temperature of intermediate filament."
+  var intermediate_temp = input
+
+  G10 P{state.currentTool} S{var.previous_tooltemp} R{var.previous_tooltemp}
+
+  G60 S0
+
+  if {state.status != "processing" || state.status != "pausing" || state.status != "paused" || state.status != "resuming"} && {!move.axes[0].homed || !move.axes[1].homed || !move.axes[2].homed || !move.axes[3].homed}
+    G28
+    M98 P"0:/sys/led/statusoff.g"
+    M98 P"0:/sys/led/restorewhite.g"
+    M98 P"0:/sys/led/start_cold.g"
+  
+  T R0
+
+  if move.axes[0].homed && move.axes[1].homed && move.axes[2].homed && move.axes[3].homed
+    G90
+    if move.axes[2].machinePosition < 420
+      G1 F18000 Z420
+    
+    if state.currentTool == 0
+      G1 Y0 X0 U999 F18000
+    elif state.currentTool == 1
+      G1 Y0 U0 X-999 F18000
+  
+  M291 R"Please wait while the nozzle is being heated up" P"This may take a few minutes." S1 T15
+  M116 P{state.currentTool} S5; Wait for the temperatures to be reached
+  M98 P"0:/sys/led/start_hot.g"
+  M83 ; Extruder to relative mode
+
+  M291 R"Feed the intermediate filament, material will be extruded" P"Press ""Extrude"" to start or ""Cancel"" to stop." S4 K{"Extrude","Cancel"}
+  if input = 0
+    G10 P{state.currentTool} S{var.intermediate_temp} R{var.intermediate_temp}
+    while true
+      G1 E10 F300; Extrude
+      if heat.heaters[state.currentTool].current <= var.intermediate_temp + 5
+        break
+    G1 E20 F300
+  else
+    if state.status != "processing" || state.status != "pausing" || state.status != "paused" || state.status != "resuming"
+      G10 S0 R0 ; Turn off the heater
+      M84 E0:1
+    M99
+  
+  
+  M400
+
+  M291 R"Do you see intermediate filament extruding?" P"Press ""Yes"" if filament is extruding or ""No"" to extrude more." S4 K{"Yes","No"}
+    while input == 1
+      G1 E50 F{var.ss} ; Extrude
+      M400
+      M291 R"Do you see intermediate filament extruding?" P"Press ""Yes"" if filament is extruding or ""No"" to extrude more." S4 K{"Yes","No"}
+  
+  M98 P"0:/sys/nozzlewipe.g" ; wipe curently active nozzle
+  M84 E0:1
+
+  M98 P"0:/macros/System/Cold Pull" A{var.intermediate_temp}
+  
+  G10 P{state.currentTool} S{var.intermediate_temp} R{var.intermediate_temp}
+
+  G60 S0
+
+  if {state.status != "processing" || state.status != "pausing" || state.status != "paused" || state.status != "resuming"} && {!move.axes[0].homed || !move.axes[1].homed || !move.axes[2].homed || !move.axes[3].homed}
+    G28
+    M98 P"0:/sys/led/statusoff.g"
+    M98 P"0:/sys/led/restorewhite.g"
+    M98 P"0:/sys/led/start_cold.g"
+  
+  T R0
+
+  if move.axes[0].homed && move.axes[1].homed && move.axes[2].homed && move.axes[3].homed
+    G90
+    if move.axes[2].machinePosition < 420
+      G1 F18000 Z420
+    
+    if state.currentTool == 0
+      G1 Y0 X0 U999 F18000
+    elif state.currentTool == 1
+      G1 Y0 U0 X-999 F18000
+
+  M291 R"Please wait while the nozzle is being heated up" P"This may take a few minutes." S1 T15
+  M116 P{state.currentTool} S5; Wait for the temperatures to be reached
+  M98 P"0:/sys/led/start_hot.g"
+  M83 ; Extruder to relative mode
+
+  M291 R"Feed the filament, material will be extruded" P"Press ""Extrude"" to start or ""Cancel"" to stop." S4 K{"Extrude","Cancel"}
+  if input = 0
+    G10 P{state.currentTool} S{var.current_temp} R{var.current_temp}
+    while true
+      G1 E10 F300; Extrude
+      if heat.heaters[state.currentTool].current <= var.current_temp + 5
+        break
+    G1 E20 F300
+  else
+    if state.status != "processing" || state.status != "pausing" || state.status != "paused" || state.status != "resuming"
+      G10 S0 R0 ; Turn off the heater
+      M84 E0:1
+    M99
+  
+  
+  M400
+
+  M291 R"Do you see new filament extruding?" P"Press ""Yes"" if filament is extruding or ""No"" to extrude more." S4 K{"Yes","No"}
+    while input == 1
+      G1 E50 F{var.ss} ; Extrude
+      M400
+      M291 R"Do you see new filament extruding?" P"Press ""Yes"" if filament is extruding or ""No"" to extrude more." S4 K{"Yes","No"}
+  
+  M98 P"0:/sys/nozzlewipe.g" ; wipe curently active nozzle
+  M84 E0:1
+
+  if state.status != "processing" || state.status != "pausing" || state.status != "paused" || state.status != "resuming"
+    G10 S0 R0 ; Turn off the heater
+
+M702 P0
+
+M291 S1 T15 R"Filament changed" P" "

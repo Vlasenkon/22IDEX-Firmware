@@ -14,9 +14,19 @@ if exists(global.filamenterror) && exists(global.filamentbackup) && global.filam
   ; Prepare new tool after filament runout  
   T{global.nextTool}                         ; Select the tool active before pause
 else
-  T R4
+  T R5
 
+if tools[state.currentTool].active[0] == 0
+  M291 S5 J1 F250 L0 H450 R"Set Left Tool Temperature" P"Please set the temperature for the filament previously loaded in the Left Tool."
+  M568 P0 R{input} S{input}
+  M291 S5 J1 F250 L0 H450 R"Set Right Tool Temperature" P"Please set the temperature for the filament previously loaded in the Right Tool."
+  M568 P1 R{input} S{input}
+  M291 S5 J1 F110 L0 H200 R"Set Bed Temperature" P"Please set the temperature for the Bed."
+  M568 P2 R{input} S{input}
+  M291 S5 J1 F60 L0 H200 R"Set Chamber Temperature" P"Please set the temperature for the Chamber."
+  M568 P3 R{input} S{input}
 
+M106 P7 S{global.hepafan}
 M116 H{state.currentTool} S5
 M116 H2 S5                                 ; Wait for heaters to reach temperature
 M98 P"0:/user/chamberwait.g"

@@ -16,16 +16,27 @@ elif input == 2
 G90
 G1 X-999 U999 Y0 F18000
 
-while true
-    if sensors.endstops[0].triggered || sensors.endstops[3].triggered
-        break
-    G1 Z450 F18000
-    M400
-    
-    if sensors.endstops[0].triggered || sensors.endstops[3].triggered
-        break
-    G1 Z0 F18000
-    M400
+G1 Z450 F18000
+M291 R"Z - Axis Lubracation" P"Please lubricate the pulleys and than click ""OK"" to continue." S3
+M400
 
+var coef = 1
+
+while true
+    if move.axes[2].machinePosition >= 435
+        set var.coef = 1
+    if move.axes[2].machinePosition <= 15
+        set var.coef = -1
+
+    echo var.coef
+
+    if sensors.endstops[0].triggered || sensors.endstops[3].triggered
+        break
+    G1 Z{move.axes[2].machinePosition - (var.coef*30)} F18000
+    M400
+    if sensors.endstops[0].triggered || sensors.endstops[3].triggered
+        break
+    G1 Z{move.axes[2].machinePosition + (var.coef*15)} F18000
+    M400
 
 G1 Z300 F18000

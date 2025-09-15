@@ -13,6 +13,9 @@ if boards[0].vIn.current < 23 || boards[0].vIn.current > 24.8
 	M98 P"0:/sys/led/fault.g"
 	abort "Error: Board 0 voltage out of range: " ^ boards[0].vIn.current ^ "V"
 
+; Test Voltage // add 5V PSU test
+M98 P"0:/macros/System/Calibration/Testing/Tests/Voltage"
+
 ; LED Test
 M98 P"0:/macros/System/Calibration/Testing/Tests/LED"
 
@@ -20,7 +23,7 @@ M98 P"0:/macros/System/Calibration/Testing/Tests/LED"
 M98 P"0:/macros/System/Calibration/Testing/Tests/Fans & Heaters"
 
 ; Endstop Test
-M98 P"0:/macros/System/Calibration/Testing/Tests/Endstop"
+M98 P"0:/macros/System/Calibration/Testing/Tests/Endstops Test x10"
 
 ; XYZ - Motor Direction & Connection Test
 M98 P"0:/macros/System/Calibration/Testing/Tests/Motor Direction"
@@ -28,8 +31,20 @@ M98 P"0:/macros/System/Calibration/Testing/Tests/Motor Direction"
 ; Z - Binding Test
 M98 P"0:/macros/System/Calibration/Testing/Tests/Z - Binding"
 
+; Z screws fixing
+M98 P"0:/macros/System/Calibration/Testing/Tests/Z screws fixing"
+
 ; Homing Test
 M98 P"0:/macros/System/Calibration/Testing/Tests/Homing"
 
 ; Probes Test
 M98 P"0:/macros/System/Calibration/Testing/Tests/Probe"
+
+; Calibrate Z - Probe // Servo rotation test // Z-Probe Pickup Angle // Height // Z-Probe Pickup Position
+M98 P"0:/macros/System/Calibration/Testing/Tests/Probe Calibration"
+
+; Tigten Nozles & Adjust Purging Backets
+M98 P"0:/macros/System/Calibration/Testing/Tests/Nozzle & Purge"
+
+; True Bed Leveling Test
+M98 P"0:/macros/System/Calibration/Testing/Tests/TBL & Lube"

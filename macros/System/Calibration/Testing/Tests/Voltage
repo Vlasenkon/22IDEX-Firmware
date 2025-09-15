@@ -18,7 +18,7 @@ if boards[0].vIn.current < var.minVoltage && boards[0].vIn.current > var.maxVolt
 M98 P"0:/sys/led/dimmwhite.g"
 G1 S2
 
-while true && iterations < 900 && var.iter < 100
+while true && iterations < 900 && var.iter < 200
     G4 P100
     M42 P1 S0
     M42 P2 S0

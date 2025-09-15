@@ -1,1 +1,1 @@
-M552 I1 S2 ; Enable WiFi AP Mode
+M552 I0 P0.0.0.0 S1 ; Enable Ethernet mode

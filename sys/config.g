@@ -1,4 +1,4 @@
-; Configuration file for 22IDEX V3
+; Configuration file for AddWise IDEX
 
 ; General preferences
 G90                                                              ; absolute coordinates
@@ -10,18 +10,11 @@ M80 C"pson"                                                      ; define PS_ON 
 ; Wait a moment for the CAN expansion boards to start 
 G4 S2
 
-; Network
-;M98 P"0:/user/networkmode.g"          ; Load network mode settings
-M586 P0 S1                            ; Enable HTTP (Web interface)
-M586 P1 S0                            ; Disable FTP
-M586 P2 S0                            ; Disable Telnet
+M98 P"0:/user/networkmode.g"
 
-; Set network configuration
-M552 P192.168.1.50                    ; Set static IP address
-M553 P255.255.255.0                   ; Set subnet mask
-M554 P192.168.1.1                     ; Set gateway (optional)
-M552 S1                               ; Enable network interface
-
+M586 P0 S1                                                       ; configure HTTP 
+M586 P1 S0                                                       ; configure FTP 
+M586 P2 S0                                                       ; configure Telnet
 
 ; Drives
 M569 P0.0 S1                                                     ; motor direction
@@ -81,19 +74,21 @@ M98 P"0:/user/PIDRightHead.g"                                    ; configure PID
 M143 H1 S510                                                     ; configure temperature limit for the heater
 M570 H1 P30 T50 R10                                              ; configure heater fault detection
 
-M308 S2 A"Bed Heater" P"1.temp1" Y"thermistor" T100000 B4000     ; configure temperature sensor
+M308 S2 A"Bed Heater" P"1.temp1" Y"thermistor" T100000 B3950     ; configure temperature sensor
+M98 P"0:/user/BedTempCalibration.g"                              ; configure C coef
 M950 H2 C"1.out0" Q10 T2                                         ; configure heater
 M98 P"0:/user/PIDBedHead.g"                                      ; configure PID parameters
 M140 H2                                                          ; map heated bed to heater
 M143 H2 S210                                                     ; configure temperature limit for the heater
-M570 H2 P30 T25 R3                                               ; configure heater fault detection
+M98 P"0:/user/bedfaultdetection.g"                               ; configure heater fault detection
 
 M308 S3 A"Chamber Air" P"1.temp0" Y"thermistor" T200000 B3100    ; configure temperature sensor
+M98 P"0:/user/ChamberTempSensor.g"                               ; configure C coef
 M950 H3 C"1.out1" Q10 T3                                         ; configure heater
 M307 H3 R0.1 K0.895 D55 S1.00 B1                                 ; configure PID parameters
 M141 H3                                                          ; map chamber to heater
 M143 H3 S110                                                     ; configure temperature limit for the heater
-M98 P"0:/user/faultdetection.g"                                  ; configure heater fault detection
+M98 P"0:/user/chamberfaultdetection.g"                           ; configure heater fault detection
 
 M308 S4 A"Chamber Heater" P"1.temp2" Y"thermistor" T100000 B3950 ; configure temperature sensor
 M143 H3 S170 T4 A2                                               ; configure temperature limit for the heater
@@ -114,8 +109,9 @@ M950 F4 C"1.out2" Q5000                                          ; configure Cha
 M106 P4 H4 T80 S1 B1                                             ; configure thermostatic contron
 ;M106 P4 H-1 S0.5 B1
 
-M950 F7 C"1.out5" Q500                                           ; configure CrFan
-M106 P7 H3 T50 S1 B0                                             ; configure thermostatic contron
+M950 F7 C"!1.out5+out5.tach" Q500                                ; configure CrFan
+M98 P"0:/user/hepafan.g"
+M106 P7 H3 T50 X{global.hepafan}                                 ; configure thermostatic contron
 
 ; LEDs
 M950 P1 C"1.out6" Q5000                                          ; Red LEDs
@@ -164,6 +160,11 @@ M98 P"0:/user/xcomp_auto.g"                                      ; load auto cal
 M98 P"0:/user/xcomp_manual.g"                                    ; load manual calibration value
 M98 P"0:/user/xcomp_mode.g"                                      ; load compensation mode
 
+M98 P"0:/user/periodic_wiping.g" 				 ; load global variables 
+M98 P"0:/user/hepafan.g"                                         ; load hepa fan speed
+M98 P"0:/user/retraction_value.g"                                ; load global variables
+
+echo >"0:/user/toolchangeretraction.g" "                         ; ToolChange Retraction Disabled"
 echo >"0:/sys/resetzbabystep.g" "                                ; do nothing"
 
 ; Custom settings

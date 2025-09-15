@@ -1,3 +1,4 @@
+
 M291 S4 K{"OK, Ethernet is connected","Cancel"} R"Connect via Ethernet" P"Please connect the Ethernet cable to the device. Once connected, press ""OK"" to continue."
 
 if input = 0
@@ -10,13 +11,13 @@ M291 S4 K{"Test Connection","Skip Test and Change Mode"} R"Test Network Connecti
 if input = 0
 	M292 ;Continue
 else
-	echo >"0:/user/networkmode.g" "M552 I0 S1 ; Enable Ethernet mode"
+	echo >"0:/user/networkmode.g" "M552 I0 P0.0.0.0 S1 ; Enable Ethernet mode"
 
 	M552 I1 S-1
 	G4 S1
 	M552 I0 S0
 	G4 S1
-	M552 I0 S1
+	M552 I0 P0.0.0.0 S1
 
 	echo "Ethernet mode Enabled"
 	M99
@@ -29,7 +30,7 @@ M98 P"0:/sys/led/resetstatus.g"
 
 M552 I1 S-1
 G4 S1
-M552 I0 S1
+M552 I0 P0.0.0.0 S1
 G1 S1
 
 while network.interfaces[0].actualIP = "0.0.0.0" || network.interfaces[0].actualIP = "192.168.0.1" && iterations < 30
@@ -63,7 +64,7 @@ else
 	if input = 1
 		M552 I1 S-1
 		G4 S1
-		M552 I0 S1
+		M552 I0 P0.0.0.0 S1
 
 
 M98 P"0:/sys/led/resetstatus.g"

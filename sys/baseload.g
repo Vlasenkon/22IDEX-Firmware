@@ -54,16 +54,12 @@ M400
 
 M291 R"Do you see new filament extruding?" P"Press ""Yes"" if filament is extruding or ""No"" to extrude more." S4 K{"Yes","No"}
   while input = 1
-    M291 R"Do you see new filament extruding?" P"Press ""Yes"" if filament is extruding or ""No"" to extrude more." S4 K{"Yes","No"}
-  if input = 1
     G1 E50 F{var.ss} ; Extrude
     M400
+    M291 R"Do you see new filament extruding?" P"Press ""Yes"" if filament is extruding or ""No"" to extrude more." S4 K{"Yes","No"}
 
 M98 P"0:/sys/nozzlewipe.g" ; wipe curently active nozzle
 M84 E0:1
 
-if state.status == "processing" || state.status == "pausing" || state.status == "paused" || state.status == "resuming"
-  M568 P{state.currentTool} A0
-  M291 R"Please set the nozzle temperature" P"Manually return the nozzle temperature that is optimal for printing new filament." S1 T15
-else
+if state.status != "processing" || state.status != "pausing" || state.status != "paused" || state.status != "resuming"
   G10 S0 R0 ; Turn off the heater

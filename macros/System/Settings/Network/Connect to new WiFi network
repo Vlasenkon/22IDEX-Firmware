@@ -1,3 +1,4 @@
+
 ; Step 1: Ask for SSID and Password;
 M291  J1 R"Enter WiFi Network Name (SSID)" P"Case sensetive. Make sure to connect to a 2.4GHz network. The WiFi module will not connect to 5.0GHz networks." S7
 var nn = {input}
@@ -9,9 +10,9 @@ echo >"0:/user/WiFiPass.g" "M587 S"""^{var.nn}^""" P"""^{var.pp}^""""
 
 M98 P"0:/sys/led/resetstatus.g"
 
-
+M98 P"0:/user/APname.g"
 ; Step 2: Try to connect to the network
-M291 S3 R"Restart Notification" P"Machine will restart now. If LEDs are GREEN, the connection was established. If RED, it failed.<br>Reconnect to the ""22 IDEX"" WiFi network after you see the green or red LED."
+M291 S3 R"Restart Notification" P"Machine will restart now. If LEDs are GREEN, the connection was established. If RED, it failed.<br>Reconnect to the "^global.APname^" WiFi network after you see the green or red LED."
 
 ; Erase values from WiFi Module
 M552 I1 S-1
@@ -24,7 +25,7 @@ G4S3
 M588 S"*"
 G4S1
 
-M589 S"22 IDEX" P"1234567890" I192.168.0.1
+M589 S{global.APname} P"1234567890" I192.168.0.1
 G4 S1
 
 ; write New values to WiFi module

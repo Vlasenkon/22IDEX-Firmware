@@ -1,3 +1,4 @@
+
 if !exists(param.R)
     M291 R"Change WiFi to AP Mode?" P"Machine will share 22IDEX WiFi Network" S4 K{"Change & Reconnect Now","Change and Reconnect Later","Cancel"}
     if input = 0
@@ -6,7 +7,8 @@ if !exists(param.R)
         G4S1
         M552 I1 S0
         G4S1
-        M589 S"22 IDEX" P"1234567890" I192.168.0.1
+        M98 P"0:/user/APname.g"
+        M589 S{global.APname} P"1234567890" I192.168.0.1
         G4S2
         M98 P"0:/user/networkmode.g"
     elif input = 1

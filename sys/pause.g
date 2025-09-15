@@ -2,7 +2,7 @@
 ; called when a print from SD card is paused
 
 M400
-G60 S4
+G60 S5
 M204 T5000
 
 
@@ -16,6 +16,8 @@ G1 Y150 F6000
 
 M106 S0
 
+if global.hepafan > 60
+  M106 P7 S60
 
 M568 P0 A0
 M568 P1 A0

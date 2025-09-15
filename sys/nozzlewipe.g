@@ -38,8 +38,35 @@ M400
 if exists(param.W) && sensors.analog[{state.currentTool}].lastReading < tools[{state.currentTool}].active[0]
   M116 S10 P{state.currentTool}
 
+; Purge fillament
+if state.status == "printing" || state.status == "resuming"
+  M98 P"0:/sys/toolchangeretraction.g" E1
+
+
 if exists(param.E)
   M83                                                             ; Relative extruder moves
+  if heat.heaters[state.currentTool].current < 160
+    if state.currentTool == 0
+      M291 S5 J1 F250 L150 H450 R"Set Left Tool Temperature" P"Please set the temperature for the filament previously loaded in the Left Tool."
+      G10 P0 R{input} S{input}
+      M568 P0 A2
+      M116 P0 S10
+    elif state.currentTool == 1
+      M291 S5 J1 F250 L150 H450 R"Set Right Tool Temperature" P"Please set the temperature for the filament previously loaded in the Right Tool."
+      G10 P1 R{input} S{input}
+      M568 P1 A2
+      M116 P1 S10
+    else
+      M291 S5 J1 F250 L150 H450 R"Set Left Tool Temperature" P"Please set the temperature for the filament previously loaded in the Left Tool."
+      G10 P2 R{input} S{input}
+      G10 P3 R{input} S{input}
+      M291 S5 J1 F250 L150 H450 R"Set Right Tool Temperature" P"Please set the temperature for the filament previously loaded in the Right Tool."
+      G10 P2 R{input} S{input}
+      G10 P3 R{input} S{input}
+      M568 P0 A2
+      M568 P1 A2
+      M116 P0 S10
+      M116 P1 S10
   G1 E{(param.E)} F{60}*{3}                                       ; extrude filament
   M400
   G4 S1

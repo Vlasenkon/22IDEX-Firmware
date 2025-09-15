@@ -41,7 +41,12 @@ while iterations < 2
   M400
 
 G1 F18000 X-50 Y-150 Z125  ; Move tools to the cleaning position
+
+M568 P3 A0
+
 M291 S3 R"Please Clean Both Nozzles" P"Use a metal brush to clean both nozzles thoroughly to prevent machine damage.<br>Click ""OK"" when you are ready to proceed or ""Cancel"" to stop."
+
+M568 P3 A2
 
 M98 P"0:/sys/homeall.g" S1
 
@@ -62,16 +67,16 @@ M42 P4 S1                                              ; Turn on relay
 
 
 
-M98 P"0:/macros/System/Calibration/Auto Calibration Macros/Tool Height Auto Calibration" S1
+M98 P"0:/macros/System/Calibration/Auto Calibration Macros/Tool Height Auto Calibration" S1 A1
 M400
 
-M98 P"0:/macros/System/Calibration/Auto Calibration Macros/Z - Offset Calibration" S1
+M98 P"0:/macros/System/Calibration/Auto Calibration Macros/Z - Offset Calibration" S1 A1
 M400
 
-M98 P"0:/macros/System/Calibration/Auto Calibration Macros/Mesh Bed calibration" S1
+M98 P"0:/macros/System/Calibration/Auto Calibration Macros/Mesh Bed calibration" S1 A1
 M400
 
-M98 P"0:/macros/System/Calibration/Auto Calibration Macros/XY - Offset Calibration" S1
+M98 P"0:/macros/System/Calibration/Auto Calibration Macros/XY - Offset Calibration" S1 A1
 M400
 
 
