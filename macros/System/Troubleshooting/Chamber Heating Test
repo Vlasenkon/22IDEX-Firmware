@@ -1,28 +1,3 @@
-; ============================================================
-; Chamber Heating Test
-; 
-; This test validates the chamber heating performance by:
-; 1. Prompting user to remove low-melting materials and choose test mode
-;    - Normal mode: keeps fault detection enabled
-;    - Disabled fault mode: temporarily disables chamber fault detection
-; 2. Cooling phase if any heater is ≥35°C (blue LED indicates cooling)
-;    - Monitors all heaters (T0, T1, bed, chamber)
-;    - Times out after 1 hour if cooling fails
-; 3. Heating phase starts after cooling complete (yellow LED indicates heating)
-;    - Sets chamber to 100°C and bed to 130°C (bed assists chamber heating)
-;    - Logs temperature data every second to CSV file
-; 4. Test ends when:
-;    - Chamber reaches 100°C (success)
-;    - X or U endstop is triggered (user abort)
-;    - Test exceeds 1 hour timeout (failure)
-; 5. Results evaluation:
-;    - Green LED if chamber reached 100°C within 10 minutes
-;    - Red LED if it took longer than expected
-;    - CSV file saved to 0:/sys/Testing/Chamber_Heatet.csv
-; 
-; Emergency stop: Hold X or U endstop at any time to abort test
-; ============================================================
-
 ; ---- User confirmation ----
 M291 S4 K{"Start test","Start (No fault detection)","Cancel"} R"Chamber Heating Test" P"The printer will heat to high temps.<br>Remove low-melting materials.<br>Hold X or U endstop to abort."
 
@@ -66,8 +41,17 @@ var bed = 0
 var chamber = 0
 var chamberHeater = 0
 
-; ---- If anything is ≥35C, show cooling popup + BLUE LED macro ----
-if (sensors.analog[0].lastReading >= 35) || (sensors.analog[1].lastReading >= 35) || (sensors.analog[2].lastReading >= 35) || (sensors.analog[3].lastReading >= 35)
+; ---- Chamber cooling wait prompt ----
+M291 S4 K{"OK","Don't wait"} R"Chamber Cooling" P"Machine will automatically wait for the chamber to cool down."
+var waitForCooling = (input == 0)
+
+if var.waitForCooling
+  echo "User selected to wait for chamber cooling"
+else
+  echo "User selected to skip cooling wait"
+
+; ---- If anything is ≥35C and user wants to wait, show cooling popup + BLUE LED macro ----
+if var.waitForCooling && ((sensors.analog[0].lastReading >= 35) || (sensors.analog[1].lastReading >= 35) || (sensors.analog[2].lastReading >= 35) || (sensors.analog[3].lastReading >= 35))
   M98 P"0:/sys/led/start_cold.g" ; BLUE
   M291 S1 R"Printer cooling" P"Wait for the printer to cool down and the temperature to stabilize.<br>To speed it up, open the door and lid."
 
@@ -104,13 +88,28 @@ if (sensors.analog[0].lastReading >= 35) || (sensors.analog[1].lastReading >= 35
   M98 P"0:/sys/led/end.g" ; GREEN success - cooling complete
   M291 S2 R"Cooling Complete" P"The printer has cooled down successfully.<br>Ready to start chamber heating test."
 
+; ---- Test duration prompt (for all scenarios) ----
+
+; ---- Test duration prompt (for all scenarios) ----
+M291 S4 K{"OK","Set custom time"} R"Test Duration" P"Machine will test the chamber heating for two hours, what temperature it will reach."
+var useCustomTime = (input == 1)
+var testDurationSeconds = 7200  ; Default 2 hours
+
+if var.useCustomTime
+  ; Ask for custom time in minutes (30-300 minutes = 0.5 to 5 hours)
+  M291 S5 R"Custom Test Duration" P"Enter test duration in minutes (30-300):" L30 H300
+  set var.testDurationSeconds = input * 60  ; Convert minutes to seconds
+  echo "Custom test duration set to " ^ (var.testDurationSeconds / 60) ^ " minutes (" ^ var.testDurationSeconds ^ " seconds)"
+else
+  echo "Using default test duration of 2 hours (7200 seconds)"
+
 ; ---- Prompt to close up, then start heating (switch to YELLOW LED macro) ----
 M291 S2 R"Close the door and lid" P"The printer will start heating the chamber.<br>Make sure the door and lid are closed."
 M98 P"0:/sys/led/pause.g"        ; YELLOW = active / heating
 
 ; Start heaters for the test (adjust as needed)
 M141 S100                        ; chamber target
-M140 S130                        ; bed target (helps chamber heat)
+M140 S160                        ; bed target (helps chamber heat)
 
 ; Mark start time for duration calc (we aren't logging elapsed per-second)
 set var.startTime = state.time
@@ -144,14 +143,14 @@ while true
     echo "Heating... Chamber: " ^ var.chamber ^ " °C"
 
     ; ---- Hard timeout guard
-  if var.elapsed > 3600
+  if var.elapsed > var.testDurationSeconds
     M141 S0
     M140 S0
     ; Restore fault detection if it was disabled
     if var.disableFaultDetection
       M570 H3 P600 T70 R5       ; Restore chamber fault detection to normal
     M98 P"0:/sys/led/fault.g"
-    abort "Timeout: heating took too long."
+    abort "Timeout: heating took too long (exceeded " ^ (var.testDurationSeconds / 60) ^ " minutes)."
   
                                  ; Stop condition: chamber at/over 100C
   if var.chamber >= 100
@@ -181,3 +180,5 @@ if var.tookTooLong == true
 else
   M98 P"0:/sys/led/end.g" ; Success - Green
   echo "Chamber heating test complete: Chamber reached 100°C in " ^ var.heatDuration ^ " s. Results saved to Settings → Testing → PA.csv"
+
+M80 S1
