@@ -43,6 +43,22 @@ elif input == 1
 else
   abort "Calibration cancelled by user."
 
+; ---- Calibration method selection ----
+M291 S4 K{"Automatic (T0+T1 avg)","Manual (Pyrometer)","Cancel"} R"Calibration Method" P"Select calibration reference method:<br><br>Automatic: Uses average of tool temperatures<br>Manual: You measure with pyrometer/thermocouple"
+
+var useManualCalibration = false
+var manualTargetTemp = 0.0
+
+if input == 0
+  ; Use automatic calibration (T0+T1 average)
+  echo "Using automatic calibration method - will reference T0+T1 average temperature"
+elif input == 1
+  ; Use manual calibration (user measured temperature)
+  set var.useManualCalibration = true
+  echo "Using manual calibration method - you will enter measured temperature"
+else
+  abort "Calibration cancelled by user."
+
 ; Safety check: If any tool temperature is hot (>cooldownTemp), cool down until both are <cooldownTemp
 var tool0Temp = heat.heaters[0].current
 var tool1Temp = heat.heaters[1].current
@@ -166,9 +182,23 @@ var startTime = {state.upTime}
 ;-else
   ;-echo "Heating complete - stabilization finished"
 
-; Calculate target temperature as average of tool 0 and tool 1 heater readings
-; This provides a reference temperature for sensor calibration
-var target = (heat.heaters[0].current + heat.heaters[1].current) / 2
+; Calculate target temperature based on calibration method
+var target = 0.0  ; Declare target variable
+
+if var.useManualCalibration
+  ; Manual calibration - ask user to measure temperature
+  M291 J1 L0 H300 F{var.chamberTargetTemp} P"Please measure the chamber air temperature using a pyrometer or thermocouple and enter the value (°C):" R"Enter measured temperature" S5
+  if result == -1
+    M140 S0  ; Turn off heaters
+    M141 S0
+    abort "Calibration cancelled by user."
+  set var.manualTargetTemp = input
+  set var.target = var.manualTargetTemp
+  echo "Using manual target temperature: " ^ var.target ^ "°C (measured by user)"
+else
+  ; Automatic calibration - use T0+T1 average
+  set var.target = (heat.heaters[0].current + heat.heaters[1].current) / 2
+  echo "Using automatic target temperature: " ^ var.target ^ "°C (T0+T1 average)"
 
 
 
@@ -224,7 +254,7 @@ echo "Sensor health check passed - proceeding with calibration"
 ; The C coefficient compensates for sensor variations and improves accuracy
 
 ; Initialize calibration parameters
-var tol = 1.0        ; Tolerance: stop when within 1.0°C of target
+var tol = 0.5        ; Tolerance: stop when within 0.5°C of target
 var cLo = -5.0e-7    ; Lower bound of C coefficient search range
 var cHi =  5.0e-7    ; Upper bound of C coefficient search range
 var bestC = 0.0      ; Best C coefficient found so far (reverted to 0.0)
@@ -242,8 +272,13 @@ while true
     echo "Endstop detected - skipping to calibration phase"
     set var.skipEndstopCheck = true  ; Don't check endstops anymore during calibration iterations
   
-  ; Recalculate target temperature as current average of T0 and T1 for adaptive calibration
-  set var.target = (heat.heaters[0].current + heat.heaters[1].current) / 2
+  ; Recalculate target temperature based on calibration method
+  if var.useManualCalibration
+    ; Manual mode - keep fixed target temperature from user measurement
+    set var.target = var.manualTargetTemp
+  else
+    ; Automatic mode - recalculate as current average of T0 and T1 for adaptive calibration
+    set var.target = (heat.heaters[0].current + heat.heaters[1].current) / 2
   
   ; Calculate middle point of current search range
   set var.cMid = (var.cLo + var.cHi)/2.0
@@ -259,7 +294,10 @@ while true
   ; Progress feedback every 10 iterations
   set var.iterations = var.iterations + 1
   if mod(var.iterations, 10) == 0
-    echo "Calibration iteration " ^ var.iterations ^ ": Target=" ^ var.target ^ "°C (T0=" ^ heat.heaters[0].current ^ "°C, T1=" ^ heat.heaters[1].current ^ "°C), Sensor=" ^ var.tNow ^ "°C, Error=" ^ var.err ^ "°C"
+    if var.useManualCalibration
+      echo "Calibration iteration " ^ var.iterations ^ ": Target=" ^ var.target ^ "°C (Manual), Sensor=" ^ var.tNow ^ "°C, Error=" ^ var.err ^ "°C"
+    else
+      echo "Calibration iteration " ^ var.iterations ^ ": Target=" ^ var.target ^ "°C (T0=" ^ heat.heaters[0].current ^ "°C, T1=" ^ heat.heaters[1].current ^ "°C), Sensor=" ^ var.tNow ^ "°C, Error=" ^ var.err ^ "°C"
   
   ; Update best values if this attempt is better
   if (var.err < var.bestErr)
@@ -276,12 +314,17 @@ while true
     var cMant = ceil(var.cUnits * var.scale - 0.5 + var.eps) / var.scale
     var cSign = (var.bestC < 0) ? "-" : ""
     
-    ; Display calibration results with final adaptive target
-    var finalTarget = (heat.heaters[0].current + heat.heaters[1].current) / 2
+    ; Display calibration results based on method used
     echo "=== CALIBRATION COMPLETE ==="
     echo "C coefficient = " ^ var.cSign ^ var.cMant ^ "e-8"
-    echo "Final Target Temp (T0+T1 avg): " ^ var.finalTarget ^ "°C"
-    echo "Final T0: " ^ heat.heaters[0].current ^ "°C, T1: " ^ heat.heaters[1].current ^ "°C"
+    if var.useManualCalibration
+      echo "Calibration Method: Manual (User measured)"
+      echo "Target Temperature (Manual): " ^ var.manualTargetTemp ^ "°C"
+    else
+      echo "Calibration Method: Automatic (T0+T1 average)"
+      var finalTarget = (heat.heaters[0].current + heat.heaters[1].current) / 2
+      echo "Final Target Temp (T0+T1 avg): " ^ var.finalTarget ^ "°C"
+      echo "Final T0: " ^ heat.heaters[0].current ^ "°C, T1: " ^ heat.heaters[1].current ^ "°C"
     echo "Chamber Sensor Reading: " ^ sensors.analog[3].lastReading ^ "°C"
     echo "Final Error: " ^ var.bestErr ^ "°C"
     echo "Total iterations: " ^ var.iterations
