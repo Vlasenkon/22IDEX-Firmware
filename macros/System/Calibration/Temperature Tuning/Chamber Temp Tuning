@@ -6,7 +6,6 @@
 
 ;========= CONFIGURABLE TEMPERATURE PARAMETERS =========
 ; Edit these values to customize calibration temperatures
-var cooldownTemp = 35        ; Temperature threshold for cooling phase (°C)
 var chamberTargetTemp = 100  ; Default chamber temperature for calibration (°C)
 var bedTargetTemp = 160      ; Target bed temperature for calibration (°C)
 
@@ -59,128 +58,113 @@ elif input == 1
 else
   abort "Calibration cancelled by user."
 
-; Safety check: If any tool temperature is hot (>cooldownTemp), cool down until both are <cooldownTemp
-var tool0Temp = heat.heaters[0].current
-var tool1Temp = heat.heaters[1].current
-var coolElapsed = 0              ; seconds spent cooling (for timeout only)
+; ========= PREPARATION PHASE =========
+; User interaction: Prepare chamber for calibration FIRST
+
+; Step 1: Remove low-temperature plastics with cancel option
+M291 S4 K{"Continue","Cancel"} R"Remove Plastics" P"Please remove all low-temperature filaments from the chamber before heating begins.<br><br>This prevents damage to sensitive materials."
+
+if input != 0
+  ; User cancelled - reset all temperatures and abort
+  M568 P0 S{0} R{0}
+  M568 P1 S{0} R{0}  
+  M568 P2 S{0} R{0}
+  M568 P3 S{0} R{0}
+  M140 S0     ; Turn off bed heater
+  M141 S0     ; Turn off chamber heater
+  abort "Calibration cancelled - all temperatures reset to safe levels."
+
+; Step 2: Close chamber door
+M291 S2 R"Close the Lid and Door" P"Please close the lid and door for calibration" S2
 
 ; Reset all heating systems to safe state
 M568 P0 S{0} R{0}
 M568 P1 S{0} R{0}
 M568 P2 S{0} R{0}
 M568 P3 S{0} R{0}
-M140 S0     ; Turn off bed heater
-M141 S0     ; Turn off chamber heater
 
-if var.tool0Temp > var.cooldownTemp || var.tool1Temp > var.cooldownTemp
-    echo "Tools require cooling: T0=" ^ var.tool0Temp ^ "°C, T1=" ^ var.tool1Temp ^ "°C (threshold: " ^ var.cooldownTemp ^ "°C)"
-    M98 P"0:/sys/led/start_cold.g" ; BLUE LED for cooling
-    M291 S2 R"Open the Lid and Door" P"Please open the lid and door to allow heat to escape for faster cooling" S2
-    
-    ;- Cooling loop: check every second until both tools are <cooldownTemp
-    ;-while true
-        ;-if sensors.endstops[0].triggered || sensors.endstops[3].triggered
-            ;-echo "Cooling period skipped by endstop trigger - proceeding to calibration"
-            ;-break  ; Skip cooling wait and proceed to calibration
-        
-        ;- Update current tool temperatures
-        ;-set var.tool0Temp = heat.heaters[0].current
-        ;-set var.tool1Temp = heat.heaters[1].current
-        
-        ;-if var.tool0Temp < var.cooldownTemp && var.tool1Temp < var.cooldownTemp
-            ;-break
-            
-        ;-if mod(iterations, 60) == 0
-            ;-echo "Cooling... T0: " ^ var.tool0Temp ^ "°C, T1: " ^ var.tool1Temp ^ "°C (target: <" ^ var.cooldownTemp ^ "°C) - Hold X or U endstop to skip"
-        
-        ;-G4 S1
-        ;-set var.coolElapsed = var.coolElapsed + 1
-        ;-if var.coolElapsed > 3600
-            ;- Restore fault detection if it was disabled
-            ;-if var.disableFaultDetection
-                ;-M570 H3 P600 T70 R5     ; Restore chamber fault detection to normal
-            ;-M98 P"0:/sys/led/fault.g"  ; RED
-            ;-abort "Error: the tools took too long to cool down (exceeded 1 hour)."
-    
-    ;- Cooling complete - show success (green LED)
-    ;-M98 P"0:/sys/led/end.g" ; GREEN success - cooling complete
-    
-    ;- Check if cooling was skipped or completed naturally
-    ;-if sensors.endstops[0].triggered || sensors.endstops[3].triggered
-        ;-M291 S2 R"Cooling Skipped" P"Cooling period was skipped by endstop.<br>Ready to start calibration."
-    ;-else
-        ;-M291 S2 R"Cooling Complete" P"Both tools have cooled down successfully.<br>Ready to start calibration."
+;========= START HEATING EARLY =========
+; Start heating immediately after user confirmation to save time
+
+; Smart bed temperature setting - don't cool down if already hot
+var currentBedTemp = heat.heaters[2].current
+var actualBedTarget = 0.0
+
+if var.currentBedTemp >= var.bedTargetTemp
+  ; Bed is already at or above target - keep current temperature
+  set var.actualBedTarget = var.currentBedTemp
+  echo "Bed already hot (" ^ var.currentBedTemp ^ "°C) - maintaining current temperature"
+else
+  ; Bed is below target - heat to target temperature
+  set var.actualBedTarget = var.bedTargetTemp
+  echo "Bed below target (" ^ var.currentBedTemp ^ "°C) - heating to " ^ var.bedTargetTemp ^ "°C"
+
+echo "Starting heating early - Bed: " ^ var.actualBedTarget ^ "°C, Chamber: " ^ var.chamberTargetTemp ^ "°C"
+M140 S{var.actualBedTarget}     ; Set bed temperature using smart logic
+M141 S{var.chamberTargetTemp}    ; Set chamber temperature using configurable variable
 
 ; Ensure all axes are homed before starting calibration
-;-if !move.axes[1].homed||!move.axes[0].homed||!move.axes[3].homed||!move.axes[2].homed
-;-  G28  ; Home all axes if any are not homed
+if !move.axes[1].homed||!move.axes[0].homed||!move.axes[3].homed||!move.axes[2].homed
+  G28  ; Home all axes if any are not homed
 
-; Move to safe calibration position
-;-G1 F18000 X-200 Y0 U200 Z150  ; Position axes away from build area
-
-; User interaction: Prepare chamber for calibration
-;-M291 S2 R"Attention!" P"Please take the low-temperature filament from the chamber" S2
-;-M291 S2 R"Close the Lid and Door" P"Please close the lid and door for calibration" S2
-
-;========= HEATING PHASE FOR CALIBRATION =========
-; Heat up the system to create stable temperature conditions for calibration
-echo "Starting heating phase - Bed: " ^ var.bedTargetTemp ^ "°C, Chamber: " ^ var.chamberTargetTemp ^ "°C"
-M140 S{var.bedTargetTemp}   ; Set bed temperature using configurable variable
-M141 S{var.chamberTargetTemp}    ; Set chamber temperature using configurable variable
+; Set LED status AFTER homing (G28 resets LEDs)
 M98 P"0:/sys/led/pause.g"        ; YELLOW = active / heating
 
-;- Wait for average of tool temperatures to reach desired chamber temperature
-;-echo "Waiting for tool average temperature to reach " ^ var.chamberTargetTemp ^ "°C (Hold X or U endstop to skip)..."
-;-while !(sensors.endstops[0].triggered || sensors.endstops[3].triggered)
-  ;- Calculate current average of tool temperatures
-  ;-var currentAverage = (heat.heaters[0].current + heat.heaters[1].current) / 2
-  
-  ;- Check if average temperature has reached target
-  ;-if var.currentAverage >= var.chamberTargetTemp
-    ;-break  ; Target reached, exit loop
-  
-  ;- Display progress every 10 seconds
-  ;-if mod(state.upTime, 10) == 0
-    ;-echo "Tool average: " ^ var.currentAverage ^ "°C / " ^ var.chamberTargetTemp ^ "°C (T0: " ^ heat.heaters[0].current ^ "°C, T1: " ^ heat.heaters[1].current ^ "°C) - Hold X or U endstop to skip"
-  
-  ;-G4 S1  ; Wait 1 second before next check
+; Move to safe calibration position
+G1 F18000 X-200 Y0 U200 Z150  ; Position axes away from build area
 
-;- Check if heating was skipped by endstop
-;-if sensors.endstops[0].triggered || sensors.endstops[3].triggered
-  ;-echo "Tool heating period skipped by endstop trigger"
-;-else
-  ;-echo "Tool average temperature reached target: " ^ var.chamberTargetTemp ^ "°C"
+; Wait for average of tool temperatures to reach desired chamber temperature
+echo "Raising temperature to reach " ^ var.chamberTargetTemp ^ "°C target - Hold X or U endstop to skip..."
+while !(sensors.endstops[0].triggered || sensors.endstops[3].triggered)
+  ; Calculate current average of tool temperatures
+  var currentAverage = (heat.heaters[0].current + heat.heaters[1].current) / 2
+  
+  ; Check if average temperature has reached target
+  if var.currentAverage >= var.chamberTargetTemp
+    break  ; Target reached, exit loop
+  
+  ; Display progress every 10 seconds
+  if mod(state.upTime, 10) == 0
+    echo "Raising temperature to reach " ^ var.chamberTargetTemp ^ "°C - Current average: " ^ var.currentAverage ^ "°C (Tool 0: " ^ heat.heaters[0].current ^ "°C, Tool 1: " ^ heat.heaters[1].current ^ "°C) - Hold X or U endstop to skip"
+  
+  G4 S1  ; Wait 1 second before next check
+
+; Check if heating was skipped by endstop
+if sensors.endstops[0].triggered || sensors.endstops[3].triggered
+  echo "Temperature raising period skipped by endstop trigger"
+else
+  echo "Tool average temperature reached target: " ^ var.chamberTargetTemp ^ "°C"
 
 ; Initialize variables for 20-minute stabilization countdown
 var startTime = {state.upTime}
-;-var remainingTime = 0
-;-var lastUpdateTime = 0
+var remainingTime = 0
+var lastUpdateTime = 0
 
-;-echo "Temperature reached - starting 20-minute stabilization period"
+echo "Temperature reached - starting 10-minute stabilization period"
     
-;- 20-minute stabilization period with 30-second updates and endstop monitoring
-;-while !(sensors.endstops[0].triggered || sensors.endstops[3].triggered)
-  ;-set var.remainingTime = 1200 - (state.upTime - var.startTime)  ; 1200 seconds = 20 minutes
+; 10-minute stabilization period with 30-second updates and endstop monitoring
+while !(sensors.endstops[0].triggered || sensors.endstops[3].triggered)
+  set var.remainingTime = 600 - (state.upTime - var.startTime)  ; 600 seconds = 10 minutes
   
-  ;- Check if stabilization period is complete
-  ;-if var.remainingTime <= 0
-    ;-break
+  ; Check if stabilization period is complete
+  if var.remainingTime <= 0
+    break
   
-  ;- Provide time update every 30 seconds
-  ;-if (state.upTime - var.lastUpdateTime) >= 30 || var.lastUpdateTime == 0
-    ;-set var.lastUpdateTime = state.upTime
-    ;-var minutes = floor(var.remainingTime / 60)
-    ;-var seconds = var.remainingTime % 60
-    ;-var minutesExact = var.remainingTime / 60.0
-    ;-echo "Stabilization in progress - Time remaining: " ^ var.minutesExact ^ " minutes (Hold X or U endstop to skip)"
+  ; Provide time update every 30 seconds
+  if (state.upTime - var.lastUpdateTime) >= 30 || var.lastUpdateTime == 0
+    set var.lastUpdateTime = state.upTime
+    var minutes = floor(var.remainingTime / 60)
+    var seconds = var.remainingTime % 60
+    var minutesExact = var.remainingTime / 60.0
+    echo "Stabilization in progress - Time remaining: " ^ var.minutesExact ^ " minutes (Hold X or U endstop to skip)"
   
-  ;-G4 S1  ; Wait 1 second before next check
+  G4 S1  ; Wait 1 second before next check
 
-;- Check if stabilization was skipped by endstop
-;-if sensors.endstops[0].triggered || sensors.endstops[3].triggered
-  ;-echo "Stabilization period skipped by endstop trigger - proceeding to calibration"
-;-else
-  ;-echo "Heating complete - stabilization finished"
+; Check if stabilization was skipped by endstop
+if sensors.endstops[0].triggered || sensors.endstops[3].triggered
+  echo "Stabilization period skipped by endstop trigger - proceeding to calibration"
+else
+  echo "Heating complete - stabilization finished"
 
 ; Calculate target temperature based on calibration method
 var target = 0.0  ; Declare target variable
