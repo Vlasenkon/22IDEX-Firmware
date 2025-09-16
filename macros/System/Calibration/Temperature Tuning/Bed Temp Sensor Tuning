@@ -1,78 +1,158 @@
-if !move.axes[1].homed||!move.axes[0].homed||!move.axes[3].homed||!move.axes[2].homed
-  G28
+;==============================================================================
+; BED TEMPERATURE SENSOR CALIBRATION SCRIPT
+; This script automatically calibrates the bed temperature sensor by finding
+; the optimal C coefficient through a binary search algorithm
+;==============================================================================
 
-G1 F8000 X-208 Y175 U208 Z150
-M568 P3 A0
-M141 S0
-M140 S0
+;========= CONFIGURABLE TEMPERATURE PARAMETERS =========
+; Edit these values to customize calibration temperatures
+var bedTargetTemp = 160      ; Default target bed temperature for calibration (°C)
 
+; User interaction: Prepare bed for calibration FIRST
+M291 S2 R"Prepare Build Plate" P"Please place the carbon fiber sheet or your print surface on top of the build plate for accurate temperature measurement." S2
 
-var tol = 0.2                  ; accuracy
-var soak = 60                  ; pause for stabilisation
+; ---- User confirmation and temperature selection ----
+M291 S4 K{"Start with 160°C","Custom temperature","Cancel"} R"Bed Temperature Calibration" P"The printer will calibrate bed sensor.<br>Hold X or U endstop to abort."
 
-;========= Ask for the Setpoint =========
-M291 J1 L70 H200 F120 P"Enter the target bed heating temperature (°C)" R"Enter the target temperature" S5
+if input == 0
+  ; Use default temperature (160°C)
+  echo "Starting bed calibration at default temperature: " ^ var.bedTargetTemp ^ "°C"
+elif input == 1
+  ; Ask for custom temperature
+  M291 J1 L70 H200 F120 P"Enter the target bed heating temperature (°C)" R"Enter the target temperature" S5
+  if result == -1
+    abort "Calibration cancelled by user."
+  set var.bedTargetTemp = input
+  echo "Starting bed calibration at custom temperature: " ^ var.bedTargetTemp ^ "°C"
+else
+  abort "Calibration cancelled by user."
+
+; Reset all heating systems to safe state
+M568 P0 S{0} R{0}
+M568 P1 S{0} R{0}
+M568 P2 S{0} R{0}
+M568 P3 S{0} R{0}
+
+;========= HEATING PHASE FOR CALIBRATION =========
+; Set temperature and start LED lighting FIRST
+echo "Starting heating phase - Bed target: " ^ var.bedTargetTemp ^ "°C"
+M140 S{var.bedTargetTemp}   ; Set bed temperature using configurable variable
+M98 P"0:/sys/led/pause.g"        ; YELLOW = active / heating
+
+; Do homing while heating up
+echo "Homing axes while bed is heating..."
+G28  ; Home all axes while bed heats up
+
+; Move build plate down after homing
+echo "Moving build plate down for easy measurement access"
+G1 F18000 Z300  ; Position Z down for ease of measurement
+
+; Wait for bed heater to reach within 5°C of target temperature
+echo "Waiting for bed temperature to reach within 5°C of target..."
+M116 H2 S5  ; Wait for bed heater to reach within 5°C of target
+
+; 10-minute stabilization period as requested
+echo "Temperature reached - starting 10-minute stabilization period"
+G4 S600    ; 10-minute stabilization wait (600 seconds)
+echo "Stabilization complete - ready for temperature measurement"
+
+;========= ASK FOR PYROMETER MEASUREMENT =========
+M291 J1 L0 H200 F120 P"Please use a pyrometer to measure the temperature of the carbon fiber sheet/print surface and enter its value (°C):" R"Enter measured temperature" S5
 if result == -1
   M140 S0
-var setpoint = {input}
-
-;Heat up and wait for stabilisation
-M140 S{var.setpoint}
-if sensors.analog[2].lastReading < var.setpoint
-  M291 P"Please wait until the heating is finished." R"Heating in progres..." S1
-  M116 H2
-
-if sensors.analog[2].lastReading > var.setpoint
-  M291 P"Please open door and wait until the bed has cooled to the desired temperature." R"Cooling in progress..." S1
-  M116 H2
-
-
-G4 S{var.soak}                 
-
-;========= Ask for Measure Temp =========
-M291 J1 L0 H200 F120 P"Please use a pyrometer to measure the temperature and enter its value (°C):" R"Enter the target temperature" S5
-if result == -1
-  M140 S0
+  abort "Calibration cancelled by user."
 var target = {input}
 
-;========= Binary search C coef =========
-var cLo = -1.5e-7
-var cHi =  1.5e-7
-var bestC = 0.0
-var bestErr = 1.0e9
-var cMid = 0.0
-var deltaT = 0
+;========= BINARY SEARCH CALIBRATION ALGORITHM =========
+; Use binary search to find optimal C coefficient for temperature sensor
+; The C coefficient compensates for sensor variations and improves accuracy
 
+; Initialize calibration parameters
+var tol = 0.2        ; Tolerance: stop when within 0.2°C of target
+var cLo = -1.5e-7    ; Lower bound of C coefficient search range
+var cHi =  1.5e-7    ; Upper bound of C coefficient search range
+var bestC = 0.0      ; Best C coefficient found so far
+var bestErr = 1.0e9  ; Best error achieved so far (start with large value)
+var cMid = 0.0       ; Current middle value being tested
+
+; Main calibration loop - binary search algorithm
+var iterations = 0
 while true
+  ; Check for abort condition (X or U endstop triggered)
+  if sensors.endstops[0].triggered || sensors.endstops[3].triggered
+    M140 S0
+    M98 P"0:/sys/led/fault.g"    ; RED
+    abort "Calibration canceled due to triggered X/U endstop."
+  
+  ; Calculate middle point of current search range
   set var.cMid = (var.cLo + var.cHi)/2.0
-  set var.deltaT = sensors.analog[2].lastReading
+  
+  ; Apply the test C coefficient to sensor 2 (bed sensor)
   M308 S2 C{var.cMid}
-  set var.deltaT = var.deltaT - sensors.analog[2].lastReading 
-  M140 S{sensors.analog[2].lastReading + var.deltaT}
-  G4 S1
+  G4 S5  ; Wait for sensor reading to stabilize
+  
+  ; Read current temperature from sensor and calculate error against target
   var tNow = sensors.analog[2].lastReading
   var err  = abs(var.tNow - var.target)
+  
+  ; Progress feedback every 10 iterations
+  set var.iterations = var.iterations + 1
+  if mod(var.iterations, 10) == 0
+    echo "Calibration iteration " ^ var.iterations ^ ": Target=" ^ var.target ^ "°C, Sensor=" ^ var.tNow ^ "°C, Error=" ^ var.err ^ "°C"
+  
+  ; Update best values if this attempt is better
   if (var.err < var.bestErr)
     set var.bestErr = var.err
     set var.bestC   = var.cMid
+    echo "Attempting C coefficient: " ^ var.cMid ^ " with error " ^ var.bestErr ^ "°C"
+  
+  ; Check if we've found a good enough solution or search range is too small
   if (var.err <= var.tol) || (abs(var.cHi - var.cLo) < 5e-10)
+    ; Format the final C coefficient for display and file output
     var scale = 100
     var cUnits = abs(var.bestC) / 1e-8
     var eps = 1e-9 * var.scale
     var cMant = ceil(var.cUnits * var.scale - 0.5 + var.eps) / var.scale
     var cSign = (var.bestC < 0) ? "-" : ""
-    echo "C coef = "^ {var.cSign} ^ {var.cMant}^ "e-8"
-    echo >"0:/user/BedTempCalibration.g" "M308 S2 A""Bed Heater"" P""1.temp1"" Y""thermistor"" T100000 B3950 C" ^ {var.cSign} ^ {var.cMant} ^ "e-8 R2200"
-    break
+    
+    ; Display calibration results
+    echo "=== CALIBRATION COMPLETE ==="
+    echo "C coefficient = " ^ var.cSign ^ var.cMant ^ "e-8"
+    echo "Target Temperature (pyrometer): " ^ var.target ^ "°C"
+    echo "Bed Sensor Reading: " ^ sensors.analog[2].lastReading ^ "°C"
+    echo "Final Error: " ^ var.bestErr ^ "°C"
+    echo "Total iterations: " ^ var.iterations
+    
+    ; Save calibrated sensor configuration to file
+    echo >"0:/user/BedTempCalibration.g" "M308 S2 A""Bed Heater"" P""1.temp1"" Y""thermistor"" T100000 B3950 C" ^ var.cSign ^ var.cMant ^ "e-8 R2200"
+    break  ; Exit calibration loop
+  
+  ; Adjust search range based on temperature reading vs target
   if (var.tNow > var.target)
-    set var.cHi = var.cMid      
+    set var.cHi = var.cMid  ; Reading too high, search lower C values    
   else
-    set var.cLo = var.cMid     
+    set var.cLo = var.cMid  ; Reading too low, search higher C values
+  
+  ; Safety timeout to prevent infinite loops (max 200 iterations)
+  if var.iterations > 200
+    echo "WARNING: Maximum iterations reached. Using best coefficient found."
+    break     
 
-G4 S5
-M105
+;========= CALIBRATION COMPLETION AND CLEANUP =========
+; Final sensor reading and temperature display
+G4 S5   ; Brief pause for stability
+M105    ; Report all temperatures
 
-M140 S0
-M98 P"0:/sys/led/end.g"
-M291 P{"Calibration completed successfully!"} R"Success" S1 T15
-M98 P"0:/sys/led/resetstatus.g"
+; Cool down bed heater
+M140 S0  ; Turn off bed heater
+
+; Visual feedback and completion notifications
+M98 P"0:/sys/led/end.g"  ; Set LED status to indicate completion
+M291 P"Calibration completed successfully!" R"Success" S1 T15  ; Success message
+M98 P"0:/sys/led/resetstatus.g"  ; Reset LED status
+
+;==============================================================================
+; CALIBRATION COMPLETE
+; The bed temperature sensor is now calibrated with the optimal C coefficient
+; Configuration saved to: /user/BedTempCalibration.g
+;==============================================================================
