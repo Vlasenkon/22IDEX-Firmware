@@ -7,7 +7,7 @@
 ;========= CONFIGURABLE TEMPERATURE PARAMETERS =========
 ; Edit these values to customize calibration temperatures
 var cooldownTemp = 35        ; Temperature threshold for cooling phase (°C)
-var chamberTargetTemp = 90   ; Target chamber temperature for calibration (°C)
+var chamberTargetTemp = 100  ; Default chamber temperature for calibration (°C)
 var bedTargetTemp = 160      ; Target bed temperature for calibration (°C)
 
 ; ---- User confirmation ----
@@ -24,6 +24,22 @@ elif input == 1
   set var.disableFaultDetection = true
   echo "Starting chamber calibration with disabled fault detection"
   M570 H3 P999999 T999999 R50    ; Disable chamber fault detection
+else
+  abort "Calibration cancelled by user."
+
+; ---- Chamber temperature selection ----
+M291 S4 K{"Start with 100°C","Custom temperature","Cancel"} R"Chamber Temperature Selection" P"Select chamber heating temperature for calibration."
+
+if input == 0
+  ; Use default temperature (100°C)
+  echo "Starting chamber calibration at default temperature: " ^ var.chamberTargetTemp ^ "°C"
+elif input == 1
+  ; Ask for custom temperature
+  M291 J1 L0 H200 F0 P"Enter the target chamber heating temperature (°C)" R"Enter chamber temperature" S5
+  if result == -1
+    abort "Calibration cancelled by user."
+  set var.chamberTargetTemp = input
+  echo "Starting chamber calibration at custom temperature: " ^ var.chamberTargetTemp ^ "°C"
 else
   abort "Calibration cancelled by user."
 
@@ -45,48 +61,50 @@ if var.tool0Temp > var.cooldownTemp || var.tool1Temp > var.cooldownTemp
     M98 P"0:/sys/led/start_cold.g" ; BLUE LED for cooling
     M291 S2 R"Open the Lid and Door" P"Please open the lid and door to allow heat to escape for faster cooling" S2
     
-    ; Cooling loop: check every second until both tools are <cooldownTemp
-    while true
-        if sensors.endstops[0].triggered || sensors.endstops[3].triggered
-            ; Restore fault detection if it was disabled
-            if var.disableFaultDetection
-                M570 H3 P600 T70 R5     ; Restore chamber fault detection to normal
-            M98 P"0:/sys/led/fault.g"  ; RED
-            abort "Calibration canceled due to triggered X/U endstop during cooling."
+    ;- Cooling loop: check every second until both tools are <cooldownTemp
+    ;-while true
+        ;-if sensors.endstops[0].triggered || sensors.endstops[3].triggered
+            ;-echo "Cooling period skipped by endstop trigger - proceeding to calibration"
+            ;-break  ; Skip cooling wait and proceed to calibration
         
-        ; Update current tool temperatures
-        set var.tool0Temp = heat.heaters[0].current
-        set var.tool1Temp = heat.heaters[1].current
+        ;- Update current tool temperatures
+        ;-set var.tool0Temp = heat.heaters[0].current
+        ;-set var.tool1Temp = heat.heaters[1].current
         
-        if var.tool0Temp < var.cooldownTemp && var.tool1Temp < var.cooldownTemp
-            break
+        ;-if var.tool0Temp < var.cooldownTemp && var.tool1Temp < var.cooldownTemp
+            ;-break
             
-        if mod(iterations, 60) == 0
-            echo "Cooling... T0: " ^ var.tool0Temp ^ "°C, T1: " ^ var.tool1Temp ^ "°C (target: <" ^ var.cooldownTemp ^ "°C)"
+        ;-if mod(iterations, 60) == 0
+            ;-echo "Cooling... T0: " ^ var.tool0Temp ^ "°C, T1: " ^ var.tool1Temp ^ "°C (target: <" ^ var.cooldownTemp ^ "°C) - Hold X or U endstop to skip"
         
-        G4 S1
-        set var.coolElapsed = var.coolElapsed + 1
-        if var.coolElapsed > 3600
-            ; Restore fault detection if it was disabled
-            if var.disableFaultDetection
-                M570 H3 P600 T70 R5     ; Restore chamber fault detection to normal
-            M98 P"0:/sys/led/fault.g"  ; RED
-            abort "Error: the tools took too long to cool down (exceeded 1 hour)."
+        ;-G4 S1
+        ;-set var.coolElapsed = var.coolElapsed + 1
+        ;-if var.coolElapsed > 3600
+            ;- Restore fault detection if it was disabled
+            ;-if var.disableFaultDetection
+                ;-M570 H3 P600 T70 R5     ; Restore chamber fault detection to normal
+            ;-M98 P"0:/sys/led/fault.g"  ; RED
+            ;-abort "Error: the tools took too long to cool down (exceeded 1 hour)."
     
-    ; Cooling complete - show success (green LED)
-    M98 P"0:/sys/led/end.g" ; GREEN success - cooling complete
-    M291 S2 R"Cooling Complete" P"Both tools have cooled down successfully.<br>Ready to start calibration."
+    ;- Cooling complete - show success (green LED)
+    ;-M98 P"0:/sys/led/end.g" ; GREEN success - cooling complete
+    
+    ;- Check if cooling was skipped or completed naturally
+    ;-if sensors.endstops[0].triggered || sensors.endstops[3].triggered
+        ;-M291 S2 R"Cooling Skipped" P"Cooling period was skipped by endstop.<br>Ready to start calibration."
+    ;-else
+        ;-M291 S2 R"Cooling Complete" P"Both tools have cooled down successfully.<br>Ready to start calibration."
 
 ; Ensure all axes are homed before starting calibration
-if !move.axes[1].homed||!move.axes[0].homed||!move.axes[3].homed||!move.axes[2].homed
-  G28  ; Home all axes if any are not homed
+;-if !move.axes[1].homed||!move.axes[0].homed||!move.axes[3].homed||!move.axes[2].homed
+;-  G28  ; Home all axes if any are not homed
 
 ; Move to safe calibration position
-G1 F18000 X-200 Y0 U200 Z150  ; Position axes away from build area
+;-G1 F18000 X-200 Y0 U200 Z150  ; Position axes away from build area
 
 ; User interaction: Prepare chamber for calibration
-M291 S2 R"Attention!" P"Please take the low-temperature filament from the chamber" S2
-M291 S2 R"Close the Lid and Door" P"Please close the lid and door for calibration" S2
+;-M291 S2 R"Attention!" P"Please take the low-temperature filament from the chamber" S2
+;-M291 S2 R"Close the Lid and Door" P"Please close the lid and door for calibration" S2
 
 ;========= HEATING PHASE FOR CALIBRATION =========
 ; Heat up the system to create stable temperature conditions for calibration
@@ -94,38 +112,135 @@ echo "Starting heating phase - Bed: " ^ var.bedTargetTemp ^ "°C, Chamber: " ^ v
 M140 S{var.bedTargetTemp}   ; Set bed temperature using configurable variable
 M141 S{var.chamberTargetTemp}    ; Set chamber temperature using configurable variable
 M98 P"0:/sys/led/pause.g"        ; YELLOW = active / heating
-M116 H2 C0  ; Wait for bed heater to reach target temperature
-G4 S1200    ; Additional 20-minute stabilization wait
-echo "Heating complete - stabilization finished"
+
+;- Wait for average of tool temperatures to reach desired chamber temperature
+;-echo "Waiting for tool average temperature to reach " ^ var.chamberTargetTemp ^ "°C (Hold X or U endstop to skip)..."
+;-while !(sensors.endstops[0].triggered || sensors.endstops[3].triggered)
+  ;- Calculate current average of tool temperatures
+  ;-var currentAverage = (heat.heaters[0].current + heat.heaters[1].current) / 2
+  
+  ;- Check if average temperature has reached target
+  ;-if var.currentAverage >= var.chamberTargetTemp
+    ;-break  ; Target reached, exit loop
+  
+  ;- Display progress every 10 seconds
+  ;-if mod(state.upTime, 10) == 0
+    ;-echo "Tool average: " ^ var.currentAverage ^ "°C / " ^ var.chamberTargetTemp ^ "°C (T0: " ^ heat.heaters[0].current ^ "°C, T1: " ^ heat.heaters[1].current ^ "°C) - Hold X or U endstop to skip"
+  
+  ;-G4 S1  ; Wait 1 second before next check
+
+;- Check if heating was skipped by endstop
+;-if sensors.endstops[0].triggered || sensors.endstops[3].triggered
+  ;-echo "Tool heating period skipped by endstop trigger"
+;-else
+  ;-echo "Tool average temperature reached target: " ^ var.chamberTargetTemp ^ "°C"
+
+; Initialize variables for 20-minute stabilization countdown
+var startTime = {state.upTime}
+;-var remainingTime = 0
+;-var lastUpdateTime = 0
+
+;-echo "Temperature reached - starting 20-minute stabilization period"
+    
+;- 20-minute stabilization period with 30-second updates and endstop monitoring
+;-while !(sensors.endstops[0].triggered || sensors.endstops[3].triggered)
+  ;-set var.remainingTime = 1200 - (state.upTime - var.startTime)  ; 1200 seconds = 20 minutes
+  
+  ;- Check if stabilization period is complete
+  ;-if var.remainingTime <= 0
+    ;-break
+  
+  ;- Provide time update every 30 seconds
+  ;-if (state.upTime - var.lastUpdateTime) >= 30 || var.lastUpdateTime == 0
+    ;-set var.lastUpdateTime = state.upTime
+    ;-var minutes = floor(var.remainingTime / 60)
+    ;-var seconds = var.remainingTime % 60
+    ;-var minutesExact = var.remainingTime / 60.0
+    ;-echo "Stabilization in progress - Time remaining: " ^ var.minutesExact ^ " minutes (Hold X or U endstop to skip)"
+  
+  ;-G4 S1  ; Wait 1 second before next check
+
+;- Check if stabilization was skipped by endstop
+;-if sensors.endstops[0].triggered || sensors.endstops[3].triggered
+  ;-echo "Stabilization period skipped by endstop trigger - proceeding to calibration"
+;-else
+  ;-echo "Heating complete - stabilization finished"
 
 ; Calculate target temperature as average of tool 0 and tool 1 heater readings
 ; This provides a reference temperature for sensor calibration
 var target = (heat.heaters[0].current + heat.heaters[1].current) / 2
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+; Check chamber sensor health before calibration
+var initialSensorReading = sensors.analog[3].lastReading
+echo "Initial chamber sensor reading: " ^ var.initialSensorReading ^ "°C"
+echo "Target calibration temperature: " ^ var.target ^ "°C"
+
+; Detect sensor faults (disconnected thermistor reads ~2000°C)
+if var.initialSensorReading > 1500 || var.initialSensorReading < -50
+  M140 S0  ; Turn off heaters for safety
+  M141 S0
+  ; Restore fault detection if it was disabled
+  if var.disableFaultDetection
+    M570 H3 P600 T70 R5
+  M98 P"0:/sys/led/fault.g"  ; RED LED
+  echo "SENSOR FAULT DETECTED:"
+  echo "Chamber sensor reading: " ^ var.initialSensorReading ^ "°C"
+  echo "This indicates:"
+  echo "- Disconnected thermistor wires"
+  echo "- Faulty chamber temperature sensor"  
+  echo "- Wrong sensor configuration"
+  echo "Please check chamber sensor wiring and configuration."
+  abort "Cannot calibrate - Chamber sensor fault detected"
+
+echo "Sensor health check passed - proceeding with calibration"
 
 ;========= BINARY SEARCH CALIBRATION ALGORITHM =========
 ; Use binary search to find optimal C coefficient for temperature sensor
 ; The C coefficient compensates for sensor variations and improves accuracy
 
 ; Initialize calibration parameters
-var tol = 0.2        ; Tolerance: stop when within 0.2°C of target
-var cLo = -1.5e-7    ; Lower bound of C coefficient search range
-var cHi =  1.5e-7    ; Upper bound of C coefficient search range
-var bestC = 0.0      ; Best C coefficient found so far
+var tol = 1.0        ; Tolerance: stop when within 1.0°C of target
+var cLo = -5.0e-7    ; Lower bound of C coefficient search range
+var cHi =  5.0e-7    ; Upper bound of C coefficient search range
+var bestC = 0.0      ; Best C coefficient found so far (reverted to 0.0)
 var bestErr = 1.0e9  ; Best error achieved so far (start with large value)
-var cMid = 0.0       ; Current middle value being tested
+var cMid = 0.0       ; Current middle value being tested (reverted to 0.0)
+
+echo "Starting calibration from C coefficient: 0.0 (binary search from -5e-7 to 5e-7)"
 
 ; Main calibration loop - binary search algorithm with adaptive target temperature
 var iterations = 0
+var skipEndstopCheck = false  ; Flag to skip endstop checks during calibration
 while true
-  ; Check for abort condition (X or U endstop triggered)
-  if sensors.endstops[0].triggered || sensors.endstops[3].triggered
-    M140 S0
-    M141 S0
-    ; Restore fault detection if it was disabled
-    if var.disableFaultDetection
-      M570 H3 P600 T70 R5       ; Restore chamber fault detection to normal
-    M98 P"0:/sys/led/fault.g"    ; RED
-    abort "Calibration canceled due to triggered X/U endstop."
+  ; Check for skip condition (X or U endstop triggered) only if not already in calibration
+  if !var.skipEndstopCheck && (sensors.endstops[0].triggered || sensors.endstops[3].triggered)
+    echo "Endstop detected - skipping to calibration phase"
+    set var.skipEndstopCheck = true  ; Don't check endstops anymore during calibration iterations
   
   ; Recalculate target temperature as current average of T0 and T1 for adaptive calibration
   set var.target = (heat.heaters[0].current + heat.heaters[1].current) / 2
@@ -181,10 +296,38 @@ while true
   else
     set var.cLo = var.cMid  ; Reading too low, search higher C values
   
-  ; Safety timeout to prevent infinite loops (max 200 iterations)
-  if var.iterations > 200
-    echo "WARNING: Maximum iterations reached. Using best coefficient found."
+  ; Safety timeout to prevent infinite loops (max 300 iterations)
+  if var.iterations > 300
+    ; If we still haven't achieved target, use best coefficient found
+    if var.bestErr > var.tol
+      echo "WARNING: Could not achieve target accuracy. Best error: " ^ var.bestErr ^ "°C"
+      echo "Using best coefficient found. Consider checking sensor wiring or chamber conditions."
     break     
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 ;========= CALIBRATION COMPLETION AND CLEANUP =========
 ; Final sensor reading and temperature display
