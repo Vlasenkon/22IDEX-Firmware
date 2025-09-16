@@ -1,67 +1,212 @@
+;==============================================================================
+; CHAMBER TEMPERATURE SENSOR CALIBRATION SCRIPT
+; This script automatically calibrates the chamber temperature sensor by finding
+; the optimal C coefficient through a binary search algorithm
+;==============================================================================
+
+;========= CONFIGURABLE TEMPERATURE PARAMETERS =========
+; Edit these values to customize calibration temperatures
+var cooldownTemp = 35        ; Temperature threshold for cooling phase (°C)
+var chamberTargetTemp = 90   ; Target chamber temperature for calibration (°C)
+var bedTargetTemp = 160      ; Target bed temperature for calibration (°C)
+
+; ---- User confirmation ----
+M291 S4 K{"Start test","Start (No fault detection)","Cancel"} R"Chamber Temperature Calibration" P"The printer will calibrate chamber sensor.<br>Remove low-melting materials.<br>Hold X or U endstop to abort."
+
+; Variable to track fault detection state
+var disableFaultDetection = false
+
+if input == 0
+  ; Start test normally - fault detection remains enabled
+  echo "Starting chamber calibration with normal fault detection"
+elif input == 1
+  ; Start test with disabled chamber fault detection
+  set var.disableFaultDetection = true
+  echo "Starting chamber calibration with disabled fault detection"
+  M570 H3 P999999 T999999 R50    ; Disable chamber fault detection
+else
+  abort "Calibration cancelled by user."
+
+; Safety check: If any tool temperature is hot (>cooldownTemp), cool down until both are <cooldownTemp
+var tool0Temp = heat.heaters[0].current
+var tool1Temp = heat.heaters[1].current
+var coolElapsed = 0              ; seconds spent cooling (for timeout only)
+
+; Reset all heating systems to safe state
+M568 P0 S{0} R{0}
+M568 P1 S{0} R{0}
+M568 P2 S{0} R{0}
+M568 P3 S{0} R{0}
+M140 S0     ; Turn off bed heater
+M141 S0     ; Turn off chamber heater
+
+if var.tool0Temp > var.cooldownTemp || var.tool1Temp > var.cooldownTemp
+    echo "Tools require cooling: T0=" ^ var.tool0Temp ^ "°C, T1=" ^ var.tool1Temp ^ "°C (threshold: " ^ var.cooldownTemp ^ "°C)"
+    M98 P"0:/sys/led/start_cold.g" ; BLUE LED for cooling
+    M291 S2 R"Open the Lid and Door" P"Please open the lid and door to allow heat to escape for faster cooling" S2
+    
+    ; Cooling loop: check every second until both tools are <cooldownTemp
+    while true
+        if sensors.endstops[0].triggered || sensors.endstops[3].triggered
+            ; Restore fault detection if it was disabled
+            if var.disableFaultDetection
+                M570 H3 P600 T70 R5     ; Restore chamber fault detection to normal
+            M98 P"0:/sys/led/fault.g"  ; RED
+            abort "Calibration canceled due to triggered X/U endstop during cooling."
+        
+        ; Update current tool temperatures
+        set var.tool0Temp = heat.heaters[0].current
+        set var.tool1Temp = heat.heaters[1].current
+        
+        if var.tool0Temp < var.cooldownTemp && var.tool1Temp < var.cooldownTemp
+            break
+            
+        if mod(iterations, 60) == 0
+            echo "Cooling... T0: " ^ var.tool0Temp ^ "°C, T1: " ^ var.tool1Temp ^ "°C (target: <" ^ var.cooldownTemp ^ "°C)"
+        
+        G4 S1
+        set var.coolElapsed = var.coolElapsed + 1
+        if var.coolElapsed > 3600
+            ; Restore fault detection if it was disabled
+            if var.disableFaultDetection
+                M570 H3 P600 T70 R5     ; Restore chamber fault detection to normal
+            M98 P"0:/sys/led/fault.g"  ; RED
+            abort "Error: the tools took too long to cool down (exceeded 1 hour)."
+    
+    ; Cooling complete - show success (green LED)
+    M98 P"0:/sys/led/end.g" ; GREEN success - cooling complete
+    M291 S2 R"Cooling Complete" P"Both tools have cooled down successfully.<br>Ready to start calibration."
+
+; Ensure all axes are homed before starting calibration
 if !move.axes[1].homed||!move.axes[0].homed||!move.axes[3].homed||!move.axes[2].homed
-  G28
+  G28  ; Home all axes if any are not homed
 
-if heat.heaters[0].current > 35 || heat.heaters[1].current > 35 ||heat.heaters[2].current > 35 || heat.heaters[3].current > 35
-    M291 S2 R"Open the Lid and Door" P"Please Open the Lid and Door" S2
+; Move to safe calibration position
+G1 F18000 X-200 Y0 U200 Z150  ; Position axes away from build area
 
-G1 F8000 X-208 Y175 U208 Z150
-M568 P3 A0
-M140 S0
-M141 S0
-
-if heat.heaters[0].current > 35 && heat.heaters[1].current > 35 && heat.heaters[2].current > 35 && heat.heaters[3].current > 35
-    M291 R"Wait for Heater to Cool Down" P"The temperature of all heaters must be below 35°C." S1 T10
-    while heat.heaters[0].current > 35 && heat.heaters[1].current > 35 && heat.heaters[2].current > 35 && heat.heaters[3].current > 35
-        G4 S5
-
+; User interaction: Prepare chamber for calibration
 M291 S2 R"Attention!" P"Please take the low-temperature filament from the chamber" S2
-M291 S2 R"Close the Lid and Door" P"Please Close the Lid and Door" S2
+M291 S2 R"Close the Lid and Door" P"Please close the lid and door for calibration" S2
 
-M140 S150
-M141 S90
-M116 H2 C0
-G4 S1200
+;========= HEATING PHASE FOR CALIBRATION =========
+; Heat up the system to create stable temperature conditions for calibration
+echo "Starting heating phase - Bed: " ^ var.bedTargetTemp ^ "°C, Chamber: " ^ var.chamberTargetTemp ^ "°C"
+M140 S{var.bedTargetTemp}   ; Set bed temperature using configurable variable
+M141 S{var.chamberTargetTemp}    ; Set chamber temperature using configurable variable
+M98 P"0:/sys/led/pause.g"        ; YELLOW = active / heating
+M116 H2 C0  ; Wait for bed heater to reach target temperature
+G4 S1200    ; Additional 20-minute stabilization wait
+echo "Heating complete - stabilization finished"
 
-var target = ((heat.heaters[0].current+heat.heaters[1].current)/2)
+; Calculate target temperature as average of tool 0 and tool 1 heater readings
+; This provides a reference temperature for sensor calibration
+var target = (heat.heaters[0].current + heat.heaters[1].current) / 2
 
-;========= Binary search C coef =========
-var tol = 0.2
-var cLo = -1.5e-7
-var cHi =  1.5e-7
-var bestC = 0.0
-var bestErr = 1.0e9
-var cMid = 0.0
+;========= BINARY SEARCH CALIBRATION ALGORITHM =========
+; Use binary search to find optimal C coefficient for temperature sensor
+; The C coefficient compensates for sensor variations and improves accuracy
 
+; Initialize calibration parameters
+var tol = 0.2        ; Tolerance: stop when within 0.2°C of target
+var cLo = -1.5e-7    ; Lower bound of C coefficient search range
+var cHi =  1.5e-7    ; Upper bound of C coefficient search range
+var bestC = 0.0      ; Best C coefficient found so far
+var bestErr = 1.0e9  ; Best error achieved so far (start with large value)
+var cMid = 0.0       ; Current middle value being tested
+
+; Main calibration loop - binary search algorithm with adaptive target temperature
+var iterations = 0
 while true
+  ; Check for abort condition (X or U endstop triggered)
+  if sensors.endstops[0].triggered || sensors.endstops[3].triggered
+    M140 S0
+    M141 S0
+    ; Restore fault detection if it was disabled
+    if var.disableFaultDetection
+      M570 H3 P600 T70 R5       ; Restore chamber fault detection to normal
+    M98 P"0:/sys/led/fault.g"    ; RED
+    abort "Calibration canceled due to triggered X/U endstop."
+  
+  ; Recalculate target temperature as current average of T0 and T1 for adaptive calibration
+  set var.target = (heat.heaters[0].current + heat.heaters[1].current) / 2
+  
+  ; Calculate middle point of current search range
   set var.cMid = (var.cLo + var.cHi)/2.0
+  
+  ; Apply the test C coefficient to sensor 3 (chamber sensor)
   M308 S3 C{var.cMid}
-  G4 S5
+  G4 S5  ; Wait for sensor reading to stabilize
+  
+  ; Read current temperature from sensor and calculate error against adaptive target
   var tNow = sensors.analog[3].lastReading
   var err  = abs(var.tNow - var.target)
+  
+  ; Progress feedback every 10 iterations
+  set var.iterations = var.iterations + 1
+  if mod(var.iterations, 10) == 0
+    echo "Calibration iteration " ^ var.iterations ^ ": Target=" ^ var.target ^ "°C (T0=" ^ heat.heaters[0].current ^ "°C, T1=" ^ heat.heaters[1].current ^ "°C), Sensor=" ^ var.tNow ^ "°C, Error=" ^ var.err ^ "°C"
+  
+  ; Update best values if this attempt is better
   if (var.err < var.bestErr)
     set var.bestErr = var.err
     set var.bestC   = var.cMid
+    echo "Attempting C coefficient: " ^ var.cMid ^ " with error " ^ var.bestErr ^ "°C"
+  
+  ; Check if we've found a good enough solution or search range is too small
   if (var.err <= var.tol) || (abs(var.cHi - var.cLo) < 5e-10)
+    ; Format the final C coefficient for display and file output
     var scale = 100
     var cUnits = abs(var.bestC) / 1e-8
     var eps = 1e-9 * var.scale
     var cMant = ceil(var.cUnits * var.scale - 0.5 + var.eps) / var.scale
     var cSign = (var.bestC < 0) ? "-" : ""
-    echo "C coef = "^ {var.cSign} ^ {var.cMant}^ "e-8"
-    echo "Mid Temp: "^ var.target ^"<br> Chamber Temp: "^ heat.heaters[3].current
-    echo >"0:/user/ChamberTempSensor.g" "M308 S3 A""Chamber Air"" P""1.temp0"" Y""thermistor"" T200000 B3950 C" ^ {var.cSign} ^ {var.cMant} ^ "e-8 R2200"
-    break
+    
+    ; Display calibration results with final adaptive target
+    var finalTarget = (heat.heaters[0].current + heat.heaters[1].current) / 2
+    echo "=== CALIBRATION COMPLETE ==="
+    echo "C coefficient = " ^ var.cSign ^ var.cMant ^ "e-8"
+    echo "Final Target Temp (T0+T1 avg): " ^ var.finalTarget ^ "°C"
+    echo "Final T0: " ^ heat.heaters[0].current ^ "°C, T1: " ^ heat.heaters[1].current ^ "°C"
+    echo "Chamber Sensor Reading: " ^ sensors.analog[3].lastReading ^ "°C"
+    echo "Final Error: " ^ var.bestErr ^ "°C"
+    echo "Total iterations: " ^ var.iterations
+    
+    ; Save calibrated sensor configuration to file
+    echo >"0:/user/ChamberTempSensor.g" "M308 S3 A""Chamber Air"" P""1.temp0"" Y""thermistor"" T200000 B3950 C" ^ var.cSign ^ var.cMant ^ "e-8 R2200"
+    break  ; Exit calibration loop
+  
+  ; Adjust search range based on temperature reading vs adaptive target
   if (var.tNow > var.target)
-    set var.cHi = var.cMid      
+    set var.cHi = var.cMid  ; Reading too high, search lower C values    
   else
-    set var.cLo = var.cMid     
+    set var.cLo = var.cMid  ; Reading too low, search higher C values
+  
+  ; Safety timeout to prevent infinite loops (max 200 iterations)
+  if var.iterations > 200
+    echo "WARNING: Maximum iterations reached. Using best coefficient found."
+    break     
 
-G4 S5
-M105
+;========= CALIBRATION COMPLETION AND CLEANUP =========
+; Final sensor reading and temperature display
+G4 S5   ; Brief pause for stability
+M105    ; Report all temperatures
 
+; Cool down all heating systems
+M140 S0  ; Turn off bed heater
+M141 S0  ; Turn off chamber heater
 
-M140 S0
-M141 S0
-M98 P"0:/sys/led/end.g"
-M291 P"Calibration completed successfully!" R"Success" S1 T15
-M98 P"0:/sys/led/resetstatus.g"
+; Restore fault detection if it was disabled
+if var.disableFaultDetection == true
+  echo "Restoring chamber fault detection to normal settings"
+  M570 H3 P600 T70 R5        ; Restore chamber fault detection to normal
+
+; Visual feedback and completion notifications
+M98 P"0:/sys/led/end.g"  ; Set LED status to indicate completion
+M291 P"Calibration completed successfully!" R"Success" S1 T15  ; Success message
+M98 P"0:/sys/led/resetstatus.g"  ; Reset LED status
+
+;==============================================================================
+; CALIBRATION COMPLETE
+; The chamber temperature sensor is now calibrated with the optimal C coefficient
+; Configuration saved to: /user/ChamberTempSensor.g
+;==============================================================================
