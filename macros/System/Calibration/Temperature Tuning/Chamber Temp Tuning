@@ -202,7 +202,7 @@ if var.disableFaultDetection == true
 
 ; Visual feedback and completion notifications
 M98 P"0:/sys/led/end.g"  ; Set LED status to indicate completion
-M291 P"Calibration completed successfully!" R"Success" S1 T15  ; Success message
+M291 P"Calibration completed successfully!" R"Success" S2  ; Success message
 M98 P"0:/sys/led/resetstatus.g"  ; Reset LED status
 
 ;==============================================================================
