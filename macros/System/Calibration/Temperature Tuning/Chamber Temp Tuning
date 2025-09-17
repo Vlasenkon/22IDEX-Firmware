@@ -1,541 +1,297 @@
 ;==============================================================================
-; CHAMBER TEMPERATURE SENSOR CALIBRATION SCRIPT
-; This script automatically calibrates the chamber temperature sensor by finding
-; the optimal C coefficient through a binary search algorithm
+; SIMPLIFIED CHAMBER TEMPERATURE SENSOR CALIBRATION
+; Simple binary search calibration with 30-minute heating and 5-minute stabilization
 ;==============================================================================
 
-;========= CONFIGURABLE TEMPERATURE PARAMETERS =========
-; Edit these values to customize calibration temperatures
-var chamberTargetTemp = 90   ; Default chamber temperature for calibration (90°C recommended for optimal results)
-var bedTargetTemp = 160      ; Target bed temperature for calibration (°C)
+; ---- User confirmation for fault detection ----
+M291 S4 K{"Start test","Start (No fault detection)","Cancel"} R"Chamber Temperature Calibration" P"Start simplified chamber sensor calibration?<br><br>Remove low-melting materials first.<br>Hold X or U endstop to abort at any time."
 
-; ---- User confirmation ----
-M291 S4 K{"Start test","Start (No fault detection)","Cancel"} R"Chamber Temperature Calibration" P"The printer will calibrate chamber sensor.<br>Remove low-melting materials.<br>Hold X or U endstop to abort."
-
-; Variable to track fault detection state
+; Track fault detection state
 var disableFaultDetection = false
 
 if input == 0
-  ; Start test normally - fault detection remains enabled
-  echo "Starting chamber calibration with normal fault detection"
+  echo "Starting calibration with normal fault detection"
 elif input == 1
-  ; Start test with disabled chamber fault detection
   set var.disableFaultDetection = true
-  echo "Starting chamber calibration with disabled fault detection"
+  echo "Starting calibration with disabled fault detection"
   M570 H3 P999999 T999999 R50    ; Disable chamber fault detection
 else
   abort "Calibration cancelled by user."
 
-; ---- Chamber temperature selection ----
-M291 S4 K{"Start with 90°C","Custom temperature","Cancel"} R"Chamber Temperature Selection" P"Select chamber heating temperature for calibration.<br><br>90°C is recommended for optimal results."
-
-if input == 0
-  ; Use default temperature (90°C)
-  echo "Starting chamber calibration at default temperature: " ^ var.chamberTargetTemp ^ "°C"
-elif input == 1
-  ; Ask for custom temperature with smart limits based on current chamber temperature
-  ; Calculate current chamber temperature as average of T0 and T1
-  var currentChamberTemp = (heat.heaters[0].current + heat.heaters[1].current) / 2
-  var minTemp = var.currentChamberTemp  ; Minimum: current chamber temperature
-  var maxTemp = 100                     ; Maximum: 100°C
-  
-  ; Ensure minimum is reasonable (at least 50°C)
-  if var.minTemp < 50
-    set var.minTemp = 50
-  
-  echo "Current chamber temperature: " ^ var.currentChamberTemp ^ "°C"
-  echo "Temperature limits: " ^ var.minTemp ^ "°C (minimum) to " ^ var.maxTemp ^ "°C (maximum)"
-  
-  ; Build dialog message in parts to avoid line length limit
-  var tempMsg = "Enter target chamber temperature (°C)<br><br>Current chamber temp: " ^ var.currentChamberTemp ^ "°C"
-  set var.tempMsg = var.tempMsg ^ "<br>Range: " ^ var.minTemp ^ "°C to " ^ var.maxTemp ^ "°C"
-  
-  ; Ask for custom temperature with calculated limits
-  M291 J1 L{var.minTemp} H{var.maxTemp} F{var.chamberTargetTemp} P{var.tempMsg} R"Custom Chamber Temperature" S5
-  if result == -1
-    abort "Calibration cancelled by user."
-  set var.chamberTargetTemp = input
-  echo "Starting chamber calibration at custom temperature: " ^ var.chamberTargetTemp ^ "°C"
-else
-  abort "Calibration cancelled by user."
-
 ; ---- Calibration method selection ----
-M291 S4 K{"Automatic (T0+T1 avg)","Manual (Pyrometer)","Cancel"} R"Calibration Method" P"Select calibration method:<br><br>Automatic: Uses tool temperatures<br>Manual: You measure with pyrometer"
+M291 S4 K{"Automatic (T0+T1 avg)","Manual (IR/Probe)","Cancel"} R"Calibration Method" P"Select calibration method:<br><br>Automatic: Uses tool temperatures<br>Manual: You measure with IR/probe"
 
 var useManualCalibration = false
-var manualTargetTemp = 0.0
 
 if input == 0
-  ; Use automatic calibration (T0+T1 average)
-  echo "Using automatic calibration method - will reference T0+T1 average temperature"
+  echo "Using automatic calibration - T0+T1 average temperature"
 elif input == 1
-  ; Use manual calibration (user measured temperature)
   set var.useManualCalibration = true
-  echo "Using manual calibration method - you will enter measured temperature"
+  echo "Using manual calibration - you will measure temperature"
 else
   abort "Calibration cancelled by user."
 
-; ========= PREPARATION PHASE =========
-; User interaction: Prepare chamber for calibration FIRST
+; ---- Heating duration selection ----
+M291 S4 K{"30 minutes (Default)","Custom duration","Cancel"} R"Heating Duration" P"Select heating duration:<br><br>30 minutes is recommended for most cases.<br>Longer heating ensures better thermal stability."
 
-; Step 1: Remove low-temperature plastics with cancel option
-M291 S4 K{"Continue","Cancel"} R"Remove Plastics" P"Please remove low-temp filaments from chamber.<br><br>This prevents damage to sensitive materials."
+var heatingMinutes = 30  ; Default heating duration
+
+if input == 0
+  echo "Using default heating duration: 30 minutes"
+elif input == 1
+  ; Ask for custom heating duration
+  M291 J1 L5 H120 F30 P"Enter heating duration (5-120 minutes):<br><br>Recommended: 30-60 minutes<br>Minimum: 5 minutes for safety" R"Custom Heating Duration" S5
+  if result == -1
+    abort "Calibration cancelled by user."
+  set var.heatingMinutes = input
+  echo "Using custom heating duration: " ^ var.heatingMinutes ^ " minutes"
+else
+  abort "Calibration cancelled by user."
+
+; ---- Safety preparations ----
+M291 S4 K{"Continue","Cancel"} R"Remove Plastics" P"Remove low-temperature filaments from chamber.<br><br>This prevents damage during heating."
 
 if input != 0
-  ; User cancelled - reset all temperatures and abort
+  ; Reset temperatures and abort
   M568 P0 S{0} R{0}
   M568 P1 S{0} R{0}  
   M568 P2 S{0} R{0}
   M568 P3 S{0} R{0}
-  M140 S0     ; Turn off bed heater
-  M141 S0     ; Turn off chamber heater
-  abort "Calibration cancelled - all temperatures reset to safe levels."
+  M140 S0
+  M141 S0
+  abort "Calibration cancelled - all temperatures reset."
 
-; Step 2: Close chamber door
-M291 S2 R"Close the Lid and Door" P"Please close the lid and door for calibration" S2
+M291 S2 R"Close Chamber" P"Close the chamber lid and door" S2
 
-; Reset all heating systems to safe state
+; Reset all heaters to safe state
 M568 P0 S{0} R{0}
 M568 P1 S{0} R{0}
 M568 P2 S{0} R{0}
 M568 P3 S{0} R{0}
 
-;========= START HEATING EARLY =========
-; Start heating immediately after user confirmation to save time
+; Home axes if needed
+if !move.axes[0].homed||!move.axes[1].homed||!move.axes[2].homed||!move.axes[3].homed
+  G28
 
-; CHAMBER TEMPERATURE OVERRIDE - Always heat chamber to 90°C for optimal results
-; User's selected temperature will be used as the calibration endpoint, not the chamber heater setting
-var userCalibrationTarget = var.chamberTargetTemp  ; Save user's target for calibration calculations
-var actualChamberTemp = 90                         ; Always set chamber to 90°C for optimal results
+; Move to safe position
+G1 F18000 X-200 Y0 U200 Z150
 
-echo "Chamber heating strategy:"
-echo "- Chamber heater will be set to: " ^ var.actualChamberTemp ^ "°C (recommended for optimal results)"
-echo "- Calibration will stop at: " ^ var.userCalibrationTarget ^ "°C (user's target temperature)"
-echo "- 90°C provides the best balance of safety and calibration accuracy"
+; Check sensor health
+var initialReading = sensors.analog[3].lastReading
+echo "Initial chamber sensor reading: " ^ var.initialReading ^ "°C"
 
-; Smart bed temperature setting - don't cool down if already hot
-var currentBedTemp = heat.heaters[2].current
-var actualBedTarget = 0.0
-
-if var.currentBedTemp >= var.bedTargetTemp
-  ; Bed is already at or above target - keep current temperature
-  set var.actualBedTarget = var.currentBedTemp
-  echo "Bed already hot (" ^ var.currentBedTemp ^ "°C) - maintaining current temperature"
-else
-  ; Bed is below target - heat to target temperature
-  set var.actualBedTarget = var.bedTargetTemp
-  echo "Bed below target (" ^ var.currentBedTemp ^ "°C) - heating to " ^ var.bedTargetTemp ^ "°C"
-
-echo "Starting heating - Bed: " ^ var.actualBedTarget ^ "°C, Chamber: " ^ var.actualChamberTemp ^ "°C"
-M140 S{var.actualBedTarget}     ; Set bed temperature using smart logic
-M141 S{var.actualChamberTemp}   ; Set chamber temperature to 90°C for optimal results
-
-; Ensure all axes are homed before starting calibration
-if !move.axes[1].homed||!move.axes[0].homed||!move.axes[3].homed||!move.axes[2].homed
-  G28  ; Home all axes if any are not homed
-
-; Set LED status AFTER homing (G28 resets LEDs)
-M98 P"0:/sys/led/pause.g"        ; YELLOW = active / heating
-
-; Move to safe calibration position
-G1 F18000 X-200 Y0 U200 Z150  ; Position axes away from build area
-
-; Calculate calibration data points BEFORE heating messages
-; Get current chamber/reference temperature for dynamic point calculation
-var currentChamberTemp = (heat.heaters[0].current + heat.heaters[1].current) / 2  ; T0+T1 average
-
-; Calculate 3 dynamic calibration points with smart LOW point selection
-var minStartTemp = 40.0  ; Minimum temperature for Point 1 (avoids room temp calibration issues)
-var lowTemp = max(var.currentChamberTemp, var.minStartTemp)  ; Use current temp OR 40°C, whichever is higher
-var highTemp = var.userCalibrationTarget ; Final point = USER'S calibration target (highest) - NOT chamber setting
-var midTemp = (var.lowTemp + var.highTemp) / 2   ; Middle point = average of low and high
-
-echo "Smart Point 1 selection:"
-echo "Current temperature: " ^ var.currentChamberTemp ^ "°C"
-echo "Minimum start temperature: " ^ var.minStartTemp ^ "°C"
-echo "Selected Point 1 temperature: " ^ var.lowTemp ^ "°C (ensures meaningful calibration range)"
-
-; Create calibration targets array with 3 dynamic points in HEATING ORDER (low to high)
-var calibrationTargets = {var.lowTemp, var.midTemp, var.highTemp}  ; Low to high temperature order for heating
-
-; Progressive heating and calibration - we will heat step by step to each data point
-echo "Starting progressive 3-point chamber calibration:"
-echo "• Data Point 1: " ^ var.calibrationTargets[0] ^ "°C (smart start point - minimum 40°C for accuracy)"
-echo "• Data Point 2: " ^ var.calibrationTargets[1] ^ "°C (mid-range temperature - MID point)"  
-echo "• Data Point 3: " ^ var.calibrationTargets[2] ^ "°C (target temperature - HIGH point)"
-echo ""
-echo "Strategy: Heat to each data point, calibrate there, then continue to next point"
-echo "Note: Chamber heater set to " ^ var.actualChamberTemp ^ "°C for optimal heating"
-
-; Check chamber sensor health before calibration
-var initialSensorReading = sensors.analog[3].lastReading
-echo "Initial chamber sensor reading: " ^ var.initialSensorReading ^ "°C"
-echo "Progressive calibration temperature range: " ^ var.calibrationTargets[0] ^ "°C to " ^ var.calibrationTargets[2] ^ "°C"
-
-; Detect sensor faults (disconnected thermistor reads ~2000°C)
-if var.initialSensorReading > 1500 || var.initialSensorReading < -50
-  M140 S0  ; Turn off heaters for safety
+if var.initialReading > 1500 || var.initialReading < -50
+  M140 S0
   M141 S0
-  ; Restore fault detection if it was disabled
   if var.disableFaultDetection
     M570 H3 P600 T70 R5
-  M98 P"0:/sys/led/fault.g"  ; RED LED
-  echo "SENSOR FAULT DETECTED:"
-  echo "Chamber sensor reading: " ^ var.initialSensorReading ^ "°C"
-  echo "This indicates:"
-  echo "- Disconnected thermistor wires"
-  echo "- Faulty chamber temperature sensor"  
-  echo "- Wrong sensor configuration"
-  echo "Please check chamber sensor wiring and configuration."
-  abort "Cannot calibrate - Chamber sensor fault detected"
+  echo "SENSOR FAULT: " ^ var.initialReading ^ "°C - Check wiring"
+  abort "Chamber sensor fault detected"
 
-echo "Sensor health check passed - proceeding with calibration"
+echo "Sensor health check passed"
 
-;========= DYNAMIC 3-POINT CALIBRATION ALGORITHM =========
-; Use dynamic 3-point linear regression based on current and target temperatures
-; This method handles sensor offset issues better than single-point calibration
-
-; Initialize calibration variables (calibrationTargets array already defined during heating)
-var numPoints = 3  ; Fixed to 3 points
-var sensorReadings = vector(var.numPoints, 0.0)  ; Array to store sensor readings  
-var referenceTemps = vector(var.numPoints, 0.0)  ; Array to store reference temperatures
-var currentPoint = 0                             ; Current calibration point index
-
-echo "=== DYNAMIC 3-POINT CALIBRATION SETUP ==="
-echo "Starting chamber temperature: " ^ var.calibrationTargets[0] ^ "°C"
-echo "Calibration target temperature: " ^ var.userCalibrationTarget ^ "°C (user's selection)"
-echo "Chamber heater temperature: " ^ var.actualChamberTemp ^ "°C (90°C for optimal results)"
-echo ""
-; Show M291 dialog explaining the progressive calibration strategy
-var dialogText = "Progressive Calibration Plan:<br><br>We will heat step-by-step and calibrate at each data point:<br><br>"
-set var.dialogText = var.dialogText ^ "• Data Point 1: " ^ var.calibrationTargets[0] ^ "°C → Heat & Calibrate<br>"
-set var.dialogText = var.dialogText ^ "• Data Point 2: " ^ var.calibrationTargets[1] ^ "°C → Heat & Calibrate<br>"
-set var.dialogText = var.dialogText ^ "• Data Point 3: " ^ var.calibrationTargets[2] ^ "°C → Heat & Calibrate<br><br>"
-set var.dialogText = var.dialogText ^ "This ensures accurate calibration at each temperature.<br>"
-set var.dialogText = var.dialogText ^ "Hold X or U endstop to skip waiting periods."
-M291 P{var.dialogText} R"Progressive Calibration" S1 T30
-
-echo "=== STARTING PROGRESSIVE HEATING AND CALIBRATION ==="
-echo "We will heat step by step to each data point and calibrate at each temperature"
-echo "Data Point sequence:"
-echo "1. Heat to " ^ var.calibrationTargets[0] ^ "°C (LOW) → Calibrate"
-echo "2. Heat to " ^ var.calibrationTargets[1] ^ "°C (MID) → Calibrate"  
-echo "3. Heat to " ^ var.calibrationTargets[2] ^ "°C (HIGH) → Calibrate"
-echo ""
-
-; Initialize variables for multi-point calibration results
-var calibrationResults = vector(3, 0.0)  ; Store C coefficients from each point
-var calibrationErrors = vector(3, 0.0)   ; Store errors from each point
-var validCalibrations = 0                 ; Count successful calibrations
-
-; Initialize final calibration result variables (used after the loop)
-var bestC = 0.0      ; Best C coefficient from calibration
-var bestErr = 1.0e9  ; Best error from calibration
-var finalC = 0.0     ; Final C coefficient to use
-var finalError = 0.0 ; Final error achieved
-
-; Initialize coefficient formatting variables (used throughout)
-var cSign = ""       ; Sign of the C coefficient (+ or -)
-var cMant = 0.0      ; Mantissa of the C coefficient for formatting
-var scale = 100      ; Scale factor for formatting
-var cUnits = 0.0     ; Units calculation for formatting
-var eps = 0.0        ; Epsilon for rounding calculation
-
-; Reset sensor to default configuration for initial readings
+; Reset sensor to default configuration
 M308 S3 A"Chamber Air" P"1.temp0" Y"thermistor" T200000 B3950 C0 R2200
 
-while var.currentPoint < var.numPoints
-  var targetTemp = var.calibrationTargets[var.currentPoint]
-  var pointName = ""
+;========= SIMPLIFIED HEATING PHASE =========
+echo "=== HEATING PHASE ==="
+echo "Setting chamber to 105°C and heating for " ^ var.heatingMinutes ^ " minutes"
+
+; Set temperatures
+M140 S160    ; Heat bed to 160°C
+M141 S105    ; Heat chamber to 105°C
+
+; Set status LED
+M98 P"0:/sys/led/pause.g"
+
+; User-selected heating period
+var heatingStartTime = state.upTime
+var heatingDuration = var.heatingMinutes * 60  ; Convert minutes to seconds
+var lastHeatingUpdate = 0
+
+echo "Heating chamber for " ^ var.heatingMinutes ^ " minutes..."
+echo "Hold X or U endstop to skip heating period"
+
+while !(sensors.endstops[0].triggered || sensors.endstops[3].triggered)
+  var heatingRemaining = var.heatingDuration - (state.upTime - var.heatingStartTime)
   
-  ; Assign descriptive names to each calibration point
-  if var.currentPoint == 0
-    set var.pointName = "LOW"
-  elif var.currentPoint == 1  
-    set var.pointName = "MID"
-  else
-    set var.pointName = "HIGH"
+  ; Check if heating is complete
+  if var.heatingRemaining <= 0
+    echo var.heatingMinutes ^ "-minute heating period complete"
+    break
   
-  echo "=============================================="
-  echo "=== NOW HEATING TO DATA POINT " ^ (var.currentPoint + 1) ^ "/3 (" ^ var.pointName ^ ") ==="
-  echo "=== Target: " ^ var.targetTemp ^ "°C - Then Performing Calibration ==="
-  echo "=============================================="
-  
-  ; Show current heating progress
+  ; Calculate variables outside conditional for proper scope
+  var remainingMinutes = var.heatingRemaining / 60.0
   var currentTemp = (heat.heaters[0].current + heat.heaters[1].current) / 2
-  echo "Current temperature: " ^ var.currentTemp ^ "°C"
-  echo "Heating toward Data Point " ^ (var.currentPoint + 1) ^ ": " ^ var.targetTemp ^ "°C"
-  echo "Chamber heater: " ^ var.actualChamberTemp ^ "°C (providing heating power)"
   
-  ; Wait for temperature to reach calibration point
-  echo "Waiting for temperature to reach Data Point " ^ (var.currentPoint + 1) ^ " (" ^ var.targetTemp ^ "°C ±2°C tolerance)"
-  echo "Hold X or U endstop to skip waiting and calibrate at current temperature"
-  var waitStartTime = state.upTime
-  var skipWaiting = false
-  var actualReachedTemp = var.currentTemp
+  ; Progress update every 2 minutes
+  if (state.upTime - var.lastHeatingUpdate) >= 120 || var.lastHeatingUpdate == 0
+    set var.lastHeatingUpdate = state.upTime
+    echo "Heating - Time remaining: " ^ var.remainingMinutes ^ " minutes, Chamber: " ^ var.currentTemp ^ "°C"
+    echo "(Hold X or U endstop to skip)"
   
-  while !var.skipWaiting
-    ; Calculate current reference temperature (T0+T1 average)
-    var currentRef = (heat.heaters[0].current + heat.heaters[1].current) / 2
-    set var.actualReachedTemp = var.currentRef
-    
-    ; Check if we're close enough to target temperature
-    if abs(var.currentRef - var.targetTemp) <= 2.0
-      echo "Data Point " ^ (var.currentPoint + 1) ^ " reached: " ^ var.currentRef ^ "°C (target: " ^ var.targetTemp ^ "°C)"
-      break
-    
-    ; Check for endstop skip or timeout (max 30 minutes per point)
-    if (sensors.endstops[0].triggered || sensors.endstops[3].triggered) || ((state.upTime - var.waitStartTime) > 1800)
-      echo "Temperature wait skipped - Using current temperature for Data Point " ^ (var.currentPoint + 1) ^ ": " ^ var.currentRef ^ "°C"
-      set var.skipWaiting = true
-      break
-    
-    ; Progress update every 30 seconds
-    if mod((state.upTime - var.waitStartTime), 30) == 0
-      echo "Heating to Data Point " ^ (var.currentPoint + 1) ^ " - Target: " ^ var.targetTemp ^ "°C, Current: " ^ var.currentRef ^ "°C"
-      echo "(Hold X or U to skip)"
-    
-    G4 S2
+  G4 S10  ; Wait 10 seconds
+
+if sensors.endstops[0].triggered || sensors.endstops[3].triggered
+  echo "Heating period skipped by endstop"
+else
+  echo var.heatingMinutes ^ "-minute heating complete"
+
+;========= STABILIZATION PHASE =========
+echo "=== STABILIZATION PHASE ==="
+echo "Turning off chamber heater and waiting 5 minutes for stabilization"
+
+; Turn off chamber heater completely
+M141 S-273.15   ; Turn off chamber heater (absolute zero = off)
+G4 S5
+
+; 5-minute stabilization
+var stabilizationStart = state.upTime
+var stabilizationDuration = 300  ; 5 minutes = 300 seconds
+
+echo "Stabilizing for 5 minutes..."
+echo "Hold X or U endstop to skip stabilization"
+
+while !(sensors.endstops[0].triggered || sensors.endstops[3].triggered)
+  var stabilizationRemaining = var.stabilizationDuration - (state.upTime - var.stabilizationStart)
   
-  ; DIFFERENT LOGIC FOR EACH DATA POINT
-  if var.currentPoint < 2  ; Data Points 1 & 2 - Just for accuracy during heating
-    echo "Data Point " ^ (var.currentPoint + 1) ^ " reached! This point is used for heating accuracy only."
-    echo "No calibration performed at this point - continuing to next temperature."
-    
-    ; Show M291 notification for heating accuracy points
-    var accuracyMsg = "Data Point " ^ (var.currentPoint + 1) ^ " Complete!<br><br>"
-    set var.accuracyMsg = var.accuracyMsg ^ "Temperature: " ^ var.actualReachedTemp ^ "°C<br><br>"
-    set var.accuracyMsg = var.accuracyMsg ^ "This point helps with heating accuracy.<br>"
-    set var.accuracyMsg = var.accuracyMsg ^ "Continuing to next data point..."
-    var accuracyTitle = "Point " ^ (var.currentPoint + 1) ^ " - Heating Accuracy"
-    M291 P{var.accuracyMsg} R{var.accuracyTitle} S1 T10
-    
-    ; Turn chamber heater back on and continue
-    echo "Turning chamber heater back ON to continue heating to next point"
-    M141 S{var.actualChamberTemp}  ; Resume heating at 90°C for optimal results
-    
-  else  ; Data Point 3 - THE CALIBRATION POINT
-    echo "Data Point 3 reached! This is THE calibration point."
-    echo "Starting 15-minute heat soak period before calibration..."
-    
-    ; TURN OFF CHAMBER HEATER BEFORE HEAT SOAK (prevent heater fault)
-    echo "Turning OFF chamber heater for heat soak period to prevent heater fault"
-    M141 S0
-    G4 S5  ; Brief pause for heater to turn off
-    
-    ; ===== 15-MINUTE HEAT SOAK PERIOD =====
-    var soakStartTime = state.upTime
-    var soakDuration = 900  ; 15 minutes = 900 seconds
-    var lastSoakUpdate = 0
-    
-    echo "=== 15-MINUTE HEAT SOAK PERIOD ==="
-    echo "Allowing tools and chamber to stabilize at " ^ var.actualReachedTemp ^ "°C"
-    echo "This ensures the most accurate calibration possible."
-    echo "Hold X or U endstop to skip heat soak and proceed to calibration."
-    
-    ; Heat soak monitoring loop
-    while !(sensors.endstops[0].triggered || sensors.endstops[3].triggered)
-      var soakRemaining = var.soakDuration - (state.upTime - var.soakStartTime)
-      
-      ; Check if heat soak is complete
-      if var.soakRemaining <= 0
-        echo "Heat soak complete - proceeding to calibration"
-        break
-      
-      ; Provide time update every 60 seconds
-      if (state.upTime - var.lastSoakUpdate) >= 60 || var.lastSoakUpdate == 0
-        set var.lastSoakUpdate = state.upTime
-        var soakMinutes = var.soakRemaining / 60.0
-        echo "Heat soak in progress - Time remaining: " ^ var.soakMinutes ^ " minutes"
-        echo "Current temperature: " ^ ((heat.heaters[0].current + heat.heaters[1].current) / 2) ^ "°C"
-        echo "(Hold X or U endstop to skip)"
-      
-      G4 S5  ; Wait 5 seconds before next check
-    
-    ; Check if heat soak was skipped
-    if sensors.endstops[0].triggered || sensors.endstops[3].triggered
-      echo "Heat soak period skipped by endstop trigger - proceeding to calibration"
-    else
-      echo "Heat soak complete - temperature fully stabilized"
-    
-    ; GET REFERENCE TEMPERATURE FOR CALIBRATION
-    var referenceTemp = 0.0
-    if var.useManualCalibration
-      ; Manual calibration - ask user to measure temperature
-      M291 J1 L0 H300 F{var.actualReachedTemp} P"Final Calibration Point: Measure with pyrometer (°C):" R"Enter temperature" S5
-      if result == -1
-        M140 S0  ; Turn off all heaters
-        abort "Calibration cancelled by user."
-      set var.referenceTemp = input
-    else
-      ; Automatic calibration - use T0+T1 average
-      set var.referenceTemp = (heat.heaters[0].current + heat.heaters[1].current) / 2
-    
-    echo "Reference temperature for FINAL calibration: " ^ var.referenceTemp ^ "°C"
-    
-    ; ===== BINARY SEARCH CALIBRATION ALGORITHM - ONLY AT DATA POINT 3 =====
-    echo "Starting binary search calibration at FINAL data point (" ^ var.referenceTemp ^ "°C)..."
-    
-    ;========= BINARY SEARCH CALIBRATION ALGORITHM =========
-    ; Use binary search to find optimal C coefficient for temperature sensor
-    ; The C coefficient compensates for sensor variations and improves accuracy
-
-    ; Initialize calibration parameters
-    var tol = 0.5        ; Tolerance: stop when within 0.5°C of target
-    var cLo = -5.0e-7    ; Lower bound of C coefficient search range
-    var cHi =  5.0e-7    ; Upper bound of C coefficient search range
-    set var.bestC = 0.0      ; Best C coefficient found so far (reverted to 0.0)
-    set var.bestErr = 1.0e9  ; Best error achieved so far (start with large value)
-    var cMid = 0.0       ; Current middle value being tested (reverted to 0.0)
-
-    echo "Starting calibration from C coefficient: 0.0 (binary search from -5e-7 to 5e-7)"
-
-    ; Main calibration loop - binary search algorithm with adaptive target temperature
-    var iterations = 0
-    var skipEndstopCheck = false  ; Flag to skip endstop checks during calibration
-    while true
-      ; Check for skip condition (X or U endstop triggered) only if not already in calibration
-      if !var.skipEndstopCheck && (sensors.endstops[0].triggered || sensors.endstops[3].triggered)
-        echo "Endstop detected - skipping to calibration phase"
-        set var.skipEndstopCheck = true  ; Don't check endstops anymore during calibration iterations
-      
-      ; Recalculate target temperature based on calibration method
-      var target = 0.0
-      if var.useManualCalibration
-        ; Manual mode - keep fixed target temperature from user measurement
-        set var.target = var.referenceTemp
-      else
-        ; Automatic mode - recalculate as current average of T0 and T1 for adaptive calibration
-        set var.target = (heat.heaters[0].current + heat.heaters[1].current) / 2
-      
-      ; Calculate middle point of current search range
-      set var.cMid = (var.cLo + var.cHi)/2.0
-      
-      ; Apply the test C coefficient to sensor 3 (chamber sensor)
-      M308 S3 C{var.cMid}
-      G4 S5  ; Wait for sensor reading to stabilize
-      
-      ; Read current temperature from sensor and calculate error against adaptive target
-      var tNow = sensors.analog[3].lastReading
-      var err  = abs(var.tNow - var.target)
-      
-      ; Progress feedback every 10 iterations
-      set var.iterations = var.iterations + 1
-      if mod(var.iterations, 10) == 0
-        if var.useManualCalibration
-          echo "Calibration iteration " ^ var.iterations ^ ": Target=" ^ var.target ^ "°C (Manual), Sensor=" ^ var.tNow ^ "°C, Error=" ^ var.err ^ "°C"
-        else
-          echo "Calibration iteration " ^ var.iterations ^ ": Target=" ^ var.target ^ "°C (T0=" ^ heat.heaters[0].current ^ "°C, T1=" ^ heat.heaters[1].current ^ "°C), Sensor=" ^ var.tNow ^ "°C, Error=" ^ var.err ^ "°C"
-      
-      ; Update best values if this attempt is better
-      if (var.err < var.bestErr)
-        set var.bestErr = var.err
-        set var.bestC   = var.cMid
-        echo "Attempting C coefficient: " ^ var.cMid ^ " with error " ^ var.bestErr ^ "°C"
-      
-      ; Check if we've found a good enough solution or search range is too small
-      if (var.err <= var.tol) || (abs(var.cHi - var.cLo) < 5e-10) || (var.iterations > 300)
-        ; Format the final C coefficient for display and file output (using variables declared at function scope)
-        set var.scale = 100
-        set var.cUnits = abs(var.bestC) / 1e-8
-        set var.eps = 1e-9 * var.scale
-        set var.cMant = ceil(var.cUnits * var.scale - 0.5 + var.eps) / var.scale
-        set var.cSign = (var.bestC < 0) ? "-" : ""
-        
-        ; Display calibration results based on method used
-        echo "=== CALIBRATION COMPLETE ==="
-        echo "C coefficient = " ^ var.cSign ^ var.cMant ^ "e-8"
-        
-        if var.useManualCalibration
-          echo "Calibration Method: Manual (User measured)"
-          echo "Target Temperature (Manual): " ^ var.referenceTemp ^ "°C"
-        else
-          echo "Calibration Method: Automatic (T0+T1 average)"
-          var finalTarget = (heat.heaters[0].current + heat.heaters[1].current) / 2
-          echo "Final Target Temp (T0+T1 avg): " ^ var.finalTarget ^ "°C"
-          echo "Final T0: " ^ heat.heaters[0].current ^ "°C, T1: " ^ heat.heaters[1].current ^ "°C"
-        echo "Chamber Sensor Reading: " ^ sensors.analog[3].lastReading ^ "°C"
-        echo "Final Error: " ^ var.bestErr ^ "°C"
-        echo "Total iterations: " ^ var.iterations
-        
-        ; Safety timeout warning
-        if var.iterations > 300 && var.bestErr > var.tol
-          echo "WARNING: Could not achieve target accuracy. Best error: " ^ var.bestErr ^ "°C"
-          echo "Using best coefficient found. Consider checking sensor wiring or chamber conditions."
-        
-        break  ; Exit calibration loop
-      
-      ; Adjust search range based on temperature reading vs adaptive target
-      if (var.tNow > var.target)
-        set var.cHi = var.cMid  ; Reading too high, search lower C values    
-      else
-        set var.cLo = var.cMid  ; Reading too low, search higher C values
-    
-    ; Store final calibration result (using variables declared at function scope)
-    set var.finalC = var.bestC
-    set var.finalError = var.bestErr
-    
-    ; Show M291 notification for successful calibration using formatted coefficient
-    var calibrationMsg = "Chamber Calibration Complete!<br><br>"
-    set var.calibrationMsg = var.calibrationMsg ^ "Final C coefficient: " ^ var.cSign ^ var.cMant ^ "e-8<br>"
-    set var.calibrationMsg = var.calibrationMsg ^ "Calibration error: " ^ var.finalError ^ "°C<br>"
-    set var.calibrationMsg = var.calibrationMsg ^ "Iterations: " ^ var.iterations ^ "<br><br>"
-    set var.calibrationMsg = var.calibrationMsg ^ "Temperature range used: " ^ var.calibrationTargets[0] ^ "°C to " ^ var.calibrationTargets[2] ^ "°C"
-    M291 P{var.calibrationMsg} R"Calibration Success" S1 T60
-    
-    echo "FINAL calibration complete:"
-    echo "  Best C coefficient: " ^ var.cSign ^ var.cMant ^ "e-8"
-    echo "  Final error: " ^ var.finalError ^ "°C" 
-    echo "  Iterations: " ^ var.iterations
-    
-    ; Save calibrated sensor configuration to file using formatted coefficient
-    var sensorConfig = "M308 S3 A""Chamber Air"" P""1.temp0"" Y""thermistor"" T200000 B3950 C" ^ var.cSign ^ var.cMant ^ "e-8 R2200"
-    echo >"0:/user/ChamberTempSensor.g" var.sensorConfig
-    echo "Calibration saved to /user/ChamberTempSensor.g"
-    
-  ; End of Data Point 3 calibration - THIS WAS THE ONLY CALIBRATION POINT
+  if var.stabilizationRemaining <= 0
+    echo "5-minute stabilization complete"
+    break
   
-  ; Exit the loop since we only calibrate at Data Point 3
-  break
+  ; Update every 30 seconds
+  if mod((state.upTime - var.stabilizationStart), 30) == 0
+    var currentTemp = (heat.heaters[0].current + heat.heaters[1].current) / 2
+    echo "Stabilizing - " ^ (var.stabilizationRemaining / 60.0) ^ " minutes remaining, Chamber: " ^ var.currentTemp ^ "°C"
+  
+  G4 S5
 
-; Apply the calibration result from Data Point 3
-echo ""
-echo "=== APPLYING CALIBRATION RESULT ==="
-echo "Using calibration from Data Point 3 (the only calibration performed):"
-echo "C coefficient: " ^ var.cSign ^ var.cMant ^ "e-8"
-echo "Calibration error: " ^ var.bestErr ^ "°C"
+if sensors.endstops[0].triggered || sensors.endstops[3].triggered
+  echo "Stabilization skipped by endstop"
+else
+  echo "Stabilization complete"
 
-; Apply the calibration result using formatted coefficient
-M308 S3 A"Chamber Air" P"1.temp0" Y"thermistor" T200000 B3950 C{var.cSign}{var.cMant}e-8 R2200
-G4 S3  ; Let sensor stabilize
+;========= CALIBRATION PHASE =========
+echo "=== CALIBRATION PHASE ==="
 
-echo "=== 15-MINUTE HEAT SOAK CALIBRATION COMPLETE ==="
-echo "Final C coefficient: " ^ var.cSign ^ var.cMant ^ "e-8"
-echo "Achieved through binary search calibration at Data Point 3 with 15-minute heat soak"
-echo "Temperature range: " ^ var.calibrationTargets[0] ^ "°C to " ^ var.calibrationTargets[2] ^ "°C"
+; Physically disable chamber heater to prevent faults during calibration
+echo "Disabling chamber heater to prevent heater faults during calibration"
+M307 H3 A-1     ; Physically disable chamber heater (H3)
+G4 S1           ; Brief pause for heater to disable
+
+; Get reference temperature
+var referenceTemp = 0.0
+if var.useManualCalibration
+  ; Manual measurement
+  var currentTemp = (heat.heaters[0].current + heat.heaters[1].current) / 2
+  M291 J1 L0 H200 F{var.currentTemp} P"Measure chamber temperature with IR gun or probe (°C):" R"Manual Temperature" S5
+  if result == -1
+    M140 S0
+    abort "Calibration cancelled"
+  set var.referenceTemp = input
+  echo "Manual reference temperature: " ^ var.referenceTemp ^ "°C"
+else
+  ; Automatic - use T0+T1 average
+  set var.referenceTemp = (heat.heaters[0].current + heat.heaters[1].current) / 2
+  echo "Automatic reference temperature (T0+T1 avg): " ^ var.referenceTemp ^ "°C"
+
+;========= BINARY SEARCH ALGORITHM =========
+echo "Starting binary search calibration..."
+
+; Initialize search parameters
+var tolerance = 0.5      ; ±0.5°C accuracy target
+var cLow = -5.0e-7      ; Lower bound
+var cHigh = 5.0e-7      ; Upper bound
+var bestC = 0.0         ; Best coefficient found
+var bestError = 1.0e9   ; Best error achieved
+var iterations = 0
+
+echo "Binary search range: " ^ var.cLow ^ " to " ^ var.cHigh
+echo "Target accuracy: ±" ^ var.tolerance ^ "°C"
+
+; Binary search loop
+while true
+  set var.iterations = var.iterations + 1
+  
+  ; Calculate middle point
+  var cMid = (var.cLow + var.cHigh) / 2.0
+  
+  ; Apply test coefficient
+  M308 S3 C{var.cMid}
+  G4 S5  ; Wait for stabilization
+  
+  ; Read sensor and calculate error
+  var sensorReading = sensors.analog[3].lastReading
+  var error = abs(var.sensorReading - var.referenceTemp)
+  
+  ; Update best values if improved
+  if var.error < var.bestError
+    set var.bestError = var.error
+    set var.bestC = var.cMid
+  
+  ; Progress feedback every 5 iterations
+  if mod(var.iterations, 5) == 0
+    echo "Iteration " ^ var.iterations ^ ": C=" ^ var.cMid ^ ", Sensor=" ^ var.sensorReading ^ "°C, Error=" ^ var.error ^ "°C"
+  
+  ; Check convergence
+  if (var.error <= var.tolerance) || (abs(var.cHigh - var.cLow) < 1e-9) || (var.iterations > 200)
+    echo "Binary search complete after " ^ var.iterations ^ " iterations"
+    echo "Best C coefficient: " ^ var.bestC
+    echo "Best error: " ^ var.bestError ^ "°C"
+    break
+  
+  ; Adjust search range
+  if var.sensorReading > var.referenceTemp
+    set var.cHigh = var.cMid  ; Reading too high, try lower C
+  else
+    set var.cLow = var.cMid   ; Reading too low, try higher C
+
+;========= FORMAT AND SAVE RESULT =========
+; Format coefficient for display
+var cSign = (var.bestC < 0) ? "-" : ""
+var cMagnitude = abs(var.bestC) / 1e-8
+var cFormatted = ceil(var.cMagnitude * 100 - 0.5) / 100
+
+echo "=== CALIBRATION COMPLETE ==="
+echo "Final C coefficient: " ^ var.cSign ^ var.cFormatted ^ "e-8"
+echo "Final error: " ^ var.bestError ^ "°C"
+echo "Reference temperature: " ^ var.referenceTemp ^ "°C"
+echo "Final sensor reading: " ^ sensors.analog[3].lastReading ^ "°C"
+
+; Save configuration
+var sensorConfig = "M308 S3 A\"Chamber Air\" P\"1.temp0\" Y\"thermistor\" T200000 B3950 C" ^ var.cSign ^ var.cFormatted ^ "e-8 R2200"
+echo >"0:/user/ChamberTempSensor.g" var.sensorConfig
 echo "Configuration saved to /user/ChamberTempSensor.g"
 
-;========= CALIBRATION COMPLETION AND CLEANUP =========
-; Final sensor reading and temperature display
-G4 S5   ; Brief pause for stability
-M105    ; Report all temperatures
+; Apply final configuration by running the saved file
+echo "Applying calibrated sensor configuration..."
+M98 P"0:/user/ChamberTempSensor.g"
 
-; Cool down all heating systems
-M140 S0  ; Turn off bed heater
-M141 S0  ; Turn off chamber heater
+;========= CLEANUP =========
+; Turn off heaters
+M140 S0
+M141 S0
 
-; Restore fault detection if it was disabled
-if var.disableFaultDetection == true
-  echo "Restoring chamber fault detection to normal settings"
-  M570 H3 P600 T70 R5        ; Restore chamber fault detection to normal
+; Re-enable chamber heater (restore normal heater configuration)
+echo "Re-enabling chamber heater to normal operation"
+M307 H3 R2.430 C360.0 D5.50 S1.00 V0.0 B0     ; Re-enable chamber heater with normal parameters
+G4 S2
 
-; Visual feedback and completion notifications
-M98 P"0:/sys/led/end.g"  ; Set LED status to indicate completion
-M291 P"Calibration completed successfully!" R"Success" S2  ; Success message
-M98 P"0:/sys/led/resetstatus.g"  ; Reset LED status
+; Restore fault detection if disabled
+if var.disableFaultDetection
+  echo "Restoring chamber fault detection"
+  M570 H3 P600 T70 R5
+
+; Success notification
+M291 P"Calibration completed successfully!" R"Success" S2
+M98 P"0:/sys/led/end.g"
+G4 S3
+M98 P"0:/sys/led/resetstatus.g"
+
+echo "=== SIMPLIFIED CALIBRATION COMPLETE ==="
+echo "Chamber sensor calibrated with C coefficient: " ^ var.cSign ^ var.cFormatted ^ "e-8"
 
 ;==============================================================================
 ; CALIBRATION COMPLETE
-; The chamber temperature sensor is now calibrated with the optimal C coefficient
-; Configuration saved to: /user/ChamberTempSensor.g
+; Simplified process: Heat 30min → Stabilize 5min → Binary search → Save
 ;==============================================================================
