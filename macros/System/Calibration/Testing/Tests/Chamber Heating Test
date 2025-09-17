@@ -124,7 +124,7 @@ var heatDuration = 0
 var elapsed = 0                  ; seconds since heating started
 
 ; Test configuration variables
-var chamberTargetTemp = 100      ; Target chamber temperature in °C
+var chamberTargetTemp = 80      ; Target chamber temperature in °C
 var tempTolerance = 2            ; Temperature tolerance (target - tolerance = acceptable temp)
 var coolingTempLimit = 35        ; Temperature below which components are considered cooled
 var maxCoolingWaitSeconds = 3600 ; Maximum time to wait for cooling (1 hour)
@@ -142,25 +142,27 @@ var chamber = 0
 var chamberHeater = 0
 
 ; Variables for timing and CSV logging
-var now = 0
+var now = 0.0
 var csvData = ""
-var chamberTemp = 0
-var heatElapsed = 0
-var remainingTime = 0
-var remainingMinutes = 0
+var chamberTemp = 0.0
+var heatElapsed = 0.0
+var remainingTime = 0.0
+var remainingMinutes = 0.0
+var tempElapsed = 0.0
 
 ; Variables for heating phase
-var heatUpStartTime = 0
+var heatUpStartTime = 0.0
 var targetReached = false
-var heatUpDuration = 0
-var targetTempLower = 0
+var heatUpDuration = 0.0
+var targetTempLower = 0.0
 
 ; Variables for heat soak phase  
-var stabilizationStartTime = 0
-var lastUpdateTime = 0
-var heatSoakSeconds = 0
-var minutesExact = 0
-var heatSoakDuration = 0
+var stabilizationStartTime = 0.0
+var lastUpdateTime = 0.0
+var heatSoakSeconds = 0.0
+var minutesExact = 0.0
+var heatSoakDuration = 0.0
+var tempDuration = 0.0
 
 ; Variables for cooling phase
 var coolingTitle = ""
@@ -173,6 +175,19 @@ var totalTestDuration = 0
 var loggingDuration = 0
 var totalElapsed = 0
 var completionMsg = ""
+
+; Variables for 10-minute heating validation
+var initialT0Temp = 0           ; Initial Tool 0 temperature
+var initialT1Temp = 0           ; Initial Tool 1 temperature  
+var initialChamberTemp = 0      ; Initial chamber air temperature
+var tempValidationDone = false  ; Flag to ensure validation only runs once
+var minTempIncrease = 10        ; Minimum temperature increase required (10°C)
+var validationTimeMinutes = 10  ; Time after which to validate (10 minutes)
+var t0Increase = 0              ; Tool 0 temperature increase
+var t1Increase = 0              ; Tool 1 temperature increase
+var chamberIncrease = 0         ; Chamber temperature increase
+var maxInitialChamberTemp = 45  ; Maximum initial chamber temp to run validation (45°C)
+var runTempValidation = false   ; Flag to determine if validation should run
 
 ; ---- Chamber cooling wait prompt ----
 M291 S4 K{"OK","Don't wait"} R"Chamber Cooling" P"Machine will automatically wait for the chamber to cool down."
@@ -231,21 +246,25 @@ if var.waitForCooling && var.needsCooling
     abort "Test cancelled by user after cooling."
 
 ; ---- Consolidated axis homing and positioning ----
-; Check if Z-axis is homed, if not perform G28 to home all axes
-if !move.axes[2].homed
-  echo "Z-axis not homed, performing G28 to home all axes"
+; Check if all axes (0-3) are homed
+if !move.axes[0].homed || !move.axes[1].homed || !move.axes[2].homed || !move.axes[3].homed
+  echo "Not all axes homed, performing G28 to home all axes"
   G28                              ; Home all axes
   ; Restore LED state after homing if cooling was completed
   if var.waitForCooling && var.needsCooling
     M98 P"0:/sys/led/end.g"        ; GREEN = success maintained after cooling
 else
-  echo "Z-axis already homed"
+  echo "All axes already homed"
 
-; Move Z-axis to global position 150mm
-echo "Moving Z-axis to position 150mm"
+; Select tool 0
+echo "Selecting tool 0"
+T0                                 ; Select tool 0
+
+; Move axes to specified positions
+echo "Moving axes to test positions"
 G90                                ; Absolute positioning
-G0 Z150                            ; Move Z to 150mm
-echo "Z-axis positioned at 150mm"
+G0 Z150 X-200 U200 Y0              ; Move Z to 150mm, X to -200, U to 200, Y to 0
+echo "Axes positioned: Z=150mm, X=-200mm, U=200mm, Y=0mm"
 
 ; ---- Test duration prompt (for all scenarios) ----
 M291 S4 K{"OK","Set custom time"} R"Test Duration" P"Machine will test the chamber heating for two hours, what temperature it will reach."
@@ -266,6 +285,21 @@ M98 P"0:/sys/led/pause.g"        ; YELLOW = active / heating
 ; Start heaters for the test (adjust as needed)
 M141 S{var.chamberTargetTemp}    ; chamber target
 M140 S160                        ; bed target (helps chamber heat)
+
+; Capture initial temperatures for 10-minute validation check
+set var.initialT0Temp = sensors.analog[0].lastReading
+set var.initialT1Temp = sensors.analog[1].lastReading
+set var.initialChamberTemp = sensors.analog[3].lastReading
+
+; Determine if 10-minute heating validation should run (only if chamber starts below 45°C)
+if var.initialChamberTemp < var.maxInitialChamberTemp
+  set var.runTempValidation = true
+  echo "Initial temperatures captured - Tool0:" ^ var.initialT0Temp ^ "°C Tool1:" ^ var.initialT1Temp ^ "°C Chamber:" ^ var.initialChamberTemp ^ "°C"
+  echo "10-minute heating validation ENABLED (chamber below " ^ var.maxInitialChamberTemp ^ "°C)"
+else
+  set var.runTempValidation = false
+  echo "Initial temperatures captured - Tool0:" ^ var.initialT0Temp ^ "°C Tool1:" ^ var.initialT1Temp ^ "°C Chamber:" ^ var.initialChamberTemp ^ "°C"
+  echo "10-minute heating validation SKIPPED (chamber above " ^ var.maxInitialChamberTemp ^ "°C - already warm)"
 
 ; Mark start time for overall test duration
 set var.startTime = state.time
@@ -290,7 +324,8 @@ while !var.targetReached && ((state.time - var.heatUpStartTime) < var.testDurati
 
   ; Log sensor data to CSV during heating phase
   set var.now = state.time
-  set var.elapsed = floor(var.now - var.startTime)
+  set var.tempElapsed = var.now - var.startTime
+  set var.elapsed = floor(var.tempElapsed)
   set var.t0 = sensors.analog[0].lastReading          ; Tool 0
   set var.t1 = sensors.analog[1].lastReading          ; Tool 1
   set var.bed = sensors.analog[2].lastReading         ; Build Plate
@@ -305,11 +340,13 @@ while !var.targetReached && ((state.time - var.heatUpStartTime) < var.testDurati
   set var.chamberTemp = sensors.analog[3].lastReading
   if var.chamberTemp >= var.targetTempLower
     set var.targetReached = true
-    set var.heatUpDuration = floor(state.time - var.heatUpStartTime)
+    set var.tempDuration = state.time - var.heatUpStartTime
+    set var.heatUpDuration = floor(var.tempDuration)
     break
   
   ; Display progress every 30 seconds
-  set var.heatElapsed = floor(state.time - var.heatUpStartTime)
+  set var.tempElapsed = state.time - var.heatUpStartTime
+  set var.heatElapsed = floor(var.tempElapsed)
   if mod(var.heatElapsed, 30) == 0
     set var.remainingTime = var.testDurationSeconds - var.heatElapsed
     set var.remainingMinutes = var.remainingTime / 60.0
@@ -334,40 +371,42 @@ M98 P"0:/sys/led/pause.g"        ; YELLOW = temperature reached, stabilizing
 
 ; Initialize variables for heat soak countdown
 set var.stabilizationStartTime = state.time
-set var.remainingTime = 0
-set var.lastUpdateTime = 0
-set var.heatSoakSeconds = var.heatSoakMinutes * 60
 
 echo "Temperature reached - starting " ^ var.heatSoakMinutes ^ "-minute heat soak period"
-    
-; Heat soak period with 30-second updates and endstop monitoring
-while !(sensors.endstops[0].triggered || sensors.endstops[3].triggered)
-  set var.remainingTime = var.heatSoakSeconds - (state.time - var.stabilizationStartTime)
-  
-  ; Check if stabilization period is complete
-  if var.remainingTime <= 0
+
+; Heat soak period with simple countdown approach
+var soakIterations = 0
+var maxSoakIterations = var.heatSoakMinutes * 60  ; Convert minutes to seconds
+var messageCounter = 0
+var heatSoakSkipped = false  ; Track if heat soak was skipped
+
+while var.soakIterations < var.maxSoakIterations
+  ; Check for endstop abort
+  if sensors.endstops[0].triggered || sensors.endstops[3].triggered
+    set var.heatSoakSkipped = true
     break
   
-  ; Provide time update every 30 seconds
-  if (state.time - var.lastUpdateTime) >= 30 || var.lastUpdateTime == 0
-    set var.lastUpdateTime = state.time
-    set var.minutesExact = var.remainingTime / 60.0
+  ; Display progress every 30 seconds (counter starts at 0)
+  if mod(var.soakIterations, 30) == 0
+    set var.minutesExact = (var.maxSoakIterations - var.soakIterations) / 60
     echo "Heat soak in progress - Time remaining: " ^ var.minutesExact ^ " minutes (Hold X or U endstop to skip)"
   
-  G4 S1  ; Wait 1 second before next check
+  G4 S1  ; Wait 1 second
+  set var.soakIterations = var.soakIterations + 1
 
-; Calculate heat soak duration
-set var.heatSoakDuration = floor(state.time - var.stabilizationStartTime)
+; Calculate actual heat soak duration
+set var.tempDuration = state.time - var.stabilizationStartTime
+set var.heatSoakDuration = floor(var.tempDuration)
 
 ; Check if stabilization was skipped by endstop
-if sensors.endstops[0].triggered || sensors.endstops[3].triggered
+if var.heatSoakSkipped
   echo "Heat soak period skipped by endstop trigger - proceeding to logging phase"
 else
   echo "Heat soak complete - chamber stabilized for " ^ (var.heatSoakDuration / 60.0) ^ " minutes"
 
 ; Display heating phase summary
 echo "=== HEATING PHASE COMPLETE ==="
-echo "Time to reach 100°C: " ^ (var.heatUpDuration / 60.0) ^ " minutes"
+echo "Time to reach " ^ var.chamberTargetTemp ^ "°C: " ^ (var.heatUpDuration / 60.0) ^ " minutes"
 echo "Heat soak duration: " ^ (var.heatSoakDuration / 60.0) ^ " minutes"
 echo "Total preparation time: " ^ ((var.heatUpDuration + var.heatSoakDuration) / 60.0) ^ " minutes"
 
@@ -375,16 +414,13 @@ echo "Total preparation time: " ^ ((var.heatUpDuration + var.heatSoakDuration) /
 ; Stop ONLY when (X or U endstop held) OR test duration exceeded
 while true
   if sensors.endstops[0].triggered || sensors.endstops[3].triggered
-    M141 S0
-    M140 S0
-    if var.disableFaultDetection
-      M570 H3 P600 T70 R5
-    M98 P"0:/sys/led/fault.g"
-    abort "Test canceled due to triggered X/U endstop."
+    echo "Test ended early by user (endstop trigger) - completing test gracefully"
+    break  ; Exit logging loop and complete test normally
 
                                  ; Sample temps - [0]=Tool0, [1]=Tool1, [2]=BuildPlate, [3]=ChamberAir, [4]=ChamberHeater
   set var.now = state.time
-  set var.elapsed = floor(var.now - var.startTime)
+  set var.tempElapsed = var.now - var.startTime
+  set var.elapsed = floor(var.tempElapsed)
   set var.t0 = sensors.analog[0].lastReading          ; Tool 0
   set var.t1 = sensors.analog[1].lastReading          ; Tool 1
   set var.bed = sensors.analog[2].lastReading         ; Build Plate
@@ -394,6 +430,32 @@ while true
   ; Append to CSV - build data string to ensure line length stays manageable
   set var.csvData = var.now ^ "," ^ var.elapsed ^ "," ^ var.t0 ^ "," ^ var.t1 ^ "," ^ var.bed ^ "," ^ var.chamber ^ "," ^ var.chamberHeater
   echo >>"0:/sys/Testing/Chamber_Heater_Test.csv" {var.csvData}
+
+  ; ---- 10-minute heating validation check ----
+  if var.runTempValidation && !var.tempValidationDone && (var.elapsed >= (var.validationTimeMinutes * 60))
+    set var.tempValidationDone = true  ; Ensure this check only runs once
+    
+    ; Calculate temperature increases
+    set var.t0Increase = var.t0 - var.initialT0Temp
+    set var.t1Increase = var.t1 - var.initialT1Temp  
+    set var.chamberIncrease = var.chamber - var.initialChamberTemp
+    
+    echo "=== 10-MINUTE HEATING VALIDATION ==="
+    echo "Tool0 increase: " ^ var.t0Increase ^ "°C (from " ^ var.initialT0Temp ^ "°C to " ^ var.t0 ^ "°C)"
+    echo "Tool1 increase: " ^ var.t1Increase ^ "°C (from " ^ var.initialT1Temp ^ "°C to " ^ var.t1 ^ "°C)"
+    echo "Chamber increase: " ^ var.chamberIncrease ^ "°C (from " ^ var.initialChamberTemp ^ "°C to " ^ var.chamber ^ "°C)"
+    
+    ; Check if all components have increased by at least 10°C
+    if var.t0Increase < var.minTempIncrease || var.t1Increase < var.minTempIncrease || var.chamberIncrease < var.minTempIncrease
+      echo "HEATING VALIDATION FAILED - Insufficient temperature increase after 10 minutes"
+      M141 S0  ; Turn off chamber heater
+      M140 S0  ; Turn off bed heater
+      if var.disableFaultDetection
+        M570 H3 P600 T70 R5  ; Restore fault detection
+      M98 P"0:/sys/led/fault.g"  ; Red fault LED
+      abort "Heating system validation failed: Tool0 +" ^ var.t0Increase ^ "°C, Tool1 +" ^ var.t1Increase ^ "°C, Chamber +" ^ var.chamberIncrease ^ "°C (minimum " ^ var.minTempIncrease ^ "°C required)"
+    else
+      echo "HEATING VALIDATION PASSED - All components heating properly"
 
                                  ; Console heartbeat every ~30s  
   if mod(iterations, 60) == 0
@@ -426,7 +488,8 @@ if var.disableFaultDetection == true
   M570 H3 P600 T70 R5           ; Restore chamber fault detection to normal
 
 ; Calculate total test duration including all phases
-set var.totalTestDuration = floor(state.time - var.startTime)
+set var.tempElapsed = state.time - var.startTime
+set var.totalTestDuration = floor(var.tempElapsed)
 set var.loggingDuration = var.totalTestDuration - var.heatUpDuration - var.heatSoakDuration
 
 ; ---- Final LEDs + comprehensive timing report ----
