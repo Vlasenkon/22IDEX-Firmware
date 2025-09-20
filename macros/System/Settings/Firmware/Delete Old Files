@@ -1,3 +1,6 @@
+; Delete all the files completely because we are starting with fresh v4 firmware and they will have all the same firmware. 
+
+
 ; Delete Files
 M472 P"user/xcomp.g"
 M472 P"sys/resetzbabystep.g"

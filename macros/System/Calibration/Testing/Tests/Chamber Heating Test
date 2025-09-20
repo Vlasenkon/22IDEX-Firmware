@@ -1,3 +1,14 @@
+; Add error codes and troubleshooting steps. Yes. Break down what is responsible for what and give customer prompts and error codes and instructions what to do. 
+; one of the tests is to see if average of T0 and T1 is different from temperature read by chamber air temperature sensor then we need to recommend the customer to to do my chamber temperature tuning. 
+; Allow customer to set the temperature manually. Have the prompt first. First, use the preheat to a stock 100 degrees. and then if and the user has an option click ok or set custom temperature And then custom temperature should be within range, let's say 45 to 110 degrees. 
+; Set default duration of the test to be 45 minutes. and then additionally plus heat soaking time 
+; can you hear first start heating and then if needed perform homing
+; We have to set the temperature to 150 degrees. However, we have to only watch We have to watch the temperature until it reaches the temperature defined by user, for example, 80 degrees Celsius. 
+; Only give cool down message if temperature is above the desired value. only if cooling is needed. If it's not me, don't give a message that... Don't, don't prompt user that at all. And then if users selected to skip cooling, do not give a successful cooling message. 
+; We have to move this file to troubleshooting folder. 
+
+
+
 ; ---- User confirmation ----
 M291 S4 K{"Start test","Start (No fault detection)","Cancel"} R"Chamber Heating Test" P"The printer will heat to high temps.<br>Remove low-melting materials.<br>Hold X or U endstop to abort."
 

@@ -1,3 +1,7 @@
+;M292 R{0} S13
+;Error: in file macro line 10 column 21: M291: unknown variable 'ip'
+;Error: in file macro line 11 column 15: meta command: unknown variable 'ip'
+
 
 M291 R"Change Settings" P"Do you want to change settings Ethernet to PC Mode?" S4 K{"Change parameter", "Cancel"}
 if input == 1

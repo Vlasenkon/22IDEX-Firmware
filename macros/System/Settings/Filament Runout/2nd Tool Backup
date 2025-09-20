@@ -1,3 +1,6 @@
+; Explain what this feature does using M291 commands to make sure user understands. also give instructions on how to use it. user has to start a print with tool 0 and then if inside the tool it will be detected that filament runs out. the right hand side tool will take over and continue printing. For this, two of the same materials has to be loaded in both tools and auto calibration has to be performed perfectly. 
+
+
 ; togglefilamentbackup.g
 ; Toggles the filament runout tool swap feature
 

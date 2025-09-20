@@ -1,0 +1,2 @@
+; Macro got completely lost, recovered it from V3 firmware 
+; Make sure that if this macro is selected, build plate is lowered all the way to the bottom. and warn user that if this macro will be activated build plate will lower all all the way to the bottom, ask for confirmation. 

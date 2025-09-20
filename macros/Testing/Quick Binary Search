@@ -1,0 +1,112 @@
+;==============================================================================
+; QUICK BINARY SEARCH - CHAMBER TEMPERATURE CALIBRATION
+; Simple binary search with no prompts - just click and run
+; Takes average of T0+T1 as reference temperature
+;==============================================================================
+
+echo "=== QUICK BINARY SEARCH CALIBRATION ==="
+echo "No prompts - using T0+T1 average as reference"
+
+; Get reference temperature (T0+T1 average)
+var referenceTemp = (heat.heaters[0].current + heat.heaters[1].current) / 2
+echo "Reference temperature (T0+T1 avg): " ^ var.referenceTemp ^ "°C"
+
+; Physically disable chamber heater to prevent faults
+M141 S-273.15
+G4 S1
+
+; Reset sensor to default
+M308 S3 A"Chamber Air" P"1.temp0" Y"thermistor" T200000 B3950 C0 R2200
+G4 S2
+
+; Binary search parameters
+var tolerance = 0.5
+var cLow = -5.0e-7
+var cHigh = 5.0e-7
+var bestC = 0.0
+var bestError = 1.0e9
+var iterations = 0
+var maxIterations = 20
+
+echo "Starting binary search..."
+echo "Range: " ^ var.cLow ^ " to " ^ var.cHigh
+echo "Target: ±" ^ var.tolerance ^ "°C"
+
+; Binary search loop
+while var.iterations < var.maxIterations
+  set var.iterations = var.iterations + 1
+  
+  ; Calculate middle point
+  var cMid = (var.cLow + var.cHigh) / 2.0
+  
+  ; Apply test coefficient
+  M308 S3 C{var.cMid}
+  G4 S2
+  
+  ; Read sensor and calculate error
+  var sensorReading = sensors.analog[3].lastReading
+  var error = abs(var.sensorReading - var.referenceTemp)
+  
+  ; Update best values if improved
+  if var.error < var.bestError
+    set var.bestError = var.error
+    set var.bestC = var.cMid
+  
+  echo "Iter " ^ var.iterations ^ ": C=" ^ var.cMid ^ ", Sensor=" ^ var.sensorReading ^ "°C, Error=" ^ var.error ^ "°C"
+  
+  ; Check if good enough
+  if var.error <= var.tolerance
+    echo "Target accuracy reached!"
+    break
+  
+  ; Check convergence
+  if abs(var.cHigh - var.cLow) < 1e-9
+    echo "Convergence reached"
+    break
+  
+  ; Adjust search range based on error
+  if var.sensorReading > var.referenceTemp
+    set var.cHigh = var.cMid
+  else
+    set var.cLow = var.cMid
+
+; Format result
+var cSign = (var.bestC < 0) ? "-" : ""
+var cMagnitude = abs(var.bestC) / 1e-8
+var cFormatted = ceil(var.cMagnitude * 100 - 0.5) / 100
+
+echo "=== QUICK CALIBRATION COMPLETE ==="
+echo "Best C coefficient: " ^ var.cSign ^ var.cFormatted ^ "e-8"
+echo "Final error: " ^ var.bestError ^ "°C"
+echo "Iterations: " ^ var.iterations
+
+; Check if error is acceptable (threshold: 0.5°C)
+var maxAcceptableError = 0.5
+
+if var.bestError > var.maxAcceptableError
+  echo "ERROR: Calibration failed - error too large (" ^ var.bestError ^ "°C > " ^ var.maxAcceptableError ^ "°C)"
+  echo "Resetting to default sensor configuration..."
+  
+  ; Reset to default parameters (C=0)
+  ; Load default configuration from stored file
+  M98 P"0:/user/ChamberTempSensor.g"
+  
+  echo "CALIBRATION FAILED - using default sensor settings"
+else
+  echo "Error within acceptable range - storing calibrated value"
+  
+  ; Save calibrated result
+  var sensorConfig = "M308 S3 A""Chamber Air"" P""1.temp0"" Y""thermistor"" T200000 B3950 R2200 C" ^ var.cSign ^ var.cFormatted ^ "e-8"
+  echo >"0:/user/ChamberTempSensor.g" var.sensorConfig
+  echo "Calibrated configuration saved to /user/ChamberTempSensor.g"
+
+  ; Apply the calibrated configuration
+  M98 P"0:/user/ChamberTempSensor.g"
+  
+  echo "CALIBRATION SUCCESS - using calibrated sensor settings"
+
+echo "Quick binary search complete - ready to use!"
+
+;==============================================================================
+; END OF QUICK BINARY SEARCH
+;==============================================================================

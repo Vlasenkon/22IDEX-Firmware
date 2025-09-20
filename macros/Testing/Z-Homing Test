@@ -1,0 +1,46 @@
+; Z-Homing Iteration Test Macro
+; This macro runs Z-homing for a specified number of iterations
+; Useful for testing repeatability and reliability of Z-homing
+
+; Ask user for confirmation to start the test
+M291 R"Z-Homing Iteration Test" P"Do you want to start the Z-homing iteration test?" K{"Yes","No"} S4 J2
+if result == -1 || input == 1
+  abort "Z-homing iteration test cancelled by user"
+
+; Ask user for number of iterations (default 10)
+M291 R"Z-Homing Iterations" P"Enter number of iterations (default: 10)" S5 L1 H1000 F10 J2
+if result == -1
+  abort "Z-homing iteration test cancelled by user"
+
+; Store the number of iterations
+var numIterations = input
+
+echo "Starting Z-homing iteration test with ", var.numIterations, " iterations"
+
+; Initialize counter
+var currentIteration = 1
+
+; Main loop - use while loop with counter
+while var.currentIteration <= var.numIterations
+  echo "Starting Z-homing iteration ", var.currentIteration, " of ", var.numIterations
+  
+  ; Call the Z-homing script using M98
+  M98 P"0:/sys/homez.g"
+  
+  ; Check if homing was successful
+  if result != 0
+    M98 P"0:/sys/led/fault.g"
+    echo >>"0:/sys/eventlog.txt" {"Z-homing iteration test failed on iteration " ^ var.currentIteration}
+    abort {"Z-homing failed on iteration " ^ var.currentIteration ^ " of " ^ var.numIterations}
+  
+  echo "Iteration ", var.currentIteration, " completed successfully"
+  
+  ; Increment counter
+  set var.currentIteration = var.currentIteration + 1
+  
+  ; Small pause between iterations to avoid overwhelming the system
+  if var.currentIteration <= var.numIterations
+    G4 P500  ; Wait 500ms between iterations
+
+echo "Z-homing iteration test completed successfully! All ", var.numIterations, " iterations passed."
+echo >>"0:/sys/eventlog.txt" {"Z-homing iteration test completed: " ^ var.numIterations ^ " iterations successful"}

@@ -1,0 +1,80 @@
+M302 P1
+
+; Drives
+M569 P0.0 S0                                                     ; motor direction
+
+M350 E16:16 I1                                   ; configure microstepping
+M92 E525:400                                    ; set steps per mm
+M566 E600:600                                ; set maximum jerk (mm/min)
+M203 E{60*2000}:12000                     ; set maximum speeds (mm/min)
+M201 E5000:5000                        ; set accelerations (mm/s^2)
+M906 E600:600 I35                    ; set motor currents (mA) and motor idle factor in per cent
+
+
+
+
+; Progressive extrusion test from minimum to maximum distance
+
+; Get test parameters from user
+M291 S6 F0.1 L0.1 R"Minimum Extrusion Distance" P"Enter minimum extrusion distance (mm):"
+var minExtrusion = input
+
+M291 S6 F3 L0.1 R"Maximum Extrusion Distance" P"Enter maximum extrusion distance (mm):"
+var maxExtrusion = input
+
+M291 S5 F50 L3 R"Number of Steps" P"Enter number of test steps:"
+var numSteps = input
+
+M291 S6 F50.0 L0.1 H200 R"Extrusion Speed" P"Enter extrusion speed (mm/sec):"
+var extrudeSpeed = input * 60
+
+; Calculate step increment
+var stepIncrement = (var.maxExtrusion - var.minExtrusion) / (var.numSteps - 1)
+
+echo "Starting Extruder test:"
+echo "Min: " ^ var.minExtrusion ^ "mm, Max: " ^ var.maxExtrusion ^ "mm"
+echo "Steps: " ^ var.numSteps ^ ", Speed: " ^ (var.extrudeSpeed/60) ^ "mm/sec"
+echo "Step increment: " ^ var.stepIncrement ^ "mm"
+
+; Set relative extrusion mode
+M83
+
+; Set extrusion speed
+G1 F{var.extrudeSpeed}
+
+; Progressive extrusion test loop
+var currentStep = 0
+while var.currentStep < var.numSteps
+    var currentExtrusion = var.minExtrusion + (var.currentStep * var.stepIncrement)
+    
+    ;echo "Step " ^ (var.currentStep + 1) ^ "/" ^ var.numSteps ^ ": Extruding " ^ var.currentExtrusion ^ "mm"
+
+    ; Wait for extrusion to complete
+    M400
+
+    ; Extrude the calculated amount
+    G1 E{var.currentExtrusion}
+    
+    ; Wait for extrusion to complete
+    M400
+    
+    ; Extrude the calculated amount
+    G1 E{-var.currentExtrusion}
+        
+    ; Increment step counter
+    set var.currentStep = var.currentStep + 1
+
+; Reset to absolute extrusion mode
+M82
+M84 E0
+
+echo "Extruder test completed!"
+; Calculate total forward extrusion
+var totalForward = (var.minExtrusion * var.numSteps + (var.stepIncrement * var.numSteps * (var.numSteps - 1)) / 2)
+; Calculate total backward extrusion (same as forward since we retract the same amount)
+var totalBackward = var.totalForward
+; Total material movement (forward + backward)
+var totalMovement = var.totalForward + var.totalBackward
+echo "Total forward extrusion: " ^ var.totalForward ^ "mm"
+echo "Total backward extrusion: " ^ var.totalBackward ^ "mm"
+echo "Total material movement: " ^ var.totalMovement ^ "mm"

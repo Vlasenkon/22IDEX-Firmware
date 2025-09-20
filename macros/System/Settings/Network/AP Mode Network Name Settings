@@ -1,3 +1,5 @@
+; This task was not understood correctly. we should not change access point mode we should change machine name. name this way when customers are connecting in In client mode or Ethernet mode, they can use it instead of IP address. They can use it as 22idex.local, but instead of this they can use a custom name. 
+
 M291 S4 R"Changing the printer’s network name in Access Point mode" P"Press Standard Name to keep the default name ""22 IDEX""<br>Press Custom Name to set your own." K{"Standart Name", "Custom Name"}
 
 if input == 0

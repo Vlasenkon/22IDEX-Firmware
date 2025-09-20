@@ -1,3 +1,6 @@
+; We renamed this macro macro to explain user in the name that this macro is designed to work in the following in a way where if heater fault is detected, machine will turn off automatically. it will cut the power for safety. 50. Then in the... We want to use just up to four words in the name to explain this. and then when user click it inside M291 prompt, we want to tell that, We want to explain the macro again and say what it's doing, what will happen and so on. 
+
+
 M291 S4 K{"Enable", "Change the time", "Disable"} R"Heater fault detection" P"After a heater fault occurs, the printer will automatically shut down in 30 seconds"
 if input == 0
     echo >"0:/user/heaterfault_timer.g" "if exists(global.heaterfault_timer)"
@@ -18,4 +21,3 @@ if input == 2
     echo >>"0:/user/heaterfault_timer.g" "else"
     echo >>"0:/user/heaterfault_timer.g" "  global heaterfault_timer = -1"
     echo "Printer auto-shutdown after heater fault is disable"
-

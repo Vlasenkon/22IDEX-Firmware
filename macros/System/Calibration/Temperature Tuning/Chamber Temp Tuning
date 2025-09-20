@@ -1,3 +1,9 @@
+; can you hear first start heating and then if needed perform homing
+; can you limit amount of iterations for binary search to 20 and then if temperature is way off more than if temperature is not within range then revert to default settings and turn on red lights say that error occurred
+; If temperature deviation is higher than target, do not store the value. start again from value from zero value from the from the scratch do it three times until if second time you get a second time you don't meet the requirement do it third time and after third time just say that it's failed but don't store the value in case of failure 
+; Use M141 S-273.15 to turn off chamber heater instead of M307 H3 A-1 and M141 S0 to turn it back on instead of M307 H3 A1
+
+
 ;==============================================================================
 ; SIMPLIFIED CHAMBER TEMPERATURE SENSOR CALIBRATION
 ; Simple binary search calibration with 30-minute heating and 5-minute stabilization
@@ -259,7 +265,7 @@ echo "Reference temperature: " ^ var.referenceTemp ^ "°C"
 echo "Final sensor reading: " ^ sensors.analog[3].lastReading ^ "°C"
 
 ; Save configuration
-var sensorConfig = "M308 S3 A\"Chamber Air\" P\"1.temp0\" Y\"thermistor\" T200000 B3950 C" ^ var.cSign ^ var.cFormatted ^ "e-8 R2200"
+var sensorConfig = "M308 S3 A""Chamber Air"" P""1.temp0"" Y""thermistor"" T200000 B3950 C" ^ var.cSign ^ var.cFormatted ^ " R2200"
 echo >"0:/user/ChamberTempSensor.g" var.sensorConfig
 echo "Configuration saved to /user/ChamberTempSensor.g"
 
