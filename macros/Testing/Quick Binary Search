@@ -1,9 +1,3 @@
-;==============================================================================
-; QUICK BINARY SEARCH - CHAMBER TEMPERATURE CALIBRATION
-; Simple binary search with no prompts - just click and run
-; Takes average of T0+T1 as reference temperature
-;==============================================================================
-
 ; Check temperature difference between nozzles before starting
 var temp0 = heat.heaters[0].current
 var temp1 = heat.heaters[1].current
@@ -111,8 +105,3 @@ else
   set var.successMsg = var.successMsg ^ "Final error: " ^ var.bestError ^ "°C (≤" ^ var.maxAcceptableError ^ "°C)<br>"
   set var.successMsg = var.successMsg ^ "Iterations: " ^ var.iterations ^ "<br><br>Configuration saved and applied"
   M291 R"Calibration Successful" P{var.successMsg} S2 T0
-
-
-;==============================================================================
-; END OF QUICK BINARY SEARCH
-;==============================================================================
