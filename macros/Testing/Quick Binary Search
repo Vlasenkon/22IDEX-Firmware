@@ -4,8 +4,19 @@
 ; Takes average of T0+T1 as reference temperature
 ;==============================================================================
 
-echo "=== QUICK BINARY SEARCH CALIBRATION ==="
-echo "No prompts - using T0+T1 average as reference"
+; Check temperature difference between nozzles before starting
+var temp0 = heat.heaters[0].current
+var temp1 = heat.heaters[1].current
+var tempDifference = abs(var.temp0 - var.temp1)
+echo "Nozzle temperatures - T0: " ^ var.temp0 ^ "°C, T1: " ^ var.temp1 ^ "°C"
+echo "Temperature difference: " ^ var.tempDifference ^ "°C"
+
+if var.tempDifference > 30
+  echo "ERROR: Temperature difference too large (" ^ var.tempDifference ^ "°C > 30°C)"
+  var tempErrMsg = "Nozzle temperature difference is " ^ var.tempDifference ^ "°C (>30°C). Calibration aborted."
+  M291 R"Temperature Error" P{var.tempErrMsg} S2
+  M98 P"0:/sys/led/red.g"
+  abort "Temperature difference too large - calibration aborted"
 
 ; Get reference temperature (T0+T1 average)
 var referenceTemp = (heat.heaters[0].current + heat.heaters[1].current) / 2
@@ -75,37 +86,32 @@ var cSign = (var.bestC < 0) ? "-" : ""
 var cMagnitude = abs(var.bestC) / 1e-8
 var cFormatted = ceil(var.cMagnitude * 100 - 0.5) / 100
 
-echo "=== QUICK CALIBRATION COMPLETE ==="
-echo "Best C coefficient: " ^ var.cSign ^ var.cFormatted ^ "e-8"
-echo "Final error: " ^ var.bestError ^ "°C"
-echo "Iterations: " ^ var.iterations
-
 ; Check if error is acceptable (threshold: 0.5°C)
 var maxAcceptableError = 0.5
 
 if var.bestError > var.maxAcceptableError
-  echo "ERROR: Calibration failed - error too large (" ^ var.bestError ^ "°C > " ^ var.maxAcceptableError ^ "°C)"
-  echo "Resetting to default sensor configuration..."
-  
   ; Reset to default parameters (C=0)
-  ; Load default configuration from stored file
   M98 P"0:/user/ChamberTempSensor.g"
   
-  echo "CALIBRATION FAILED - using default sensor settings"
+  ; Build failure message in parts to stay under 256 char limit
+  var failMsg = "CALIBRATION FAILED - Results:<br>Best C coefficient: " ^ var.cSign ^ var.cFormatted ^ "e-8<br>"
+  set var.failMsg = var.failMsg ^ "Final error: " ^ var.bestError ^ "°C (>" ^ var.maxAcceptableError ^ "°C)<br>"
+  set var.failMsg = var.failMsg ^ "Iterations: " ^ var.iterations ^ "<br><br>Error too large - using default sensor settings"
+  M291 R"Calibration Failed" P{var.failMsg} S2 T0
 else
-  echo "Error within acceptable range - storing calibrated value"
-  
   ; Save calibrated result
   var sensorConfig = "M308 S3 A""Chamber Air"" P""1.temp0"" Y""thermistor"" T200000 B3950 R2200 C" ^ var.cSign ^ var.cFormatted ^ "e-8"
   echo >"0:/user/ChamberTempSensor.g" var.sensorConfig
-  echo "Calibrated configuration saved to /user/ChamberTempSensor.g"
 
   ; Apply the calibrated configuration
   M98 P"0:/user/ChamberTempSensor.g"
   
-  echo "CALIBRATION SUCCESS - using calibrated sensor settings"
+  ; Build success message in parts to stay under 256 char limit
+  var successMsg = "CALIBRATION SUCCESS - Results:<br>Best C coefficient: " ^ var.cSign ^ var.cFormatted ^ "e-8<br>"
+  set var.successMsg = var.successMsg ^ "Final error: " ^ var.bestError ^ "°C (≤" ^ var.maxAcceptableError ^ "°C)<br>"
+  set var.successMsg = var.successMsg ^ "Iterations: " ^ var.iterations ^ "<br><br>Configuration saved and applied"
+  M291 R"Calibration Successful" P{var.successMsg} S2 T0
 
-echo "Quick binary search complete - ready to use!"
 
 ;==============================================================================
 ; END OF QUICK BINARY SEARCH
