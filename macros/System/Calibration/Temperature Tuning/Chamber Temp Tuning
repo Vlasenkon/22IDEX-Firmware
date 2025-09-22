@@ -102,9 +102,7 @@ if !var.useManualCalibration
   echo "Temperature difference: " ^ var.tempDifference ^ "°C"
 
   if var.tempDifference > 30
-    echo "ERROR: Temperature difference too large (" ^ var.tempDifference ^ "°C > 30°C)"
-    var tempErrMsg = "Nozzle temperature difference is " ^ var.tempDifference ^ "°C (>30°C). Calibration aborted."
-    M291 R"Temperature Error" P{var.tempErrMsg} S2
+    echo "Error: Nozzle temperature difference too high (" ^ var.tempDifference ^ "°C > 30°C)"
     M98 P"0:/sys/led/fault.g"
     abort "Temperature difference too large - calibration aborted"
 
@@ -114,11 +112,13 @@ if !var.immediateCalibration
   ; Set temperatures for regular calibration
   M140 S160    ; Heat bed to 160°C
   M141 S105    ; Heat chamber to 105°C
+  
+  ; Set status LED to indicate heating
+  M98 P"0:/sys/led/pause.g"
 else
-  ; For immediate calibration, only heat bed and nozzles, not chamber
-  echo "=== IMMEDIATE CALIBRATION - Heating nozzles only ==="
-  M140 S160    ; Heat bed to 160°C
-  ; Chamber heating skipped for immediate calibration
+  ; For immediate calibration, don't heat anything - use current conditions
+  echo "=== IMMEDIATE CALIBRATION - Using current temperatures ==="
+  ; No heating commands for immediate calibration
 
 ; Combined homing and positioning for automatic calibration
 if !var.useManualCalibration
@@ -225,11 +225,6 @@ if var.useManualCalibration
 else
   ; Automatic - use T0+T1 average
   set var.referenceTemp = (heat.heaters[0].current + heat.heaters[1].current) / 2
-  
-  ; Additional validation for automatic calibration reference temperature
-  if var.referenceTemp < 50
-    var tempWarnMsg = "Warning: Low reference temperature (" ^ var.referenceTemp ^ "°C). For best accuracy, ensure nozzles are adequately heated."
-    M291 R"Low Temperature Warning" P{var.tempWarnMsg} S2 T10
   
   echo "Reference temperature (T0+T1 avg): " ^ var.referenceTemp ^ "°C"
 
