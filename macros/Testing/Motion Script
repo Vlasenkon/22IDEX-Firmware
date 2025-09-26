@@ -80,7 +80,7 @@ if sensors.endstops[0].triggered || sensors.endstops[3].triggered
 
 ;Duplicate Mode ZigZag
 T2
-G1 X97.5    Y48
+G1 X97.5    Y48 F{var.speed * 60}
 G1 X-102.5 Y-63
 G1 X2.5  Y-175
 G1 X2.5  Y160
