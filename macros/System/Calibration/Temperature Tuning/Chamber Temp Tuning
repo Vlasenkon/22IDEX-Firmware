@@ -175,9 +175,16 @@ if !var.immediateCalibration
   ;========= STABILIZATION PHASE =========
   echo "=== STABILIZING 5 MINUTES (Hold X/U endstop to skip) ==="
 
-  ; Turn off chamber heater completely
+  ;========= CLEANUP =========
+  ; Turn off heaters
+  M140 S0
+  M141 S0
   M141 S-273.15   ; Turn off chamber heater (absolute zero = off)
-  G4 S5
+  
+  G4 S2
+  ; Restore fault detection if disabled
+  if var.disableFaultDetection
+    M570 H3 P600 T70 R5  
 
   ; 5-minute stabilization
   var stabilizationStart = state.upTime
@@ -299,9 +306,6 @@ if var.bestError > var.maxAcceptableError
   set var.failMsg = var.failMsg ^ "Final error: " ^ var.bestError ^ "°C (>" ^ var.maxAcceptableError ^ "°C)<br>"
   set var.failMsg = var.failMsg ^ "Iterations: " ^ var.iterations ^ "<br><br>Error too large - using default sensor settings"
   M291 R"Calibration Failed" P{var.failMsg} S2 T0
-  
-  ; Set red LED to indicate failure
-  M98 P"0:/sys/led/fault.g"
 else
   ; Save calibrated result
   var sensorConfig = "M308 S3 A""Chamber Air"" P""1.temp0"" Y""thermistor"" T200000 B3950 R2200 C" ^ var.cSign ^ var.cFormatted ^ "e-8"
@@ -309,22 +313,15 @@ else
 
   ; Apply the calibrated configuration
   M98 P"0:/user/ChamberTempSensor.g"
-  
+
+  ; Set green LED to indicate success
+  M98 P"0:/sys/led/end.g"
+
   ; Build success message in parts to stay under 256 char limit
   var successMsg = "CALIBRATION SUCCESS - Results:<br>Best C coefficient: " ^ var.cSign ^ var.cFormatted ^ "e-8<br>"
   set var.successMsg = var.successMsg ^ "Final error: " ^ var.bestError ^ "°C (≤" ^ var.maxAcceptableError ^ "°C)<br>"
   set var.successMsg = var.successMsg ^ "Iterations: " ^ var.iterations ^ "<br><br>Configuration saved and applied"
   M291 R"Calibration Successful" P{var.successMsg} S2 T0
-  
-  ; Set green LED to indicate success
-  M98 P"0:/sys/led/end.g"
 
-
-;========= CLEANUP =========
-; Turn off heaters
-M140 S0
-M141 S0
-
-; Restore fault detection if disabled
-if var.disableFaultDetection
-  M570 H3 P600 T70 R5
+; Restore white LED
+M98 P"0:/sys/led/restorewhite.g"
