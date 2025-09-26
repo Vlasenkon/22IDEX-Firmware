@@ -1,10 +1,92 @@
-; Homing XYU axis if they are not homed
+; Define tolerance for position errors (in mm)
+var tolerance = 0.1
+
+
+; ---- CSV header setup ----
+; CSV header for motion accuracy test logging
+echo >"0:/sys/Testing/Motion_Accuracy_Test.csv" "Iteration,X_Error_Microns,LeftY_Error_Microns,RightY_Error_Microns,U_Error_Microns,X_Error_mm,LeftY_Error_mm,RightY_Error_mm,U_Error_mm"
+
+; Variables for CSV logging
+var csvData = ""
+
+
 if !move.axes[0].homed || !move.axes[1].homed || !move.axes[2].homed || !move.axes[3].homed
   M98 P"homeall.g"
 
 
-M98 P"macros/Testing/Motion Accuracy"
-
+M98 P"0:/macros/Testing/Motion Accuracy"
 M400
 
-M98 P"macros/Testing/Motion Script"
+;pull data from global variable and use it as default values 
+if !exists(global.axisPositions)
+    abort "Error: Motion Accuracy must be run first to establish baseline measurements"
+
+; Store baseline measurements as reference values
+var baselineX = global.axisPositions[0]
+var baselineLeftY = global.axisPositions[1]
+var baselineRightY = global.axisPositions[2]
+var baselineU = global.axisPositions[3]
+
+;=echo "Baseline measurements established:"
+;=echo "X-axis: " ^ {var.baselineX} ^ " mm"
+;=echo "Y-axis Left: " ^ {var.baselineLeftY} ^ " mm"
+;=echo "Y-axis Right: " ^ {var.baselineRightY} ^ " mm"
+;=echo "U-axis: " ^ {var.baselineU} ^ " mm"
+
+
+while true & iterations < 5
+    
+    M98 P"0:/macros/Testing/Motion Script"
+    M400
+    M98 P"0:/macros/Testing/Motion Accuracy"
+    M400
+    
+    ;pull data from global variable and compare with default values, report Error with echo
+    if exists(global.axisPositions)
+        var currentX = global.axisPositions[0]
+        var currentLeftY = global.axisPositions[1]
+        var currentRightY = global.axisPositions[2]
+        var currentU = global.axisPositions[3]
+        
+        ; Calculate deviations from baseline
+        var deviationX = abs(var.currentX - var.baselineX)
+        var deviationLeftY = abs(var.currentLeftY - var.baselineLeftY)
+        var deviationRightY = abs(var.currentRightY - var.baselineRightY)
+        var deviationU = abs(var.currentU - var.baselineU)
+        
+        ; Report for each axis - Iteration and error values
+        echo "Iteration " ^ {iterations + 1}
+        echo {var.deviationX * 1000} ^ "μm (" ^ {var.deviationX} ^ "mm) - X-axis"
+        echo {var.deviationLeftY * 1000} ^ "μm (" ^ {var.deviationLeftY} ^ "mm) - Y-axis Left"
+        echo {var.deviationRightY * 1000} ^ "μm (" ^ {var.deviationRightY} ^ "mm) - Y-axis Right"
+        echo {var.deviationU * 1000} ^ "μm (" ^ {var.deviationU} ^ "mm) - U-axis"
+        
+        ; Log data to CSV - build data string in parts to stay under 256 character limit
+        set var.csvData = {iterations + 1} ^ "," ^ {var.deviationX * 1000} ^ "," ^ {var.deviationLeftY * 1000} ^ "," ^ {var.deviationRightY * 1000} ^ "," ^ {var.deviationU * 1000}
+        set var.csvData = var.csvData ^ "," ^ {var.deviationX} ^ "," ^ {var.deviationLeftY} ^ "," ^ {var.deviationRightY} ^ "," ^ {var.deviationU}
+        echo >>"0:/sys/Testing/Motion_Accuracy_Test.csv" {var.csvData}
+        
+        ; Check for errors and abort if tolerance exceeded
+        if var.deviationX > var.tolerance
+            echo "ERROR: Deviation too much on X-axis: " ^ {var.deviationX} ^ "mm (tolerance: " ^ {var.tolerance} ^ "mm)"
+            M291 R"Motion Test Error" P"X-axis deviation exceeds tolerance! Test aborted." S2
+            abort "Motion test failed - X-axis deviation too high"
+        
+        if var.deviationLeftY > var.tolerance
+            echo "ERROR: Deviation too much on Y-axis Left: " ^ {var.deviationLeftY} ^ "mm (tolerance: " ^ {var.tolerance} ^ "mm)"
+            M291 R"Motion Test Error" P"Y-axis Left deviation exceeds tolerance! Test aborted." S2
+            abort "Motion test failed - Y-axis Left deviation too high"
+        
+        if var.deviationRightY > var.tolerance
+            echo "ERROR: Deviation too much on Y-axis Right: " ^ {var.deviationRightY} ^ "mm (tolerance: " ^ {var.tolerance} ^ "mm)"
+            M291 R"Motion Test Error" P"Y-axis Right deviation exceeds tolerance! Test aborted." S2
+            abort "Motion test failed - Y-axis Right deviation too high"
+        
+        if var.deviationU > var.tolerance
+            echo "ERROR: Deviation too much on U-axis: " ^ {var.deviationU} ^ "mm (tolerance: " ^ {var.tolerance} ^ "mm)"
+            M291 R"Motion Test Error" P"U-axis deviation exceeds tolerance! Test aborted." S2
+            abort "Motion test failed - U-axis deviation too high"
+    else
+        echo "ERROR: Failed to retrieve motion accuracy measurements"
+        M291 R"Motion Test Error" P"Failed to retrieve motion accuracy data! Test aborted." S2
+        abort "Motion test failed - unable to retrieve measurement data"

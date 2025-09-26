@@ -1,3 +1,10 @@
+var xu_endstop = 208
+var y_endstop = 175
+var endstop_offset = 5
+
+
+
+
 if !move.axes[0].homed || !move.axes[1].homed || !move.axes[2].homed || !move.axes[3].homed
     abort "Error: All axes must be homed before running this test."
 
@@ -6,12 +13,12 @@ T0
 M204 T2000                            ; Set acceleration for non-printing moves
 
 
-;== Y-AXIS POSITION CHECK ===
 
 G90
-G1 Y-150 F18000                        ; Move to safe Y position
+G1 Y{-var.y_endstop+var.endstop_offset} X{-var.xu_endstop+var.endstop_offset} U{var.xu_endstop-var.endstop_offset} F18000                        ; Move to safe Y position
 
-;== Check Y-axis endstop positions ===
+
+;== Y-AXIS POSITION CHECK ===
 
 ; Initialize variables to store the positions
 var leftEndstopPosition = 0
@@ -53,14 +60,14 @@ G4 P300
 set var.currentYPos = move.axes[1].machinePosition
 if var.side == "right"
     set var.rightEndstopPosition = var.currentYPos
-    echo "Right Y endstop position: " ^ {var.rightEndstopPosition} ^ " mm"
+    ;echo "Right Y endstop position: " ^ {var.rightEndstopPosition} ^ " mm"
 elif var.side == "left" 
     set var.leftEndstopPosition = var.currentYPos
-    echo "Left Y endstop position: " ^ {var.leftEndstopPosition} ^ " mm"
+    ;echo "Left Y endstop position: " ^ {var.leftEndstopPosition} ^ " mm"
 elif var.side == "both"
     set var.leftEndstopPosition = var.currentYPos
     set var.rightEndstopPosition = var.currentYPos
-    echo "Both Y endstops triggered simultaneously. Please check wiring."
+    ;echo "Both Y endstops triggered simultaneously. Please check wiring."
 
 ; Now check the other endstop by switching motor drivers
 if var.side == "right"
@@ -70,7 +77,7 @@ if var.side == "right"
   M400
   G4 P300
   set var.leftEndstopPosition = move.axes[1].machinePosition
-  echo "Left Y endstop position: " ^ {var.leftEndstopPosition} ^ " mm"
+  ;echo "Left Y endstop position: " ^ {var.leftEndstopPosition} ^ " mm"
 
 if var.side == "left"
   M584 Y0.1                           ; Switch to the other driver for the Y axis  
@@ -79,7 +86,7 @@ if var.side == "left"
   M400
   G4 P300
   set var.rightEndstopPosition = move.axes[1].machinePosition
-  echo "Right Y endstop position: " ^ {var.rightEndstopPosition} ^ " mm"
+  ;echo "Right Y endstop position: " ^ {var.rightEndstopPosition} ^ " mm"
 
 
 ; Restore Y-axis configuration
@@ -90,12 +97,8 @@ M400                                  ; Ensure all moves are completed
 
 
  ; == X-AXIS POSITION CHECK ===
-
-G90
+G90                                   ; Switch to absolute positioningG90
 G1 Y172 F18000                        ; Move to safe Y position
-G91                                   ; Switch to relative positioning
-G1 H2 X5 U-5 F1800                    ; Move away from any potential endstop
-G90                                   ; Switch to absolute positioning
 
 
 G91                                   ; Switch to relative positioning
@@ -104,7 +107,7 @@ G1 X2 F1800                           ; Move away from endstop by 2 mm
 G1 H4 X-3 F140                        ; Move slowly to ensure endstop is triggered
 
 var xEndstopPosition = move.axes[0].machinePosition
-echo "X-axis endstop position: " ^ {var.xEndstopPosition} ^ " mm"
+;echo "X-axis endstop position: " ^ {var.xEndstopPosition} ^ " mm"
 
 G1 H2 X5 F1800                       ; Move away from endstop by 5 mm
 
@@ -116,8 +119,14 @@ G1 U-2 F1800                         ; Move away from endstop by 2 mm
 G1 H4 U3 F140                        ; Move slowly to ensure endstop is triggered
 
 var uEndstopPosition = move.axes[3].machinePosition
-echo "U-axis endstop position: " ^ {var.uEndstopPosition} ^ " mm"
+;echo "U-axis endstop position: " ^ {var.uEndstopPosition} ^ " mm"
 
-G1 H2 U-5 F18000                      ; Move away from endstop by 5 mm
+G1 H2 U-5 F1800                      ; Move away from endstop by 5 mm
 
 M400                                  ; Ensure all moves are completed
+
+; Create global variable with four axis positions array
+if exists(global.axisPositions)
+    set global.axisPositions = {var.xEndstopPosition, var.leftEndstopPosition, var.rightEndstopPosition, var.uEndstopPosition}
+else
+    global axisPositions = {var.xEndstopPosition, var.leftEndstopPosition, var.rightEndstopPosition, var.uEndstopPosition}
