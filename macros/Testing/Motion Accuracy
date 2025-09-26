@@ -1,3 +1,6 @@
+if !move.axes[0].homed || !move.axes[1].homed || !move.axes[2].homed || !move.axes[3].homed
+    abort "Error: All axes must be homed before running this test."
+
 M98 P"tfree3.g"                       ; Run the "tfree3.g" macro to free the tool
 T0
 M204 T2000                            ; Set acceleration for non-printing moves
