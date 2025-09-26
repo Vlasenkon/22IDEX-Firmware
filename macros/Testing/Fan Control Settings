@@ -11,13 +11,13 @@ if var.hepaMode == 0
     echo "HEPA fan turned off"
 elif var.hepaMode == 1
     ; Full speed mode
-    M106 P7 H-1 S1.0
+    M106 P7 H-1 S1.0 X1.0
     echo "HEPA fan set to full speed (100%)"
 elif var.hepaMode == 2
     ; Custom speed mode
     M291 S5 F50 L0 H100 R"Custom HEPA Fan Speed" P"Enter HEPA fan speed percentage (0-100%):"
     var hepaSpeed = input / 100.0
-    M106 P7 H-1 S{var.hepaSpeed}
+    M106 P7 H-1 S{var.hepaSpeed} X{var.hepaSpeed}
     echo "HEPA fan set to " ^ input ^ "% speed"
 else
     ; Thermostatic control mode
