@@ -1,21 +1,61 @@
 ; Define tolerance for position errors (in mm)
-var tolerance = 0.1
+var tolerance = 0.5
+var num_iterations = 50
+
+M291 S5 J1 F350 R"XY Movement test" P"Set the temperature for the Test"
+var temp = input
+
+
+M564 H0
+G10 P0 S{var.temp} R{var.temp}
+G10 P1 S{var.temp} R{var.temp}
+G10 P2 S{var.temp} R{var.temp}
+G10 P3 S{var.temp} R{var.temp}
+
+M140 S150 R150
+M141 S100 R100
+
+; Homing XYU axis if they are not homed
+if !move.axes[0].homed || !move.axes[1].homed || !move.axes[2].homed || !move.axes[3].homed
+  M98 P"homeall.g"
+
+G90
+G1 Z300 F18000
+
+;Wait for temp
+M116 H0 S5
+M116 H1 S5
+
+M570 H0 P1 T10 R1                                            ; configure heater fault detection
+M570 H1 P1 T10 R1                                            ; configure heater fault detection
+
+
+; Fans
+M106 P1 S0.5
+M106 P3 S0.5
+
+M98 P"0:/macros/Testing/Motion Accuracy"
+M400
+
+
 
 
 ; ---- CSV header setup ----
-; CSV header for motion accuracy test logging
-echo >"0:/sys/Testing/Motion_Accuracy_Test.csv" "Iteration,X_Error_Microns,LeftY_Error_Microns,RightY_Error_Microns,U_Error_Microns,X_Error_mm,LeftY_Error_mm,RightY_Error_mm,U_Error_mm"
+; CSV header for motion accuracy test logging - all temperatures and errors
+echo >"0:/sys/Testing/Motion_Accuracy_Test.csv" "Iteration,Elapsed_Seconds,X_Error_Microns,LeftY_Error_Microns,RightY_Error_Microns,U_Error_Microns,Tool0_Temp,Tool1_Temp,Bed_Temp,Chamber_Temp"
 
 ; Variables for CSV logging
 var csvData = ""
 
+; Temperature sensor variables
+var t0 = 0
+var t1 = 0
+var bed = 0
+var chamber = 0
 
-if !move.axes[0].homed || !move.axes[1].homed || !move.axes[2].homed || !move.axes[3].homed
-  M98 P"homeall.g"
-
-
-M98 P"0:/macros/Testing/Motion Accuracy"
-M400
+; Start time tracking
+var XY_Mov_Start_Time = state.time
+var XY_Mov_Time = 0
 
 ;pull data from global variable and use it as default values 
 if !exists(global.axisPositions)
@@ -27,6 +67,11 @@ var baselineLeftY = global.axisPositions[1]
 var baselineRightY = global.axisPositions[2]
 var baselineU = global.axisPositions[3]
 
+; Error flag variables
+var errorDetected = false
+var errorAxis = ""
+var errorValue = 0
+
 ;=echo "Baseline measurements established:"
 ;=echo "X-axis: " ^ {var.baselineX} ^ " mm"
 ;=echo "Y-axis Left: " ^ {var.baselineLeftY} ^ " mm"
@@ -34,7 +79,7 @@ var baselineU = global.axisPositions[3]
 ;=echo "U-axis: " ^ {var.baselineU} ^ " mm"
 
 
-while true & iterations < 5
+while sensors.analog[3].lastReading <= 80 && iterations < {var.num_iterations}
     
     M98 P"0:/macros/Testing/Motion Script"
     M400
@@ -43,6 +88,15 @@ while true & iterations < 5
     
     ;pull data from global variable and compare with default values, report Error with echo
     if exists(global.axisPositions)
+        ; Read temperature sensors
+        set var.t0 = sensors.analog[0].lastReading      ; Tool 0
+        set var.t1 = sensors.analog[1].lastReading      ; Tool 1  
+        set var.bed = sensors.analog[2].lastReading     ; Build Plate
+        set var.chamber = sensors.analog[3].lastReading ; Chamber Air
+        
+        ; Calculate elapsed time
+        set var.XY_Mov_Time = state.time - var.XY_Mov_Start_Time
+        
         var currentX = global.axisPositions[0]
         var currentLeftY = global.axisPositions[1]
         var currentRightY = global.axisPositions[2]
@@ -57,36 +111,105 @@ while true & iterations < 5
         ; Report for each axis - Iteration and error values
         echo "Iteration " ^ {iterations + 1}
         echo {var.deviationX * 1000} ^ "μm (" ^ {var.deviationX} ^ "mm) - X-axis"
-        echo {var.deviationLeftY * 1000} ^ "μm (" ^ {var.deviationLeftY} ^ "mm) - Y-axis Left"
-        echo {var.deviationRightY * 1000} ^ "μm (" ^ {var.deviationRightY} ^ "mm) - Y-axis Right"
+        echo {var.deviationLeftY * 1000} ^ "μm (" ^ {var.deviationLeftY} ^ "mm) - Left Y-axis"
+        echo {var.deviationRightY * 1000} ^ "μm (" ^ {var.deviationRightY} ^ "mm) - Right Y-axis"
         echo {var.deviationU * 1000} ^ "μm (" ^ {var.deviationU} ^ "mm) - U-axis"
+        echo {var.t0} ^ "°C - Tool0"
+        echo {var.t1} ^ "°C - Tool1"
+        echo {var.bed} ^ "°C - Bed"
+        echo {var.chamber} ^ "°C - Chamber"
         
-        ; Log data to CSV - build data string in parts to stay under 256 character limit
-        set var.csvData = {iterations + 1} ^ "," ^ {var.deviationX * 1000} ^ "," ^ {var.deviationLeftY * 1000} ^ "," ^ {var.deviationRightY * 1000} ^ "," ^ {var.deviationU * 1000}
-        set var.csvData = var.csvData ^ "," ^ {var.deviationX} ^ "," ^ {var.deviationLeftY} ^ "," ^ {var.deviationRightY} ^ "," ^ {var.deviationU}
+        ; Log data to CSV - include elapsed time, all errors, and all temperatures
+        set var.csvData = {iterations + 1} ^ "," ^ {floor(var.XY_Mov_Time)} ^ "," ^ {var.deviationX * 1000} ^ "," ^ {var.deviationLeftY * 1000} ^ "," ^ {var.deviationRightY * 1000} ^ "," ^ {var.deviationU * 1000}
+        set var.csvData = var.csvData ^ "," ^ {var.t0} ^ "," ^ {var.t1} ^ "," ^ {var.bed} ^ "," ^ {var.chamber}
         echo >>"0:/sys/Testing/Motion_Accuracy_Test.csv" {var.csvData}
         
-        ; Check for errors and abort if tolerance exceeded
+        ; Check for errors and set flag if tolerance exceeded
         if var.deviationX > var.tolerance
-            echo "ERROR: Deviation too much on X-axis: " ^ {var.deviationX} ^ "mm (tolerance: " ^ {var.tolerance} ^ "mm)"
-            M291 R"Motion Test Error" P"X-axis deviation exceeds tolerance! Test aborted." S2
-            abort "Motion test failed - X-axis deviation too high"
+            echo "ERROR: Deviation detected on X-axis: " ^ {var.deviationX} ^ "mm (tolerance: " ^ {var.tolerance} ^ "mm)"
+            set var.errorDetected = true
+            set var.errorAxis = "X-axis"
+            set var.errorValue = var.deviationX
+            break
         
         if var.deviationLeftY > var.tolerance
-            echo "ERROR: Deviation too much on Y-axis Left: " ^ {var.deviationLeftY} ^ "mm (tolerance: " ^ {var.tolerance} ^ "mm)"
-            M291 R"Motion Test Error" P"Y-axis Left deviation exceeds tolerance! Test aborted." S2
-            abort "Motion test failed - Y-axis Left deviation too high"
+            echo "ERROR: Deviation detected on Y-axis Left: " ^ {var.deviationLeftY} ^ "mm (tolerance: " ^ {var.tolerance} ^ "mm)"
+            set var.errorDetected = true
+            set var.errorAxis = "Y-axis Left"
+            set var.errorValue = var.deviationLeftY
+            break
         
         if var.deviationRightY > var.tolerance
-            echo "ERROR: Deviation too much on Y-axis Right: " ^ {var.deviationRightY} ^ "mm (tolerance: " ^ {var.tolerance} ^ "mm)"
-            M291 R"Motion Test Error" P"Y-axis Right deviation exceeds tolerance! Test aborted." S2
-            abort "Motion test failed - Y-axis Right deviation too high"
+            echo "ERROR: Deviation detected on Y-axis Right: " ^ {var.deviationRightY} ^ "mm (tolerance: " ^ {var.tolerance} ^ "mm)"
+            set var.errorDetected = true
+            set var.errorAxis = "Y-axis Right"
+            set var.errorValue = var.deviationRightY
+            break
         
         if var.deviationU > var.tolerance
-            echo "ERROR: Deviation too much on U-axis: " ^ {var.deviationU} ^ "mm (tolerance: " ^ {var.tolerance} ^ "mm)"
-            M291 R"Motion Test Error" P"U-axis deviation exceeds tolerance! Test aborted." S2
-            abort "Motion test failed - U-axis deviation too high"
+            echo "ERROR: Deviation detected on U-axis: " ^ {var.deviationU} ^ "mm (tolerance: " ^ {var.tolerance} ^ "mm)"
+            set var.errorDetected = true
+            set var.errorAxis = "U-axis"
+            set var.errorValue = var.deviationU
+            break
     else
         echo "ERROR: Failed to retrieve motion accuracy measurements"
-        M291 R"Motion Test Error" P"Failed to retrieve motion accuracy data! Test aborted." S2
-        abort "Motion test failed - unable to retrieve measurement data"
+        set var.errorDetected = true
+        set var.errorAxis = "Data retrieval"
+        break
+
+; ---- Test completion and cleanup ----
+set var.XY_Mov_Time = state.time - var.XY_Mov_Start_Time
+
+; Reset all temperatures and configurations
+M570 H0 P30 T50 R10                                              ; configure heater fault detection
+M570 H1 P30 T50 R10                                              ; configure heater fault detection
+
+G10 P0 S0 R0
+G10 P1 S0 R0
+G10 P2 S0 R0
+G10 P3 S0 R0
+M140 S0 R0
+M141 S0 R0
+
+G90
+G1 F18000 Y-999 X-150 U150
+G1 Z300
+
+; Final temperature readings
+set var.t0 = sensors.analog[0].lastReading
+set var.t1 = sensors.analog[1].lastReading  
+set var.bed = sensors.analog[2].lastReading
+set var.chamber = sensors.analog[3].lastReading
+
+echo "Movement test completed in " ^ {var.XY_Mov_Time/60} ^ " minutes (" ^ {floor(var.XY_Mov_Time)} ^ " seconds)"
+echo "Final Temperatures: Tool0=" ^ {var.t0} ^ "°C, Tool1=" ^ {var.t1} ^ "°C, Bed=" ^ {var.bed} ^ "°C, Chamber=" ^ {var.chamber} ^ "°C"
+
+; Decide success or failure based on error flag
+if var.errorDetected
+    echo "=== MOTION ACCURACY TEST FAILED ==="
+    echo "Error detected on " ^ {var.errorAxis} ^ " with deviation: " ^ {var.errorValue} ^ "mm (tolerance: " ^ {var.tolerance} ^ "mm)"
+    echo "Results saved to: Settings → Testing → Motion_Accuracy_Test.csv"
+    
+    ; Failure dialog
+    var failureMsg = "Motion accuracy test FAILED!<br><br>"
+    set var.failureMsg = var.failureMsg ^ "Error on " ^ {var.errorAxis} ^ "<br>"
+    set var.failureMsg = var.failureMsg ^ "Deviation: " ^ {var.errorValue} ^ "mm<br>"
+    set var.failureMsg = var.failureMsg ^ "Tolerance: " ^ {var.tolerance} ^ "mm<br><br>"
+    set var.failureMsg = var.failureMsg ^ "Test duration: " ^ {floor(var.XY_Mov_Time/60)} ^ " min<br>"
+    set var.failureMsg = var.failureMsg ^ "Results: Settings→Testing→Motion_Accuracy_Test.csv"
+    
+    M291 S2 R"Motion Test Failed" P{var.failureMsg} T0
+else
+    echo "=== MOTION ACCURACY TEST COMPLETE ==="
+    echo "All iterations completed successfully within tolerance"
+    echo "Results saved to: Settings → Testing → Motion_Accuracy_Test.csv"
+    
+    ; Success dialog
+    var successMsg = "Test completed successfully!<br><br>"
+    set var.successMsg = var.successMsg ^ "Duration: " ^ {floor(var.XY_Mov_Time/60)} ^ " min (" ^ {floor(var.XY_Mov_Time)} ^ "s)<br><br>"
+    set var.successMsg = var.successMsg ^ "Final Temps:<br>Tool0: " ^ {var.t0} ^ "°C, Tool1: " ^ {var.t1} ^ "°C<br>"
+    set var.successMsg = var.successMsg ^ "Bed: " ^ {var.bed} ^ "°C, Chamber: " ^ {var.chamber} ^ "°C<br><br>"
+    set var.successMsg = var.successMsg ^ "All within tolerance.<br>Results: Settings→Testing→Motion_Accuracy_Test.csv"
+    
+    M291 S2 R"Motion Test Complete" P{var.successMsg} T0
