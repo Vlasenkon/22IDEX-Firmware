@@ -17,7 +17,7 @@ G1 H2 X10 U-10 F18000                 ; Move the X and U axes 10 mm in opposite 
 
 ;=== Home with Y End Stops ===
 G91                                   ; Switch to absolute positioning
-G1 H1 Y-400 F3000                     ; Move the Y axis back quickly to hit the endstop
+G1 H1 Y-400 F1800                     ; Move the Y axis back quickly to hit the endstop
 if result !=0
   M98 P"0:/sys/led/fault.g"
   echo >>"0:/sys/eventlog.txt" "Error: Y axis homing failed"
