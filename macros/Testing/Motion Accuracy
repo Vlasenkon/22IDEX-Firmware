@@ -1,16 +1,14 @@
 M98 P"tfree3.g"                       ; Run the "tfree3.g" macro to free the tool
 T0
-
 M204 T2000                            ; Set acceleration for non-printing moves
 
 
-;=== Y-AXIS POSITION CHECK ===
-echo "Checking Y-axis positions..."
+;== Y-AXIS POSITION CHECK ===
 
 G90
 G1 Y-150 F18000                        ; Move to safe Y position
 
-;=== Check Y-axis endstop positions ===
+;== Check Y-axis endstop positions ===
 
 ; Initialize variables to store the positions
 var leftEndstopPosition = 0
@@ -20,6 +18,8 @@ var side = ""
 
 G91                                   ; Switch to relative positioning
 G1 H4 Y-30 F1800                     ; Move towards Y endstop and record position when triggered
+G1 Y2 F12000                           ; Move away from endstop by 2 mm
+G1 H4 Y-3 F140
 
 ; Check which endstop was triggered and record position
 M574 Y1 S1 P"io1.in"                  ; Configure right-hand side Y endstop on io1.in
@@ -54,6 +54,10 @@ if var.side == "right"
 elif var.side == "left" 
     set var.leftEndstopPosition = var.currentYPos
     echo "Left Y endstop position: " ^ {var.leftEndstopPosition} ^ " mm"
+elif var.side == "both"
+    set var.leftEndstopPosition = var.currentYPos
+    set var.rightEndstopPosition = var.currentYPos
+    echo "Both Y endstops triggered simultaneously. Please check wiring."
 
 ; Now check the other endstop by switching motor drivers
 if var.side == "right"
@@ -79,9 +83,38 @@ if var.side == "left"
 M584 Y0.1:0.4                         ; Use both drivers for the Y axis
 M574 Y1 S1 P"io1.in+io2.in"           ; Configure endstops for both sides of the Y axis
 
-;=== SUMMARY REPORT ===
-echo "=== POSITION CHECK SUMMARY ==="
-echo "Left Y endstop: " ^ {var.leftEndstopPosition} ^ " mm"
-echo "Right Y endstop: " ^ {var.rightEndstopPosition} ^ " mm"  
+M400                                  ; Ensure all moves are completed
+
+
+ ; == X-AXIS POSITION CHECK ===
+
+G90
+G1 Y172 F18000                        ; Move to safe Y position
+G91                                   ; Switch to relative positioning
+G1 H2 X5 U-5 F1800                    ; Move away from any potential endstop
+G90                                   ; Switch to absolute positioning
+
+
+G91                                   ; Switch to relative positioning
+G1 H4 X-375 F1800                     ; Move towards X endstop and record position when triggered
+G1 X2 F1800                           ; Move away from endstop by 2 mm
+G1 H4 X-3 F140                        ; Move slowly to ensure endstop is triggered
+
+var xEndstopPosition = move.axes[0].machinePosition
+echo "X-axis endstop position: " ^ {var.xEndstopPosition} ^ " mm"
+
+G1 H2 X5 F1800                       ; Move away from endstop by 5 mm
+
+; == U-AXIS POSITION CHECK ===
+
+G91                                   ; Switch to relative positioning
+G1 H4 U375 F1800                      ; Move towards U endstop and record position when triggered
+G1 U-2 F1800                         ; Move away from endstop by 2 mm
+G1 H4 U3 F140                        ; Move slowly to ensure endstop is triggered
+
+var uEndstopPosition = move.axes[3].machinePosition
+echo "U-axis endstop position: " ^ {var.uEndstopPosition} ^ " mm"
+
+G1 H2 U-5 F18000                      ; Move away from endstop by 5 mm
 
 M400                                  ; Ensure all moves are completed
