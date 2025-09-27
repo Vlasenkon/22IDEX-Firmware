@@ -66,10 +66,11 @@ This repository contains the firmware for the 3D printer IDEX22 with the followi
 
 #### **Added Macros**
 
-- **Path:** `0:/macros/System/Settings/Nozzle Wiping/`  
+- **Path:** `0:/macros/System/Settings/Printing/`  
   - **Wiping during the print** – Enables or disables nozzle cleaning during printing for specific materials. Enabled by default.  
+  - **XY Squaring** – Enables or disables XY Squaring. Enabled by default.  
 - **Path:** `0:/macros/System/Settings/Network/`  
-  - **Adjustment Ethernet to PC Mode** – Adjusts Ethernet to PC mode.  
+  - **Adjustment Ethernet to PC Mode** – Adjusts Ethernet to PC mode. Bug fixed.  
   - **AP Mode Network Name Settings** – Changes the network name in Access Point Mode.  
 - **Path** `0:/macros/System/Calibration/Temperature Tuning`  
   - **Bed Temp Sensor Tuning** – Bed temperature sensor calibration.  
@@ -100,14 +101,16 @@ This repository contains the firmware for the 3D printer IDEX22 with the followi
   - **ChamberTempCalibration** – Adjusts chamber temperature.  
   - **extrusion\_value** – Global variable for setting extrusion in nozzle\_wipe macro.  
   - **retraction\_value** – Global variable for setting retraction in nozzle\_wipe macro.  
+  - **xy\_squar\_offset** – Global variable for setting XY Squaring.  
 - **Path** `0:/gcodes/Slicer/Tests/`  
   - **Temp Tower Test\_1h5m** – New test.  
   - **Pressure Advanced Tuning Test\_13m** – New test.  
   - **Retraction Test\_6m** – New test.  
   - **Flow Rate Tuning Test\_3h3m** – New test.  
 - **Path** `0:/sys/`  
-  - **filament\_change** – Filament change.  
-  - **heater-fault.g** – Auto shutdown after heater fault.
+  - **filament\_change.g**  – Filament change.  
+  - **heater-fault.g** – Auto shutdown after heater fault.  
+  - **xy\_squaring.g** – Y axis adjustment.
 
 #### **Updated Macros**
 
@@ -120,13 +123,15 @@ This repository contains the firmware for the 3D printer IDEX22 with the followi
   - **Test 1** – Changed the test sequence  
   - **Test 2** – Moved some tests into the Test 1 macro.  
 - **Path** `0:/macros/System/Calibration/Testing/Tests/`  
-  - **Chamber Heater \+ Fan** – Removed the chamber fan test.  
   - **LED** – Added a prompt before the test.  
   - **Voltage** – Increased the number of iterations.  
-  - **Z-Binding** – Fixed the bugs.  
-  - **TBL & Lube** – Improved macro.  
+  - **Z-Binding** – Fixed the bugs. Improved communication with the user.  
+  - **TBL & Lube** – Improved macro. Improved communication with the user.  
+  - **TBL** – Improved communication with the user.  
+  - **Fans & Heaters** – Improved communication with the user.  
+  - **Motor Direction** – Improved communication with the user.  
 - **Path** `0:/macros/`  
-  - **Auto Calibration** – Added an extra parameter A1 when calling the macros to prevent them from being run separately from the Auto Calibration Macro. Disabled heating during nozzle cleaning.  
+  - **Auto Calibration** – Added an extra parameter A1 when calling the macros to prevent them from being run separately from the Auto Calibration Macro. Disabled heating during nozzle cleaning. Added XY Auto Squaring macro.  
 - **Path** `0:/macros/System`  
   - **Cold Pull** – Added LED indication. Added M702 P0 command. Added parameter for calling macro without pop-ups.  
 - **Path** `0:/macros/System/Settings/Chamber/`  
@@ -145,12 +150,12 @@ This repository contains the firmware for the 3D printer IDEX22 with the followi
   - **toolchangeretraction** – Moved to 0:/sys/  
 - **Path** `0:/sys/`  
   - **config** – Switching to Ethernet to PC mode is now automatic. Added filter configuration. New global variables are declared: periodic\_wiping, hepafan, retruction\_value. Bed heater fault detection is now configured via the bedfaultdetection.g macro. Made Hepafan thermodependent.  
-  - **initial** – Added filter activation. Made Hepafan not thermodependent. Removed the entoolchangeretruction.g macro call.  
-  - **end** – Added filter deactivation. Added filter fault message. Made Hepafan thermodependent. Removed the toolchangeretruction.g macro call.  
+  - **initial** – Added filter activation. Made Hepafan not thermodependent. Removed the entoolchangeretruction.g macro call. Added XY Squaring macro call.  
+  - **end** – Added filter deactivation. Added filter fault message. Made Hepafan thermodependent. Removed the toolchangeretruction.g macro call. Bug fixed.  
   - **pause** – Added filter speed reduction. Removed the toolchangeretruction.g macro call.  
   - **stop**  – Removed the toolchangeretruction.g macro call.  
   - **resume** – Added filter activation. Added a check for whether the temperature is set; if not, the user is prompted to enter it. Removed the entoolchangeretruction.g macro call.  
-  - **cancel** – Added filter deactivation. Added an option to reset the temperature. Made Hepafan thermodependent.  
+  - **cancel** – Added filter deactivation. Added an option to reset the temperature. Made Hepafan thermodependent. Added M84 XYU command.  
   - **baseload** – Fixed the bug. The temperature is no longer reset when the printer is paused.  
   - **filament-error** – Added filament change.  
   - **networktest** – Changed M552 I0 S1 to M552 I0 P0.0.0.0 S1. Added custom network name. Added test Ethernet to PC.  
@@ -167,8 +172,29 @@ This repository contains the firmware for the 3D printer IDEX22 with the followi
 
 - **Path** `0:/macros/System/Calibration/Testing/Tests/`  
   - **Endstop**  – Removed, as a new one has been written: Endstops Test x10.  
+  - **Chamber Heater \+ Fan** – Removed, as a new one has been written: Fans & Heaters.  
 - **Path** `0:/sys`  
   - **entoolchangeretraction** – Removed as unnecessary.
+
+#### **Slicer Updates**
+
+- **Path** `Printers/Custom G-code/Stard G-code`  
+  - If the nozzles have different filaments, the bed temperature is set for the most refractory.  
+  - If the nozzles have different filaments, the chamber temperature is set for the most refractory.  
+  - Variables are created to regulate Pressure Advance for different nozzle diameters.  
+  - A variable is created to detect errors with a filter.  
+  - If there are toolchanges in the print, a variable is created to count them.  
+  - If the plastic ULTEM 1010 or ULTEM 9085 is selected, a variable is created with the volume of plastic through which the nozzles will be cleaned.  
+- **Path** `Printers/Custom G-code/End G-code`  
+  - A parameter with filter errors has been added to the end.g macro call.  
+- **Path** `Printers/Custom G-code/After layer change G-code`  
+  - Added nozzle cleaning for ULTEM 1010 and ULTEM 9085 plastics.  
+  - Added filter health check  
+- **Path** `Printers/Custom G-code/Tool change G-code`  
+  - Added resetting of the head temperature if it is no longer used in printing.  
+- **Path** `Filaments/Custom G-code/Start G-code`  
+  - Pressure Advance is set for a specific filament depending on the nozzle diameter.  
+  - Sets the extrusion and retract values ​​for a specific filament
 
 ---
 
@@ -212,5 +238,4 @@ There you’ll find detailed guides on printer usage, configuration, materials, 
 
 ---
 
-**Last updated:** 04.09.2025
-
+**Last updated:** 27.09.2025

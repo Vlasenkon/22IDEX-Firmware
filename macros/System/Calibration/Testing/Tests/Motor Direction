@@ -1,19 +1,12 @@
 M564 H0
 
-M84
-M291 R"Check Belt Tension" P"Tension on all belts should be 55-60Hz" S4 K{"Good","Skip","Cancel"}
+M291 R"Move Tools by Hand" P"Movement should be smooth and without binding" S4 K{"Ok","Skip","Cancel"}
 if input == 1
     M99
 elif input == 2
     abort "Test cancelled by user"
 
-
-M291 R"Move Tools by Hand" P"Movement should be smooth and without binding" S4 K{"Good","Skip","Cancel"}
-if input == 1
-    M99
-elif input == 2
-    abort "Test cancelled by user"
-
+M291 R"Information" P"Movements should be smooth. Pay attention to any unusual sounds or actions during the move." S3
 
 M291 R"Move XYU - Axis" P" " S3 X1 Y1 U1
 

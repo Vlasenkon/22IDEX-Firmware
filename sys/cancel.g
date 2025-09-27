@@ -26,6 +26,8 @@ if var.doReset
   M140 S0 R0    ; Bed heater off
   M141 S0       ; turn off chamber heater
 
+M84 XYU
+
 M98 P"0:/sys/led/stop.g"
 
 ;reset Z baby steping if it was savedduring the ptint

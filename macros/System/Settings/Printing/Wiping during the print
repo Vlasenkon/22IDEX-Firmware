@@ -1,4 +1,4 @@
-M291 S4 P"Nozzle wiping during printing" R"Select Option" K{"On","Off"} F0
+M291 S4 R"Nozzle wiping during printing" P"Select Option" K{"On","Off"} F0
 
 if input = 0
     set global.periodic_wiping = 1

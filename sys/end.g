@@ -44,6 +44,7 @@ if move.axes[2].babystep != 0
 
 M98 P"0:/user/filamentbackup.g"                          ; load filament runout tool swap variable
 
-if param.A > 10
-	echo "Warning: The filter fan is broken. Please replace it."
-	M291 R"Warning" P"The filter fan is broken. Please replace it." S1
+if exists(param.A)
+	if param.A > 10
+		echo "Warning: The filter fan is broken. Please replace it."
+		M291 R"Warning" P"The filter fan is broken. Please replace it." S1

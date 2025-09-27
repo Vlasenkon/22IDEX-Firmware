@@ -1,0 +1,21 @@
+M291 S4 R"XY Squaring" P"Select Option" K{"On","Off"} F0
+
+if input == 0
+  echo >"0:/sys/xy_squaring.g" "if exists(global.xy_square_offset)"
+  echo >>"0:/sys/xy_squaring.g" "  G90"
+  echo >>"0:/sys/xy_squaring.g" "  G1 Y0 F6000"
+  echo >>"0:/sys/xy_squaring.g" "  M400"
+  echo >>"0:/sys/xy_squaring.g" "  G4 S2"
+  echo >>"0:/sys/xy_squaring.g" "  M584 Y0.4"
+  echo >>"0:/sys/xy_squaring.g" "  G91"
+  echo >>"0:/sys/xy_squaring.g" "  G1 Y{-global.xy_square_offset} F150   ; Crossbar Alignment"
+  echo >>"0:/sys/xy_squaring.g" "  M400"
+  echo >>"0:/sys/xy_squaring.g" "  M584 Y0.1"
+  echo >>"0:/sys/xy_squaring.g" "  G1 Y{global.xy_square_offset} F150   ; Crossbar Alignment"
+  echo >>"0:/sys/xy_squaring.g" "  M400"
+  echo >>"0:/sys/xy_squaring.g" "  M584 Y0.1:0.4"
+  echo >>"0:/sys/xy_squaring.g" "  G90"
+  echo "XY squaring is enabled"
+else
+  echo >"0:/sys/xy_squaring.g" ";XY Squaring is disabled"
+  echo "XY squaring is disabled"

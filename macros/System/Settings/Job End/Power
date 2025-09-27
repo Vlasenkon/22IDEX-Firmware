@@ -1,0 +1,10 @@
+M291 P"Select Option" R"Printer after print is finished" S4 K{"Sleep", "Stay idle"}
+
+if input = 0
+  echo >"0:/user/powerendbehavior.g" "M400"
+  echo >>"0:/user/powerendbehavior.g" "G4 S5"
+  echo >>"0:/user/powerendbehavior.g" "M81 S1"
+  echo "Sleep after print is finished selected"
+elif input = 1
+  echo >"0:/user/powerendbehavior.g" "; Stay idle after print is finished"
+  echo "Stay idle after print is finished selected"

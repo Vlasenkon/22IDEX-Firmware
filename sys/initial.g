@@ -63,6 +63,10 @@ G4 S2
 
 M98 P"homeall.g" Z1 S1 L1              ; Home the machine  
 
+M98 P"0:/user/xy_square_offset.g"
+M98 P"0:/sys/xy_square_dir.g"
+M98 P"0:/sys/xy_squaring.g"
+
 if exists(param.A) && exists(param.B) && exists(param.D) && exists(param.J)
   M98 P"mesh.g" A{param.A} B{param.B} D{param.D} J{param.J}
 else

@@ -79,6 +79,9 @@ M400
 M98 P"0:/macros/System/Calibration/Auto Calibration Macros/XY - Offset Calibration" S1 A1
 M400
 
+M98 P"0:/macros/System/Calibration/Auto Calibration Macros/XY Auto Squaring" S1 A1
+M400
+
 
 
 

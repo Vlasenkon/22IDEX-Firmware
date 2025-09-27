@@ -3,7 +3,7 @@
 ; - Confirms start
 ; - Sets temps to 0, cools if any heater ≥35C (blue LED macro)
 ; - Prompts to close door/lid, then heats chamber/bed (yellow LED macro)
-; - Logs temps every second to 0:/sys/Testing/Chamber_Heatet
+; - Logs temps every second to 0:/sys/Testing/Chamber_Heater
 ; - Stops when X or U endstop is held OR chamber reaches 100C
 ; - Green if within target time, Red if slower than expected
 ; ============================================================
@@ -30,13 +30,14 @@ var tookTooLong = false
 var elapsed = 0                  ; seconds since heating started
 
 ; ---- CSV header (now includes elapsed column) ----
-echo >"0:/sys/Result/Chamber_Heatet.csv" "Time,Elapsed_s,Tool0_Temp,Tool1_Temp,Bed_Temp,Chamber_Temp"
+echo >"0:/sys/Result/Chamber_Heater.csv" "Time,Elapsed_s,Tool0_Temp,Tool1_Temp,Bed_Temp,Chamber_Temp,Chamber_Heater_Temp"
 
 ; ---- Helper scratch ----
 var t0 = 0
 var t1 = 0
 var bed = 0
 var chamber = 0
+var ch_heater = 0
 
 ; ---- If anything is ≥35C, show cooling popup + BLUE LED macro ----
 if (heat.heaters[0].current >= 35) || (heat.heaters[1].current >= 35) || (heat.heaters[2].current >= 35) || (heat.heaters[3].current >= 35)
@@ -53,12 +54,13 @@ if (heat.heaters[0].current >= 35) || (heat.heaters[1].current >= 35) || (heat.h
     set var.t1 = heat.heaters[1].current
     set var.bed = heat.heaters[2].current
     set var.chamber = heat.heaters[3].current
+    set var.ch_heater = sensors.analog[4].lastReading
 
     if var.t0 < 35 && var.t1 < 35 && var.bed < 35 && var.chamber < 35
       break
 
     if mod(iterations, 30) == 0
-      echo "Cooling... T0:"^var.t0^"  T1:"^var.t1^"  Bed:"^var.bed^"  Chamber:"^var.chamber^"  (°C)"
+      echo "Cooling... T0:"^var.t0^"  T1:"^var.t1^"  Bed:"^var.bed^"  Chamber:"^var.chamber^"  Chamber heater:"^var.ch_heater^"  (°C)"
 
     G4 S1
     set var.coolElapsed = var.coolElapsed + 1
@@ -75,7 +77,7 @@ M98 P"0:/sys/led/pause.g"        ; YELLOW = active / heating
 
 ; Start heaters for the test (adjust as needed)
 M141 S100                        ; chamber target
-M140 S130                        ; bed target (helps chamber heat)
+M140 S180                        ; bed target (helps chamber heat)
 
 ; Mark start time for duration calc (we aren't logging elapsed per-second)
 set var.startTime = state.time
@@ -96,13 +98,14 @@ while true
   set var.t1 = heat.heaters[1].current
   set var.bed = heat.heaters[2].current
   set var.chamber = heat.heaters[3].current
+  set var.ch_heater = sensors.analog[4].lastReading
 
                                  ; Append to CSV (Time, Elapsed, T0, T1, Bed, Chamber)
-  echo >>"0:/sys/Result/Chamber_Heatet.csv" {var.now^","^var.elapsed^","^var.t0^","^var.t1^","^var.bed^","^var.chamber}
+  echo >>"0:/sys/Result/Chamber_Heater.csv" {var.now^","^var.elapsed^","^var.t0^","^var.t1^","^var.bed^","^var.chamber^","^var.ch_heater}
 
                                  ; Console heartbeat every ~30s
   if mod(iterations, 30) == 0
-    echo "Heating... Chamber: "^var.chamber^" °C"
+    echo "Heating... Chamber: "^var.chamber^" °C, Chamber heater: "^var.ch_heater^" °C"
 
                                  ; Stop condition: chamber at/over 100C
   if var.chamber >= 100

@@ -1,0 +1,448 @@
+if exists(param.A)
+    if !exists(param.S)
+    
+      M291 S5 J1 F250 L150 H450 R"Set Left Tool Temperature" P"Please set the temperature for the filament previously loaded in the Left Tool."
+      var ll = input
+        
+      M291 S5 J1 F{var.ll} L150 H450 R"Set Right Tool Temperature" P"Please set the temperature for the filament previously loaded in the Right Tool."
+      var rr = input
+      
+      G10 P0 R{var.ll} S{var.ll}
+      G10 P1 R{var.rr} S{var.rr}
+      G10 P2 R{var.ll,var.rr} S{var.ll,var.rr}
+      G10 P3 R{var.ll,var.rr} S{var.ll,var.rr}
+      
+      M568 P0 A2
+      M568 P1 A2
+      
+      M291 S2 R"Please Remove the Build Sheet" P"To avoid damaging your machine, remove the build sheet from the build plate.<br>Click ""OK"" when you are ready to proceed or ""Cancel"" to stop." S2
+      
+      if !move.axes[0].homed || !move.axes[1].homed || !move.axes[2].homed || !move.axes[3].homed
+        M98 P"0:/sys/homeall.g" S1
+      
+      G90
+      G1 X-999 U999 Y-75 F18000
+      
+      M116 P0 S10
+      M116 P1 S10
+      
+      T3
+      M83                 ; relative extruder moves
+      G1 E-50 F{60}*{10}   ; retract filament
+      
+      M98 P"0:/sys/nozzlewipe.g" C1
+      M400
+      while iterations < 2
+        M98 P"0:/sys/nozzlewipe.g" L1 C1
+        M400
+      
+      G1 F18000 X-50 Y-150 Z125  ; Move tools to the cleaning position
+      M291 S2 R"Please Clean Both Nozzles" P"Use a metal brush to clean both nozzles thoroughly to prevent machine damage.<br>Click ""OK"" when you are ready to proceed or ""Cancel"" to stop." S2
+      
+      M84 Y
+
+      M98 P"0:/sys/homeall.g" S1
+      
+      G29 S2     ; disable Mesh Bed Leveling
+      M290 R0 S0
+      M208 Z-5 S1
+      M558 K0 P8 C"1.io4.in" H5 F100 T18000              ; define Z probe parameters
+      M98 P"0:/user/probeoffset.g"                       ; load global variables
+      T0
+      G1 U999 F18000
+      M42 P4 S1                                              ; Turn on relay
+    
+    ;Start of Calculation
+
+    var LR = {-149.7, 161}                   ; U, Y  |  Coordinates of Center of the Left Rear Hole 
+    var RR = {150.8, 164.8}                  ; U, Y  |  Coordinates of Center of the Right Rear Hole
+    var RF = {149.8, -156.2}                 ; U, Y  |  Coordinates of Center of the Right Front Hole
+    var holecoor = {0, 0, 0, 0}              ; UL, UR, YF, YR,  |  Border Coordinates of the Hole
+    var max_Travel = 15
+    
+    M558 K0 P8 C"1.io4.in" H5 F600 T18000
+    M98 P"0:/user/probeoffset.g"                                                                   ; load global variables
+    
+    M98 P"0:/sys/nozzlewipe.g" T1
+
+    var Iter = 0
+    if exists(param.I)
+      set var.Iter = param.I
+
+    ; Do if only Iter=1
+    if var.Iter == 1
+      if !exists(global.xy_square_offset)
+        M291 P"global.xy_square_offset is not defined" R"Error" S2
+        M99
+      ; Go to Y0 
+      G90
+      G1 Y0 F6000
+      
+      G4 S2
+
+      ;M291 P"Right" S2
+      M584 Y0.4
+      G91
+      G1 Y{-global.xy_square_offset} F150   ; Crossbar Alignment
+      M400
+      ;M291 P"Left" S2
+      M584 Y0.1
+      G1 Y{global.xy_square_offset} F150   ; Crossbar Alignment
+      M400 
+      M584 Y0.1:0.4
+      G90
+
+      ;M584 Y0.4
+
+    
+    ; =====LR Bed Hole=====
+    
+    G1 U{var.LR[0]} Y{var.LR[1] - var.max_Travel} Z2 F6000
+    
+    M98 P"0:/sys/nozzleprobe.g" Z10
+    var T1_Ref_Z = move.axes[2].userPosition
+    
+    G90                                                    ; Absolute
+    
+    G1 Z{var.T1_Ref_Z + 1}
+    G1 Y{var.LR[1]} U{var.LR[0]} F12000                    ;Move to the Centre
+    
+    while iterations < 2000
+      G38.4 K0 Z{var.T1_Ref_Z - 0.5}                               ; Move down the Hole
+      if result == 0
+        G1 Z{var.T1_Ref_Z + 1}
+        M291 S3 R"Position the head above the rear left hole in the bed." P"Press ""OK"" after positioning to countinue the macro." U1 Y1
+      else
+        set var.LR[0] = move.axes[3].userPosition
+        set var.LR[1] = move.axes[1].userPosition
+        break
+    
+    ; =====LR Hole Center Coordinates Searching=====
+    M558 K0 P8 C"1.io4.in" H5 F100 T18000              ; define Z probe parameters
+    M98 P"0:/user/probeoffset.g"                       ; load global variables
+    
+    ; 1st Probe
+    G38.4 K0 Y{move.axes[1].userPosition - var.max_Travel} ; Probe YF - on LR hole
+    M400
+    G4 P260
+    set var.holecoor[2] = move.axes[1].userPosition
+    
+    G1 Y{var.LR[1]}
+    
+    ; 2nd Probe
+    G38.4 K0 Y{move.axes[1].userPosition + var.max_Travel} ; Probe YR - on LR hole
+    M400
+    G4 P260
+    set var.holecoor[3] = move.axes[1].userPosition
+    
+    set var.LR[1] = (var.holecoor[2] + var.holecoor[3]) / 2 ; LRy center coordinate
+    
+    G1 Y{var.LR[1]} 
+    
+    ; 3rd Prode
+    G38.4 K0 U{move.axes[3].userPosition - var.max_Travel} ; Probe UL - on LR hole
+    M400
+    G4 P260
+    set var.holecoor[0] = move.axes[3].userPosition
+    
+    G1 U{var.LR[0]}
+    
+    ; 4th Probe
+    G38.4 K0 U{move.axes[3].userPosition + var.max_Travel} ; Probe UR - on LR hole
+    M400
+    G4 P260
+    set var.holecoor[1] = move.axes[3].userPosition
+    
+    set var.LR[0] = (var.holecoor[0] + var.holecoor[1]) / 2 ; LRx center coordinate
+    
+    G1 U{var.LR[0]}
+    
+    ; =====Final LR Hole Center Coordinates Searching=====
+    
+    G90
+    
+    ; 1st Probe
+    G1 U{var.LR[0]} Y{var.LR[1]}
+    G38.4 K0 Y{move.axes[1].userPosition - var.max_Travel}
+    set var.holecoor[2] = move.axes[1].userPosition
+    G1 Y{var.LR[1]}
+    
+    ; 2nd Probe
+    G38.4 K0 Y{move.axes[1].userPosition + var.max_Travel}
+    set var.holecoor[3] = move.axes[1].userPosition
+    
+    set var.LR[1] = {var.holecoor[2] + var.holecoor[3]} / 2 ; LRy center coordinate
+    G1 Y{var.LR[1]}
+    
+    ; 3rd Probe
+    G38.4 K0 U{move.axes[3].userPosition - var.max_Travel}
+    set var.holecoor[0] = move.axes[3].userPosition
+    G1 U{var.LR[0]}
+    
+    ; 4th Probe
+    G38.4 K0 U{move.axes[3].userPosition + var.max_Travel}
+    set var.holecoor[1] = move.axes[3].userPosition
+    
+    set var.LR[0] = {var.holecoor[0] + var.holecoor[1]} / 2 ; LRx center coordinate
+    G1 Y{var.LR[1]} U{var.LR[0]} Z5
+    M400
+    
+    ; =====RR Bed Hole=====
+    
+    G1 U{var.RR[0]} Y{var.RR[1] - var.max_Travel} Z2
+    
+    M98 P"0:/sys/nozzleprobe.g" Z10
+    set var.T1_Ref_Z = move.axes[2].userPosition
+    
+    G90                                                    ; Absolute
+    
+    G1 Z{var.T1_Ref_Z + 1}
+    G1 Y{var.RR[1]} U{var.RR[0]} F12000                    ;Move to the Centre
+    
+    while iterations < 2000
+      G38.4 K0 Z{var.T1_Ref_Z - 0.5}                               ; Move down the Hole
+      if result == 0
+        G1 Z{var.T1_Ref_Z + 1}
+        M291 S3 R"Position the head above the rear right hole in the bed." P"Press ""OK"" after positioning to countinue the macro." U1 Y1
+      else
+        set var.RR[0] = move.axes[3].userPosition
+        set var.RR[1] = move.axes[1].userPosition
+        break
+    
+    ; =====RR Hole Center Coordinates Searching=====
+    M558 K0 P8 C"1.io4.in" H5 F100 T18000              ; define Z probe parameters
+    M98 P"0:/user/probeoffset.g"                       ; load global variables
+    
+    ; 1st Probe
+    G38.4 K0 Y{move.axes[1].userPosition - var.max_Travel} ; Probe YF - on RR hole
+    M400
+    G4 P260
+    set var.holecoor[2] = move.axes[1].userPosition
+    
+    G1 Y{var.RR[1]}
+    
+    ; 2nd Probe
+    G38.4 K0 Y{move.axes[1].userPosition + var.max_Travel} ; Probe YR - on RR hole
+    M400
+    G4 P260
+    set var.holecoor[3] = move.axes[1].userPosition
+    
+    set var.RR[1] = (var.holecoor[2] + var.holecoor[3]) / 2 ; RRy center coordinate
+    
+    G1 Y{var.RR[1]} 
+    
+    ; 3rd Prode
+    G38.4 K0 U{move.axes[3].userPosition - var.max_Travel} ; Probe UL - on RR hole
+    M400
+    G4 P260
+    set var.holecoor[0] = move.axes[3].userPosition
+    
+    G1 U{var.RR[0]}
+    
+    ; 4th Probe
+    G38.4 K0 U{move.axes[3].userPosition + var.max_Travel} ; Probe UR - on RR hole
+    M400
+    G4 P260
+    set var.holecoor[1] = move.axes[3].userPosition
+    
+    set var.RR[0] = (var.holecoor[0] + var.holecoor[1]) / 2 ; RRx center coordinate
+    
+    G1 U{var.RR[0]}
+    
+    ; =====Final RR Hole Center Coordinates Searching=====
+    
+    G90
+    
+    ; 1st Probe
+    G1 U{var.RR[0]} Y{var.RR[1]}
+    G38.4 K0 Y{move.axes[1].userPosition - var.max_Travel}
+    set var.holecoor[2] = move.axes[1].userPosition
+    G1 Y{var.RR[1]}
+    
+    ; 2nd Probe
+    G38.4 K0 Y{move.axes[1].userPosition + var.max_Travel}
+    set var.holecoor[3] = move.axes[1].userPosition
+    
+    set var.RR[1] = {var.holecoor[2] + var.holecoor[3]} / 2 ; RRy center coordinate
+    G1 Y{var.RR[1]}
+    
+    ; 3rd Probe
+    G38.4 K0 U{move.axes[3].userPosition - var.max_Travel}
+    set var.holecoor[0] = move.axes[3].userPosition
+    G1 U{var.RR[0]}
+    
+    ; 4th Probe
+    G38.4 K0 U{move.axes[3].userPosition + var.max_Travel}
+    set var.holecoor[1] = move.axes[3].userPosition
+    
+    set var.RR[0] = {var.holecoor[0] + var.holecoor[1]} / 2 ; RRx center coordinate
+    G1 Y{var.RR[1]} U{var.RR[0]} Z5
+    var holeR = abs(var.holecoor[0] - var.holecoor[1])
+    M400
+    
+    ; =====RR Bed Hole=====
+    
+    G1 U{var.RF[0]} Y{var.RF[1] + var.max_Travel} Z2
+    
+    M584 Z1.2     ; define driver mapping
+    G91
+    G1 Z3
+    G90
+    M584 Z1.0:1.1:1.2 ; restore original driver mapping
+    
+    M98 P"0:/sys/nozzleprobe.g" Z10
+    set var.T1_Ref_Z = move.axes[2].userPosition
+    
+    G90                                                    ; Absolute
+    
+    G1 Z{var.T1_Ref_Z + 1}
+    G1 Y{var.RF[1]} U{var.RF[0]} F12000                    ;Move to the Centre
+    
+    while iterations < 2000
+      G38.4 K0 Z{var.T1_Ref_Z - 0.5}                               ; Move down the Hole
+      if result == 0
+        G1 Z{var.T1_Ref_Z + 1}
+        M291 S3 R"Position the head above the front right hole in the bed." P"Press ""OK"" after positioning to countinue the macro." U1 Y1
+      else
+        set var.RF[0] = move.axes[3].userPosition
+        set var.RF[1] = move.axes[1].userPosition
+        break
+    
+    ; =====RR Hole Center Coordinates Searching=====
+    M558 K0 P8 C"1.io4.in" H5 F100 T18000              ; define Z probe parameters
+    M98 P"0:/user/probeoffset.g"                       ; load global variables
+    
+    ; 1st Probe
+    G38.4 K0 Y{move.axes[1].userPosition - var.max_Travel} ; Probe YF - on RF hole
+    M400
+    G4 P260
+    set var.holecoor[2] = move.axes[1].userPosition
+    
+    G1 Y{var.RF[1]}
+    
+    ; 2nd Probe
+    G38.4 K0 Y{move.axes[1].userPosition + var.max_Travel} ; Probe YR - on RF hole
+    M400
+    G4 P260
+    set var.holecoor[3] = move.axes[1].userPosition
+    
+    set var.RF[1] = (var.holecoor[2] + var.holecoor[3]) / 2 ; RFy center coordinate
+    
+    G1 Y{var.RF[1]} 
+    
+    ; 3rd Prode
+    G38.4 K0 U{move.axes[3].userPosition + var.max_Travel} ; Probe UR - on RF hole
+    M400
+    G4 P260
+    set var.holecoor[1] = move.axes[3].userPosition
+    set var.holecoor[0] = {move.axes[3].userPosition - var.holeR}
+    
+    G1 U{var.RF[0]} 
+    
+    set var.RF[0] = (var.holecoor[0] + var.holecoor[1]) / 2 ; RFx center coordinate
+    
+    G1 U{var.RF[0]}
+    
+    ; =====Final RF Hole Center Coordinates Searching=====
+    
+    G90
+    
+    ; 1st Probe
+    G1 U{var.RF[0]} Y{var.RF[1]}
+    G38.4 K0 Y{move.axes[1].userPosition - var.max_Travel}
+    set var.holecoor[2] = move.axes[1].userPosition
+    G1 Y{var.RF[1]}
+    
+    ; 2nd Probe
+    G38.4 K0 Y{move.axes[1].userPosition + var.max_Travel}
+    set var.holecoor[3] = move.axes[1].userPosition
+    
+    set var.RF[1] = {var.holecoor[2] + var.holecoor[3]} / 2 ; RFy center coordinate
+    G1 Y{var.RF[1]}
+    
+    ; 3rd Probe
+    G38.4 K0 U{move.axes[3].userPosition + var.max_Travel}
+    set var.holecoor[1] = move.axes[3].userPosition
+    set var.holecoor[1] = {move.axes[3].userPosition - var.holeR}
+    G1 U{var.RF[0]}
+    
+    set var.RF[0] = {var.holecoor[0] + var.holecoor[1]} / 2 ; RFx center coordinate
+    G1 Y{var.RF[1]} U{var.RF[0]} Z50
+    M400
+    M584 Z1.2     ; define driver mapping
+    G91
+    G1 Z-3
+    G90
+    M584 Z1.0:1.1:1.2 ; restore original driver mapping
+    
+   ; =====Calculation=====
+
+    echo "Left Rear Hole Center Coordinates: U = "^{var.LR[0]}^", Y = "^{var.LR[1]}
+    echo "Right Rear Hole Center Coordinates: U = "^{var.RR[0]}^", Y = "^{var.RR[1]}
+    echo "Right Front Hole Center Coordinates: U = "^{var.RF[0]}^", Y = "^{var.RF[1]}
+    
+    ; Nominal dimensions (for reference/recalculation in mm)
+    var CrossBarLength = 479.1
+    var VertSpac       = 319.896              ; Y
+    var HorizSpac      = 300                  ; X
+
+    ; --- Measured Edge Lengths (for verification) ---
+    var HorizMeasured = sqrt(pow(var.RR[0] - var.LR[0], 2) + pow(var.RR[1] - var.LR[1], 2))
+    var VertMeasured  = sqrt(pow(var.RF[0] - var.RR[0], 2) + pow(var.RF[1] - var.RR[1], 2))
+
+    ; --- Rear (H) and Right (V) Edge Vectors ---
+    var Hx = var.RR[0] - var.LR[0]
+    var Hy = var.RR[1] - var.LR[1]
+    var Vx = var.RF[0] - var.RR[0]
+    var Vy = var.RF[1] - var.RR[1]
+
+    var k = var.Vx / var.Vy
+
+    var dot = var.Hx * var.Vx + var.Hy * var.Vy
+    var lenH = sqrt(pow(var.Hx, 2) + pow(var.Hy, 2))
+    var lenV = sqrt(pow(var.Vx, 2) + pow(var.Vy, 2))
+    var angle = acos(var.dot / (var.lenH * var.lenV))
+    var alpha_deg = degrees(var.angle) - 90
+
+    var CorrLength = 2 * var.CrossBarLength * sin(radians(abs(var.alpha_deg) / 2))
+    
+    var mag = var.CorrLength/2
+    
+    ; pick sign safely (no ternary)
+    var s = 1                                           ; +1 by default
+    if var.alpha_deg >= 0
+      set var.s = 0 - 1                                 ; -1 if alpha>=0
+
+    var CorrLengthSafety = var.mag * var.s *0.36
+
+    ; Echo suggestions
+    echo "Correction Length = ", {var.CorrLengthSafety}
+
+    if var.CorrLengthSafety < 0
+      set var.CorrLengthSafety = var.CorrLengthSafety + 1
+    elif var.CorrLengthSafety > 0
+      set var.CorrLengthSafety = var.CorrLengthSafety - 1
+
+    ; persist to a file for restoration / reuse after reboot
+    echo >"0:/user/xy_square_offset.g" "if exists(global.xy_square_offset)"
+    echo >>"0:/user/xy_square_offset.g" "  set global.xy_square_offset = " ^ var.CorrLengthSafety
+    echo >>"0:/user/xy_square_offset.g" "else"
+    echo >>"0:/user/xy_square_offset.g" "  global xy_square_offset = " ^ var.CorrLengthSafety
+
+    if !exists(param.S)
+      G10 P0 S0 R0
+      G10 P1 S0 R0
+      G10 P2 S0 R0
+      G10 P3 S0 R0
+
+      M42 P4 S0                                            ; Turn off relay
+      M208 Z0 S1
+      M558 K0 P8 C"1.io4.in" H5 F300 T18000
+      M98 P"0:/user/probeoffset.g"                         ; load global variables
+
+      G90
+      G1 X-999 U999 Y150 Z100 F12000
+
+    M204 T5000
+else
+  M291 S2 R"Use Auto Calibration macro" P"Using separate calibration macros may cause issues.<br>Please use the Auto Calibration macro"

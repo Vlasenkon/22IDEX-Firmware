@@ -1,3 +1,6 @@
+var ip = "192.168.1.50"
+var gateway = "255.255.255.0"
+var subnet = "192.168.1.1"
 
 M291 R"Change Settings" P"Do you want to change settings Ethernet to PC Mode?" S4 K{"Change parameter", "Cancel"}
 if input == 1
@@ -5,18 +8,14 @@ if input == 1
 
 if input == 0
 
-	; Опитуємо IP-адресу з прикладом
-	M291 S7 F{var.ip} R"Network Setup" P"Enter Static IP Address"
+	M291 S7 F{var.ip} R"Network Setup" P"Enter Static IP Address" J1
 	set var.ip = input
 
-	; Опитуємо шлюз з прикладом
-	M291 S7 F{var.gateway} R"Network Setup" P"Enter Gateway"
+	M291 S7 F{var.gateway} R"Network Setup" P"Enter Gateway" J1
 	set var.gateway = input
 
-	; Підтвердження
 	M291 R"Confirm" P{"Apply these settings?<br>IP: " ^ var.ip ^ "<br>Subnet: " ^ var.subnet ^ "<br>Gateway: " ^ var.gateway} S3
 
-	; Встановлюємо параметри
 	if var.ip != "" && var.subnet != "" && var.gateway != ""
 		echo >"0:/user/ip_ethernettopc.g" "M552 P"^{var.ip}^"                    ; Set static IP address"
     	echo >>"0:/user/ip_ethernettopc.g" "M553 P"^{var.subnet}^"                   ; Set subnet mask"
@@ -26,8 +25,5 @@ if input == 0
 		M291 R"Error" P{"Please repet. IP: " ^ var.ip ^ "<br>Subnet: " ^ var.subnet ^ "<br>Gateway: " ^ var.gateway} S2
 		M98 "0:/macros/System/Settings/Network/Change Settings Ethernet to PC Mode"
 
-
-; Показати результат
-M291 R"Network Config Applied" P{"IP: " ^ var.ip ^ "<br>Subnet: " ^ var.subnet ^ "<br>Gateway: " ^ var.gateway} S2
 M291 R"Network Config Applied" P"Attention: The printer will now be restarted to save the settings." S2
 M112 

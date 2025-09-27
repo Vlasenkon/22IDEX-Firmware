@@ -304,6 +304,10 @@ if exists(param.A)
           G1 U-100 Z150 F18000
           M400
 
+	  M291 S2 R"Confirm Tightening" P"Ensure the heat break is fully tightened to maintain alignment.<br>Click ""OK"" to confirm."
+    
+          G90
+          G1 X-999 U999 F18000
     
         ;====Right is Lower====
         if var.ddd < 0

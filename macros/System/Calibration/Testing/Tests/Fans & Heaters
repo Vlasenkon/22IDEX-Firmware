@@ -194,6 +194,11 @@ M98 P"0:/sys/led/resetstatus.g"
 ; ///// T0 Heater Test End /////
 
 ; ///// T0 Extruder Motor Direction Test /////
+while true
+  M291 R"Remove the filament" P"Make Sure the filament is removed from T0" S3
+  if sensors.filamentMonitors[0].status != "ok"
+    break
+
 M291 R"T0 Extruder Motor Direction Test" P"Make Sure the T0 Extruder Gear is rotating Upwards ↑" S3
 M302 P1 ; Allow cold extrudes
 T0 P0
@@ -270,6 +275,11 @@ M98 P"0:/sys/led/resetstatus.g"
 ; ///// T1 Heater Test End /////
 
 ; ///// T1 Extruder Motor Direction Test /////
+while true
+  M291 R"Remove the filament" P"Make Sure the filament is removed from T1" S3
+  if sensors.filamentMonitors[1].status != "ok"
+    break
+
 M291 R"T1 Extruder Motor Direction Test" P"Make Sure the T1 Extruder Gear is rotating Upwards ↑" S3
 M302 P1
 T1 P0
