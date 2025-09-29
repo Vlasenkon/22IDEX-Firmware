@@ -89,7 +89,8 @@ This repository contains the firmware for the 3D printer IDEX22 with the followi
   - **Endstops Test**  – Calls the endstops test.  
   - **Z-Probe Test**  – Calls the z-probe test.  
 - **Path** `0:/macros/System`  
-  - **Change filament**  – Macro for changing filament with Cold Pull and intermediate filament.  
+  - **Change Filament**  – Macro for changing filament with Cold Pull and intermediate filament.  
+  - **Reset Selected Filament**  – Macro for resetting selected filament.  
 - **Path** `0:/user/`  
   - **periodic\_wiping** – Global variable for toggling nozzle cleaning during printing mode.  
   - **ip\_ethernettopc** – Saves the IP address for Ethernet to PC mode.  
@@ -238,4 +239,4 @@ There you’ll find detailed guides on printer usage, configuration, materials, 
 
 ---
 
-**Last updated:** 27.09.2025
+**Last updated:** 29.09.2025

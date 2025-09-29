@@ -1,17 +1,123 @@
-; ============================================================
-; Chamber Heating Test
-; - Confirms start
-; - Sets temps to 0, cools if any heater ≥35C (blue LED macro)
-; - Prompts to close door/lid, then heats chamber/bed (yellow LED macro)
-; - Logs temps every second to 0:/sys/Testing/Chamber_Heater
-; - Stops when X or U endstop is held OR chamber reaches 100C
-; - Green if within target time, Red if slower than expected
-; ============================================================
+; Add error codes and troubleshooting steps. Yes. Break down what is responsible for what and give customer prompts and error codes and instructions what to do. 
+; one of the tests is to see if average of T0 and T1 is different from temperature read by chamber air temperature sensor then we need to recommend the customer to to do my chamber temperature tuning. 
+; Allow customer to set the temperature manually. Have the prompt first. First, use the preheat to a stock 100 degrees. and then if and the user has an option click ok or set custom temperature And then custom temperature should be within range, let's say 45 to 110 degrees. 
+; Set default duration of the test to be 45 minutes. and then additionally plus heat soaking time 
+; can you hear first start heating and then if needed perform homing
+; We have to set the temperature to 150 degrees. However, we have to only watch We have to watch the temperature until it reaches the temperature defined by user, for example, 80 degrees Celsius. 
+; Only give cool down message if temperature is above the desired value. only if cooling is needed. If it's not me, don't give a message that... Don't, don't prompt user that at all. And then if users selected to skip cooling, do not give a successful cooling message. 
+; We have to move this file to troubleshooting folder. 
+
+
 
 ; ---- User confirmation ----
-M291 S4 K{"Start test","Cancel"} R"Chamber Heating Test" P"The printer will heat up to high temperatures.<br>Remove any low-melting materials from the chamber.<br>You can end the test early by holding down the X or U endstops."
-if input == 1
+M291 S4 K{"Start test","Start (No fault detection)","Cancel"} R"Chamber Heating Test" P"The printer will heat to high temps.<br>Remove low-melting materials.<br>Hold X or U endstop to abort."
+
+; Variable to track fault detection state
+var disableFaultDetection = false
+
+if input == 0
+  ; Start test normally - fault detection remains enabled
+  echo "Starting chamber heating test with normal fault detection"
+elif input == 1
+  ; Start test with disabled chamber fault detection
+  set var.disableFaultDetection = true
+  echo "Starting chamber heating test with disabled fault detection"
+  M570 H3 P999999 T999999 R50    ; Disable chamber fault detection
+else
   abort "Test cancelled by user."
+
+; ---- Sensor and heater validation ----
+; Sensor mapping: [0]=Tool0, [1]=Tool1, [2]=BuildPlate, [3]=ChamberAir, [4]=ChamberHeater
+; Validate that required sensors are configured and available
+if !exists(sensors.analog[3])
+  ; Power down heaters and set error state
+  M141 S0
+  M140 S0
+  if var.disableFaultDetection
+    M570 H3 P600 T70 R5
+  M98 P"0:/sys/led/fault.g"
+  abort "Error: Chamber air temperature sensor (analog[3]) not configured."
+if !exists(sensors.analog[4])
+  ; Power down heaters and set error state  
+  M141 S0
+  M140 S0
+  if var.disableFaultDetection
+    M570 H3 P600 T70 R5
+  M98 P"0:/sys/led/fault.g"
+  abort "Error: Chamber heater temperature sensor (analog[4]) not configured."
+
+; Check that all heaters (0-3) are not in fault state
+if heat.heaters[0].state == "fault"
+  M141 S0
+  M140 S0
+  if var.disableFaultDetection
+    M570 H3 P600 T70 R5
+  M98 P"0:/sys/led/fault.g"
+  abort "Error: Heater 0 is in fault state. Please resolve before testing."
+if heat.heaters[1].state == "fault"
+  M141 S0
+  M140 S0
+  if var.disableFaultDetection
+    M570 H3 P600 T70 R5
+  M98 P"0:/sys/led/fault.g"
+  abort "Error: Heater 1 is in fault state. Please resolve before testing."
+if heat.heaters[2].state == "fault"
+  M141 S0
+  M140 S0
+  if var.disableFaultDetection
+    M570 H3 P600 T70 R5
+  M98 P"0:/sys/led/fault.g"
+  abort "Error: Heater 2 is in fault state. Please resolve before testing."
+if heat.heaters[3].state == "fault"
+  M141 S0
+  M140 S0
+  if var.disableFaultDetection
+    M570 H3 P600 T70 R5
+  M98 P"0:/sys/led/fault.g"
+  abort "Error: Heater 3 is in fault state. Please resolve before testing."
+
+; Validate sensor readings are within ambient ranges
+; Tool0 [0]: 15-500°C, Tool1 [1]: 15-500°C, BuildPlate [2]: 15-200°C, ChamberAir [3]: 15-100°C, ChamberHeater [4]: 15-200°C
+if sensors.analog[0].lastReading < 15 || sensors.analog[0].lastReading > 500
+  M141 S0
+  M140 S0
+  if var.disableFaultDetection
+    M570 H3 P600 T70 R5
+  M98 P"0:/sys/led/fault.g"
+  abort "Error: Tool 0 sensor reading out of range (" ^ sensors.analog[0].lastReading ^ "°C). Expected: 15-500°C"
+if sensors.analog[1].lastReading < 15 || sensors.analog[1].lastReading > 500
+  M141 S0
+  M140 S0
+  if var.disableFaultDetection
+    M570 H3 P600 T70 R5
+  M98 P"0:/sys/led/fault.g"
+  abort "Error: Tool 1 sensor reading out of range (" ^ sensors.analog[1].lastReading ^ "°C). Expected: 15-500°C"
+if sensors.analog[2].lastReading < 15 || sensors.analog[2].lastReading > 200
+  M141 S0
+  M140 S0
+  if var.disableFaultDetection
+    M570 H3 P600 T70 R5
+  M98 P"0:/sys/led/fault.g"
+  abort "Error: Build plate sensor reading out of range (" ^ sensors.analog[2].lastReading ^ "°C). Expected: 15-200°C"
+if sensors.analog[3].lastReading < 15 || sensors.analog[3].lastReading > 100
+  M141 S0
+  M140 S0
+  if var.disableFaultDetection
+    M570 H3 P600 T70 R5
+  M98 P"0:/sys/led/fault.g"
+  abort "Error: Chamber air sensor reading out of range (" ^ sensors.analog[3].lastReading ^ "°C). Expected: 15-100°C"
+if sensors.analog[4].lastReading < 15 || sensors.analog[4].lastReading > 200
+  M141 S0
+  M140 S0
+  if var.disableFaultDetection
+    M570 H3 P600 T70 R5
+  M98 P"0:/sys/led/fault.g"
+  abort "Error: Chamber heater sensor reading out of range (" ^ sensors.analog[4].lastReading ^ "°C). Expected: 15-200°C"
+
+echo "Validation passed - All heaters OK, Sensors:"
+echo "Tool0:" ^ sensors.analog[0].lastReading ^ "°C Tool1:" ^ sensors.analog[1].lastReading ^ "°C"
+echo "BuildPlate:" ^ sensors.analog[2].lastReading ^ "°C ChamberAir:" ^ sensors.analog[3].lastReading ^ "°C"
+echo "ChamberHeater:" ^ sensors.analog[4].lastReading ^ "°C"
 
 ; ---- Ensure all heaters are off ----
 M140 S0                          ; bed heater OFF
@@ -23,93 +129,362 @@ M568 P3 R0 S0 A0
 
 ; ---- Variables ----
 var coolElapsed = 0              ; seconds spent cooling (for timeout only)
-var expectedHeatSeconds = 600    ; target time budget (10 min)
+var expectedHeatSeconds = 600    ; target time budget (10 min) - legacy, no longer used
 var startTime = 0.0
 var heatDuration = 0
-var tookTooLong = false
 var elapsed = 0                  ; seconds since heating started
 
-; ---- CSV header (now includes elapsed column) ----
-echo >"0:/sys/Result/Chamber_Heater.csv" "Time,Elapsed_s,Tool0_Temp,Tool1_Temp,Bed_Temp,Chamber_Temp,Chamber_Heater_Temp"
+; Test configuration variables
+var chamberTargetTemp = 80      ; Target chamber temperature in °C
+var tempTolerance = 2            ; Temperature tolerance (target - tolerance = acceptable temp)
+var coolingTempLimit = 35        ; Temperature below which components are considered cooled
+var maxCoolingWaitSeconds = 3600 ; Maximum time to wait for cooling (1 hour)
+var heatSoakMinutes = 15         ; Heat soak duration in minutes
+
+; ---- CSV header setup ----
+; CSV header with clear sensor mapping: [0]=Tool0, [1]=Tool1, [2]=BuildPlate, [3]=ChamberAir, [4]=ChamberHeater  
+echo >"0:/sys/Testing/Chamber_Heater_Test.csv" "Time,Elapsed_s,Tool0_Temp,Tool1_Temp,BuildPlate_Temp,ChamberAir_Temp,ChamberHeater_Temp"
 
 ; ---- Helper scratch ----
 var t0 = 0
 var t1 = 0
 var bed = 0
 var chamber = 0
-var ch_heater = 0
+var chamberHeater = 0
 
-; ---- If anything is ≥35C, show cooling popup + BLUE LED macro ----
-if (heat.heaters[0].current >= 35) || (heat.heaters[1].current >= 35) || (heat.heaters[2].current >= 35) || (heat.heaters[3].current >= 35)
-  M291 S1 R"Printer cooling" P"Wait for the printer to cool down and the temperature to stabilize.<br>To speed it up, open the door and lid."
+; Variables for timing and CSV logging
+var now = 0.0
+var csvData = ""
+var chamberTemp = 0.0
+var heatElapsed = 0.0
+var remainingTime = 0.0
+var remainingMinutes = 0.0
+var tempElapsed = 0.0
+
+; Variables for heating phase
+var heatUpStartTime = 0.0
+var targetReached = false
+var heatUpDuration = 0.0
+var targetTempLower = 0.0
+
+; Variables for heat soak phase  
+var stabilizationStartTime = 0.0
+var lastUpdateTime = 0.0
+var heatSoakSeconds = 0.0
+var minutesExact = 0.0
+var heatSoakDuration = 0.0
+var tempDuration = 0.0
+
+; Variables for cooling phase
+var coolingTitle = ""
+var coolingMsg = ""
+
+; Variables for test completion
+var useCustomTime = false
+var testDurationSeconds = 7200  ; Default 2 hours
+var totalTestDuration = 0
+var loggingDuration = 0
+var totalElapsed = 0
+var completionMsg = ""
+
+; Variables for 10-minute heating validation
+var initialT0Temp = 0           ; Initial Tool 0 temperature
+var initialT1Temp = 0           ; Initial Tool 1 temperature  
+var initialChamberTemp = 0      ; Initial chamber air temperature
+var tempValidationDone = false  ; Flag to ensure validation only runs once
+var minTempIncrease = 10        ; Minimum temperature increase required (10°C)
+var validationTimeMinutes = 10  ; Time after which to validate (10 minutes)
+var t0Increase = 0              ; Tool 0 temperature increase
+var t1Increase = 0              ; Tool 1 temperature increase
+var chamberIncrease = 0         ; Chamber temperature increase
+var maxInitialChamberTemp = 45  ; Maximum initial chamber temp to run validation (45°C)
+var runTempValidation = false   ; Flag to determine if validation should run
+
+; ---- Chamber cooling wait prompt ----
+M291 S4 K{"OK","Don't wait"} R"Chamber Cooling" P"Machine will automatically wait for the chamber to cool down."
+var waitForCooling = (input == 0)
+
+if var.waitForCooling
+  echo "User selected to wait for chamber cooling"
+else
+  echo "User selected to skip cooling wait"
+
+; ---- If Tool 0, Tool 1, or chamber is ≥35C and user wants to wait, show cooling popup + BLUE LED macro ----
+; Check if any components need cooling
+var needsCooling = (sensors.analog[0].lastReading >= var.coolingTempLimit) || (sensors.analog[1].lastReading >= var.coolingTempLimit) || (sensors.analog[3].lastReading >= var.coolingTempLimit)
+if var.waitForCooling && var.needsCooling
   M98 P"0:/sys/led/start_cold.g" ; BLUE
+  ; Build cooling message to stay under character limit
+  set var.coolingTitle = "Cooling to ≤" ^ var.coolingTempLimit ^ "°C"
+  set var.coolingMsg = "Cooling Tool 0, Tool 1, and chamber to below " ^ var.coolingTempLimit ^ "°C.<br>"
+  set var.coolingMsg = var.coolingMsg ^ "To speed cooling: open door and Lid.<br>Hold X or U endstop to skip."
+  M291 S1 R{var.coolingTitle} P{var.coolingMsg} T0
 
-                                 ; Cooling loop: check every second until ALL heaters <35C
+  ; Cooling loop: check every second until Tool 0, Tool 1, and chamber <35C
   while true
     if sensors.endstops[0].triggered || sensors.endstops[3].triggered
-      M98 P"0:/sys/led/fault.g"  ; RED
-      abort "Test canceled due to triggered X/U endstop during cooling."
+      echo "Cooling wait skipped by endstop trigger - proceeding to next step"
+      break  ; Skip cooling wait and continue
 
-    set var.t0 = heat.heaters[0].current
-    set var.t1 = heat.heaters[1].current
-    set var.bed = heat.heaters[2].current
-    set var.chamber = heat.heaters[3].current
-    set var.ch_heater = sensors.analog[4].lastReading
+    set var.t0 = sensors.analog[0].lastReading      ; Tool 0
+    set var.t1 = sensors.analog[1].lastReading      ; Tool 1  
+    set var.bed = sensors.analog[2].lastReading     ; Build Plate
+    set var.chamber = sensors.analog[3].lastReading ; Chamber Air
 
-    if var.t0 < 35 && var.t1 < 35 && var.bed < 35 && var.chamber < 35
+    ; Only check Tool 0, Tool 1, and chamber air - exclude build plate from cooling check
+    if var.t0 < var.coolingTempLimit && var.t1 < var.coolingTempLimit && var.chamber < var.coolingTempLimit
       break
 
-    if mod(iterations, 30) == 0
-      echo "Cooling... T0:"^var.t0^"  T1:"^var.t1^"  Bed:"^var.bed^"  Chamber:"^var.chamber^"  Chamber heater:"^var.ch_heater^"  (°C)"
+    if mod(iterations, 60) == 0
+      echo "Cooling to ≤" ^ var.coolingTempLimit ^ "°C - Current: Tool0:" ^ var.t0 ^ "°C  Tool1:" ^ var.t1 ^ "°C  ChamberAir:" ^ var.chamber ^ "°C  BuildPlate:" ^ var.bed ^ "°C"
 
     G4 S1
     set var.coolElapsed = var.coolElapsed + 1
-    if var.coolElapsed > 3600
-      M98 P"0:/sys/led/fault.g"  ; RED
+    if var.coolElapsed > var.maxCoolingWaitSeconds
+      M141 S0
+      M140 S0
+      if var.disableFaultDetection
+        M570 H3 P600 T70 R5
+      M98 P"0:/sys/led/fault.g"
       abort "Error: the printer took too long to cool down."
 
+  ; ---- Cooling complete - show success (green LED) ----
+  M98 P"0:/sys/led/end.g" ; GREEN success - cooling complete
+  G4 S3  ; Hold green LED for 3 seconds so user sees it
+  M291 S4 K{"Continue","Cancel"} R"Cooling Complete" P"The printer has cooled down successfully.<br>Ready to start chamber heating test.<br><br>Click Continue to proceed."
+  
+  if input != 0
+    abort "Test cancelled by user after cooling."
+
+; ---- Consolidated axis homing and positioning ----
+; Check if all axes (0-3) are homed
+if !move.axes[0].homed || !move.axes[1].homed || !move.axes[2].homed || !move.axes[3].homed
+  echo "Not all axes homed, performing G28 to home all axes"
+  G28                              ; Home all axes
+  ; Restore LED state after homing if cooling was completed
+  if var.waitForCooling && var.needsCooling
+    M98 P"0:/sys/led/end.g"        ; GREEN = success maintained after cooling
+else
+  echo "All axes already homed"
+
+; Select tool 0
+echo "Selecting tool 0"
+T0                                 ; Select tool 0
+
+; Move axes to specified positions
+echo "Moving axes to test positions"
+G90                                ; Absolute positioning
+G0 Z150 X-200 U200 Y0              ; Move Z to 150mm, X to -200, U to 200, Y to 0
+echo "Axes positioned: Z=150mm, X=-200mm, U=200mm, Y=0mm"
+
+; ---- Test duration prompt (for all scenarios) ----
+M291 S4 K{"OK","Set custom time"} R"Test Duration" P"Machine will test the chamber heating for two hours, what temperature it will reach."
+set var.useCustomTime = (input == 1)
+
+if var.useCustomTime
+  ; Ask for custom time in minutes (30-300 minutes = 0.5 to 5 hours)
+  M291 S5 R"Custom Test Duration" P"Enter test duration in minutes (30-300):" L30 H300
+  set var.testDurationSeconds = input * 60  ; Convert minutes to seconds
+  echo "Custom test duration set to " ^ (var.testDurationSeconds / 60) ^ " minutes (" ^ var.testDurationSeconds ^ " seconds)"
+else
+  echo "Using default test duration of " ^ (var.testDurationSeconds / 60) ^ " minutes (" ^ var.testDurationSeconds ^ " seconds)"
+
 ; ---- Prompt to close up, then start heating (switch to YELLOW LED macro) ----
-M291 S2 R"Close the door and lid" P"The printer will start heating the chamber.<br>Make sure the door and lid are closed."
-M98 P"0:/sys/homeall.g"
-G90
-G1 X-100 U100
+M291 S2 R"Close the door and Lid" P"The printer will start heating the chamber.<br>Make sure the door and Lid are closed." T0
 M98 P"0:/sys/led/pause.g"        ; YELLOW = active / heating
 
 ; Start heaters for the test (adjust as needed)
-M141 S100                        ; chamber target
-M140 S180                        ; bed target (helps chamber heat)
+M141 S{var.chamberTargetTemp}    ; chamber target
+M140 S160                        ; bed target (helps chamber heat)
 
-; Mark start time for duration calc (we aren't logging elapsed per-second)
+; Capture initial temperatures for 10-minute validation check
+set var.initialT0Temp = sensors.analog[0].lastReading
+set var.initialT1Temp = sensors.analog[1].lastReading
+set var.initialChamberTemp = sensors.analog[3].lastReading
+
+; Determine if 10-minute heating validation should run (only if chamber starts below 45°C)
+if var.initialChamberTemp < var.maxInitialChamberTemp
+  set var.runTempValidation = true
+  echo "Initial temperatures captured - Tool0:" ^ var.initialT0Temp ^ "°C Tool1:" ^ var.initialT1Temp ^ "°C Chamber:" ^ var.initialChamberTemp ^ "°C"
+  echo "10-minute heating validation ENABLED (chamber below " ^ var.maxInitialChamberTemp ^ "°C)"
+else
+  set var.runTempValidation = false
+  echo "Initial temperatures captured - Tool0:" ^ var.initialT0Temp ^ "°C Tool1:" ^ var.initialT1Temp ^ "°C Chamber:" ^ var.initialChamberTemp ^ "°C"
+  echo "10-minute heating validation SKIPPED (chamber above " ^ var.maxInitialChamberTemp ^ "°C - already warm)"
+
+; Mark start time for overall test duration
 set var.startTime = state.time
+set var.heatUpStartTime = state.time
+set var.targetReached = false
+set var.heatUpDuration = 0
 
-; ---- Logging loop: once per second ----
-; Stop ONLY when (X or U endstop held) OR (chamber >= 100C)
-while true
+; ---- Wait for chamber to reach target temperature with timeout ----
+echo "Waiting for chamber temperature to reach " ^ var.chamberTargetTemp ^ "°C..."
+
+; Wait for chamber temperature to reach within tolerance of target
+set var.targetTempLower = var.chamberTargetTemp - var.tempTolerance
+while !var.targetReached && ((state.time - var.heatUpStartTime) < var.testDurationSeconds)  ; Use configured test duration as timeout
   if sensors.endstops[0].triggered || sensors.endstops[3].triggered
+    echo "Test aborted by endstop trigger - cooling down and stopping test"
     M141 S0
     M140 S0
-    M98 P"0:/sys/led/fault.g"    ; RED
-    abort "Test canceled due to triggered X/U endstop."
+    if var.disableFaultDetection
+      M570 H3 P600 T70 R5
+    M98 P"0:/sys/led/fault.g"
+    abort "Test aborted by user (endstop trigger during heating phase)"
 
-                                 ; Sample temps
-  var now = state.time
-  set var.elapsed = floor(var.now - var.startTime)
-  set var.t0 = heat.heaters[0].current
-  set var.t1 = heat.heaters[1].current
-  set var.bed = heat.heaters[2].current
-  set var.chamber = heat.heaters[3].current
-  set var.ch_heater = sensors.analog[4].lastReading
+  ; Log sensor data to CSV during heating phase
+  set var.now = state.time
+  set var.tempElapsed = var.now - var.startTime
+  set var.elapsed = floor(var.tempElapsed)
+  set var.t0 = sensors.analog[0].lastReading          ; Tool 0
+  set var.t1 = sensors.analog[1].lastReading          ; Tool 1
+  set var.bed = sensors.analog[2].lastReading         ; Build Plate
+  set var.chamber = sensors.analog[3].lastReading     ; Chamber Air
+  set var.chamberHeater = sensors.analog[4].lastReading ; Chamber Heater
+  
+  ; Append to CSV during heating - build data string to ensure line length stays manageable
+  set var.csvData = var.now ^ "," ^ var.elapsed ^ "," ^ var.t0 ^ "," ^ var.t1 ^ "," ^ var.bed ^ "," ^ var.chamber ^ "," ^ var.chamberHeater
+  echo >>"0:/sys/Testing/Chamber_Heater_Test.csv" {var.csvData}
 
-                                 ; Append to CSV (Time, Elapsed, T0, T1, Bed, Chamber)
-  echo >>"0:/sys/Result/Chamber_Heater.csv" {var.now^","^var.elapsed^","^var.t0^","^var.t1^","^var.bed^","^var.chamber^","^var.ch_heater}
-
-                                 ; Console heartbeat every ~30s
-  if mod(iterations, 30) == 0
-    echo "Heating... Chamber: "^var.chamber^" °C, Chamber heater: "^var.ch_heater^" °C"
-
-                                 ; Stop condition: chamber at/over 100C
-  if var.chamber >= 100
+  ; Check if chamber has reached target temperature (within tolerance)
+  set var.chamberTemp = sensors.analog[3].lastReading
+  if var.chamberTemp >= var.targetTempLower
+    set var.targetReached = true
+    set var.tempDuration = state.time - var.heatUpStartTime
+    set var.heatUpDuration = floor(var.tempDuration)
     break
+  
+  ; Display progress every 30 seconds
+  set var.tempElapsed = state.time - var.heatUpStartTime
+  set var.heatElapsed = floor(var.tempElapsed)
+  if mod(var.heatElapsed, 30) == 0
+    set var.remainingTime = var.testDurationSeconds - var.heatElapsed
+    set var.remainingMinutes = var.remainingTime / 60.0
+    echo "Heating: Chamber " ^ var.chamberTemp ^ "°C (Target: " ^ var.chamberTargetTemp ^ "°C) - Time remaining: " ^ var.remainingMinutes ^ " minutes (Hold X or U endstop to skip)"
+  
+  G4 S1  ; Wait 1 second
+
+; Check for timeout
+if !var.targetReached
+  M141 S0
+  M140 S0
+  if var.disableFaultDetection
+    M570 H3 P600 T70 R5
+  M98 P"0:/sys/led/fault.g"
+  abort "Timeout: Chamber did not reach " ^ var.chamberTargetTemp ^ "°C within " ^ (var.testDurationSeconds / 60.0) ^ " minutes"
+
+echo "Chamber reached target temperature in " ^ (var.heatUpDuration / 60.0) ^ " minutes"
+
+; ---- Configurable heat soak period ----
+; Switch to yellow LEDs when temperature is reached
+M98 P"0:/sys/led/pause.g"        ; YELLOW = temperature reached, stabilizing
+
+; Initialize variables for heat soak countdown
+set var.stabilizationStartTime = state.time
+
+echo "Temperature reached - starting " ^ var.heatSoakMinutes ^ "-minute heat soak period"
+
+; Heat soak period with simple countdown approach
+var soakIterations = 0
+var maxSoakIterations = var.heatSoakMinutes * 60  ; Convert minutes to seconds
+var messageCounter = 0
+var heatSoakSkipped = false  ; Track if heat soak was skipped
+
+while var.soakIterations < var.maxSoakIterations
+  ; Check for endstop abort
+  if sensors.endstops[0].triggered || sensors.endstops[3].triggered
+    set var.heatSoakSkipped = true
+    break
+  
+  ; Display progress every 30 seconds (counter starts at 0)
+  if mod(var.soakIterations, 30) == 0
+    set var.minutesExact = (var.maxSoakIterations - var.soakIterations) / 60
+    echo "Heat soak in progress - Time remaining: " ^ var.minutesExact ^ " minutes (Hold X or U endstop to skip)"
+  
+  G4 S1  ; Wait 1 second
+  set var.soakIterations = var.soakIterations + 1
+
+; Calculate actual heat soak duration
+set var.tempDuration = state.time - var.stabilizationStartTime
+set var.heatSoakDuration = floor(var.tempDuration)
+
+; Check if stabilization was skipped by endstop
+if var.heatSoakSkipped
+  echo "Heat soak period skipped by endstop trigger - proceeding to logging phase"
+else
+  echo "Heat soak complete - chamber stabilized for " ^ (var.heatSoakDuration / 60.0) ^ " minutes"
+
+; Display heating phase summary
+echo "=== HEATING PHASE COMPLETE ==="
+echo "Time to reach " ^ var.chamberTargetTemp ^ "°C: " ^ (var.heatUpDuration / 60.0) ^ " minutes"
+echo "Heat soak duration: " ^ (var.heatSoakDuration / 60.0) ^ " minutes"
+echo "Total preparation time: " ^ ((var.heatUpDuration + var.heatSoakDuration) / 60.0) ^ " minutes"
+
+; ---- Logging loop: once per second ----
+; Stop ONLY when (X or U endstop held) OR test duration exceeded
+while true
+  if sensors.endstops[0].triggered || sensors.endstops[3].triggered
+    echo "Test ended early by user (endstop trigger) - completing test gracefully"
+    break  ; Exit logging loop and complete test normally
+
+                                 ; Sample temps - [0]=Tool0, [1]=Tool1, [2]=BuildPlate, [3]=ChamberAir, [4]=ChamberHeater
+  set var.now = state.time
+  set var.tempElapsed = var.now - var.startTime
+  set var.elapsed = floor(var.tempElapsed)
+  set var.t0 = sensors.analog[0].lastReading          ; Tool 0
+  set var.t1 = sensors.analog[1].lastReading          ; Tool 1
+  set var.bed = sensors.analog[2].lastReading         ; Build Plate
+  set var.chamber = sensors.analog[3].lastReading     ; Chamber Air
+  set var.chamberHeater = sensors.analog[4].lastReading ; Chamber Heater
+
+  ; Append to CSV - build data string to ensure line length stays manageable
+  set var.csvData = var.now ^ "," ^ var.elapsed ^ "," ^ var.t0 ^ "," ^ var.t1 ^ "," ^ var.bed ^ "," ^ var.chamber ^ "," ^ var.chamberHeater
+  echo >>"0:/sys/Testing/Chamber_Heater_Test.csv" {var.csvData}
+
+  ; ---- 10-minute heating validation check ----
+  if var.runTempValidation && !var.tempValidationDone && (var.elapsed >= (var.validationTimeMinutes * 60))
+    set var.tempValidationDone = true  ; Ensure this check only runs once
+    
+    ; Calculate temperature increases
+    set var.t0Increase = var.t0 - var.initialT0Temp
+    set var.t1Increase = var.t1 - var.initialT1Temp  
+    set var.chamberIncrease = var.chamber - var.initialChamberTemp
+    
+    echo "=== 10-MINUTE HEATING VALIDATION ==="
+    echo "Tool0 increase: " ^ var.t0Increase ^ "°C (from " ^ var.initialT0Temp ^ "°C to " ^ var.t0 ^ "°C)"
+    echo "Tool1 increase: " ^ var.t1Increase ^ "°C (from " ^ var.initialT1Temp ^ "°C to " ^ var.t1 ^ "°C)"
+    echo "Chamber increase: " ^ var.chamberIncrease ^ "°C (from " ^ var.initialChamberTemp ^ "°C to " ^ var.chamber ^ "°C)"
+    
+    ; Check if all components have increased by at least 10°C
+    if var.t0Increase < var.minTempIncrease || var.t1Increase < var.minTempIncrease || var.chamberIncrease < var.minTempIncrease
+      echo "HEATING VALIDATION FAILED - Insufficient temperature increase after 10 minutes"
+      M141 S0  ; Turn off chamber heater
+      M140 S0  ; Turn off bed heater
+      if var.disableFaultDetection
+        M570 H3 P600 T70 R5  ; Restore fault detection
+      M98 P"0:/sys/led/fault.g"  ; Red fault LED
+      abort "Heating system validation failed: Tool0 +" ^ var.t0Increase ^ "°C, Tool1 +" ^ var.t1Increase ^ "°C, Chamber +" ^ var.chamberIncrease ^ "°C (minimum " ^ var.minTempIncrease ^ "°C required)"
+    else
+      echo "HEATING VALIDATION PASSED - All components heating properly"
+
+                                 ; Console heartbeat every ~30s  
+  if mod(iterations, 60) == 0
+    echo "Heating... ChamberAir: " ^ var.chamber ^ " °C"
+
+  ; ---- Hard timeout guard - check against total elapsed time ----
+  ; Calculate total elapsed time including all phases
+  set var.totalElapsed = var.elapsed + var.heatUpDuration + var.heatSoakDuration
+  if var.totalElapsed > var.testDurationSeconds
+    M141 S0
+    M140 S0
+    if var.disableFaultDetection
+      M570 H3 P600 T70 R5
+    M98 P"0:/sys/led/fault.g"
+    abort "Timeout: total test time exceeded " ^ (var.testDurationSeconds / 60) ^ " minutes."
+  
+  ; Remove the chamber temperature check since we already reached it during heat-up
+  ; This loop now just logs data for the specified test duration
 
   G4 S1
 
@@ -118,16 +493,32 @@ while true
 M141 S0
 M140 S0
 
-; Compute duration and evaluate target (no per-second elapsed logged)
-set var.heatDuration = floor(state.time - var.startTime)
-if var.heatDuration > var.expectedHeatSeconds
-  set var.tookTooLong = true
+; Restore fault detection if it was disabled
+if var.disableFaultDetection == true
+  echo "Restoring chamber fault detection to normal settings"
+  M570 H3 P600 T70 R5           ; Restore chamber fault detection to normal
 
-; ---- Final LEDs + message ----
-if var.tookTooLong
-  M98 P"0:/sys/led/fault.g"      ; RED
-  M291 S2 R"Chamber heating test complete (SLOW)" P{"Chamber reached 100°C, but exceeded the target "^var.expectedHeatSeconds^" s (actual "^var.heatDuration^" s).<br>Results: Settings → Result → PA.csv"}
-else
-                                 ; If you have a green LED macro, replace the next line with: M98 P"0:/sys/led/success.g"
-  M150 R0 U255 B0                ; GREEN success (Neopixel)
-  M291 S2 R"Chamber heating test complete" P{"Chamber reached 100°C in "^var.heatDuration^" s.<br>Results saved to Settings → Result → PA.csv"}
+; Calculate total test duration including all phases
+set var.tempElapsed = state.time - var.startTime
+set var.totalTestDuration = floor(var.tempElapsed)
+set var.loggingDuration = var.totalTestDuration - var.heatUpDuration - var.heatSoakDuration
+
+; ---- Final LEDs + comprehensive timing report ----
+M98 P"0:/sys/led/end.g" ; Success - Green
+
+; Display comprehensive test results
+echo "=== CHAMBER HEATING TEST COMPLETE ==="
+echo "Heat-up time to 100°C: " ^ (var.heatUpDuration / 60.0) ^ " minutes"
+echo "Heat soak duration: " ^ (var.heatSoakDuration / 60.0) ^ " minutes" 
+echo "Data logging duration: " ^ (var.loggingDuration / 60.0) ^ " minutes"
+echo "Total test duration: " ^ (var.totalTestDuration / 60.0) ^ " minutes"
+echo "Results saved to: Settings → Testing → Chamber_Heater_Test.csv"
+
+; Create completion message parts to stay under 256 character limit
+set var.completionMsg = "Test completed successfully!<br><br>"
+set var.completionMsg = var.completionMsg ^ "Heat-up time: " ^ (var.heatUpDuration / 60.0) ^ " min<br>"
+set var.completionMsg = var.completionMsg ^ "Heat soak: " ^ (var.heatSoakDuration / 60.0) ^ " min<br>"
+set var.completionMsg = var.completionMsg ^ "Total time: " ^ (var.totalTestDuration / 60.0) ^ " min<br><br>"
+set var.completionMsg = var.completionMsg ^ "Results: Settings → Testing → Chamber_Heater_Test.csv"
+
+M291 S2 R"Chamber Heating Test Complete" P{var.completionMsg} T0

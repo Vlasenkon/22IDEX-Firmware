@@ -1,6 +1,6 @@
 M291 P"Select an option:" R"EventLogging Toggle" S4 K{"Enable", "Disable"}
 
-if input = "Disable"
+if input = 1
   echo >"0:/user/eventlogging.g" "; EventLogging Disabled"
   echo "EventLogging Disabled"
 else

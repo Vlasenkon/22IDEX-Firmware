@@ -1,0 +1,38 @@
+power up + 00:00:02 [info] Event logging started at level warn
+power up + 00:00:02 [info] Running: Duet 3 MB6HC v1.02b: 3.6.0+1 (2025-06-10 09:25:38)
+power up + 00:00:06 [warn] Ethernet is disabled.
+power up + 00:00:09 [warn] WiFi module started
+power up + 00:00:10 [warn] WiFi module is providing access point 22 IDEX, IP address 192.168.0.1
+power up + 00:00:56 [warn] HTTP client 192.168.0.2 login succeeded (session key 3656162387)
+2025-09-29 12:37:30 [warn] Date and time set at power up + 00:00:56
+2025-09-29 12:37:57 [warn] HTTP client 192.168.0.2 disconnected
+2025-09-29 12:38:00 [warn] HTTP client 192.168.0.2 login succeeded (session key 3332619670)
+2025-09-29 12:38:25 [warn] Error: Bad command: global.APna
+2025-09-29 12:38:25 [warn] Error: Bad command: me^" WiFi network after you see the green or red LED."
+2025-09-29 12:38:34 [warn] WiFi module started
+2025-09-29 12:38:46 [warn] WiFi module started
+2025-09-29 12:39:01 [warn] Error: WiFi module reported: Authentication failed
+2025-09-29 12:39:01 [warn] WiFi module is idle
+2025-09-29 12:39:05 [warn] WiFi module is connected to access point AddWiseWeb, IP address 192.168.0.116
+2025-09-29 12:39:05 [warn] HTTP client 192.168.0.2 login succeeded (session key 547139512)
+2025-09-29 12:39:08 [warn] Warning: both space and tab characters used to indent blocks at/before line 62
+2025-09-29 12:39:13 [warn] WiFi module started
+2025-09-29 12:39:14 [warn] WiFi module is providing access point 22 IDEX, IP address 192.168.0.1
+2025-09-29 12:39:17 [warn] HTTP client 192.168.0.2 login succeeded (session key 495394845)
+2025-09-29 12:39:24 [warn] WiFi module started
+2025-09-29 12:39:34 [warn] Error: WiFi module reported: Authentication failed
+2025-09-29 12:39:34 [warn] WiFi module is idle
+2025-09-29 12:39:38 [warn] WiFi module is connected to access point AddWiseWeb, IP address 192.168.0.116
+2025-09-29 12:39:40 [warn] HTTP client 192.168.0.2 login succeeded (session key 551485820)
+2025-09-29 12:39:46 [warn] HTTP client 192.168.0.8 login succeeded (session key 1047346021)
+power up + 00:00:02 [info] Event logging started at level warn
+power up + 00:00:02 [info] Running: Duet 3 MB6HC v1.02b: 3.6.0+1 (2025-06-10 09:25:38)
+power up + 00:00:06 [warn] Ethernet is disabled.
+power up + 00:00:09 [warn] WiFi module started
+power up + 00:00:19 [warn] Error: WiFi module reported: Authentication failed
+power up + 00:00:19 [warn] WiFi module is idle
+power up + 00:00:23 [warn] WiFi module is connected to access point AddWiseWeb, IP address 192.168.0.116
+power up + 00:00:23 [warn] HTTP client 192.168.0.8 login succeeded (session key 744452856)
+2025-09-29 12:41:23 [warn] Date and time set at power up + 00:00:23
+2025-09-29 12:41:23 [warn] HTTP client 192.168.0.2 login succeeded (session key 2902407654)
+2025-09-29 12:42:04 [warn] HTTP client 192.168.0.2 disconnected

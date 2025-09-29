@@ -10,7 +10,7 @@ G1 Y172 F18000
 
 
 G91                     ; relative positioning
-G1 H1 U375 F6000        ; move quickly to X axis endstop and stop there (first pass)
+G1 H1 U375 F1800        ; move quickly to X axis endstop and stop there (first pass)
 if result !=0
   M98 P"0:/sys/led/fault.g"
   echo >>"0:/sys/eventlog.txt" "Error: Home U failed"

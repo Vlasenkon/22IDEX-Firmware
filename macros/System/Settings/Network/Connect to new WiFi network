@@ -12,7 +12,7 @@ M98 P"0:/sys/led/resetstatus.g"
 
 M98 P"0:/user/APname.g"
 ; Step 2: Try to connect to the network
-M291 S3 R"Restart Notification" P"Machine will restart now. If LEDs are GREEN, the connection was established. If RED, it failed.<br>Reconnect to the "^global.APname^" WiFi network after you see the green or red LED."
+M291 S3 R"Restart Notification" P{"Machine will restart now. If LEDs are GREEN, the connection was established. If RED, it failed.<br>Reconnect to the "^global.APname^" WiFi network after you see the green or red LED."}
 
 ; Erase values from WiFi Module
 M552 I1 S-1
