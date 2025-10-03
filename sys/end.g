@@ -8,8 +8,6 @@ G91
 G1 Z10
 G90
 
-T0 P0
-
 M98 P"0:/sys/led/end.g"
 M98 P"0:/user/lowerbed.g"                 ; lower the bed (if needed)
 M98 P"0:/user/bedfinishbehavior.g"	    ; decide what to do with bed after printing is finished
@@ -18,7 +16,9 @@ M98 P"0:/user/powerendbehavior.g"	        ; decide what to do with power after p
 
 
 G90
-G1 Y150 F18000
+M98 P"0:/sys/nozzlewipe.g"
+
+T0 P0
 
 ; Disable Fans
 M106 P3 S0

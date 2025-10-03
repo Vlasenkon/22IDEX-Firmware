@@ -1,0 +1,5 @@
+M291 S4 K{"Enable", "Disable"} R"Movement without Homing" P"Select option"
+if input == 0
+  M564 H0
+elif input == 1
+  M564 H1

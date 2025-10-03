@@ -7,9 +7,14 @@ elif input == 2
 var timeout = 120
 var press_count = 10;
 
-
 ; Endstop Test Macro
 M84
+M564 H0 S0 Z
+G91
+
+M291 R"Adjust the Bed Position" P"Please adjust the bed position.<br>Attantion: the bed must be positioned at a sufficient distance from Y-endstops<br>so that you can easily reach them." S3 Z1
+
+M564 H1 S1
 
 ; Test Left-hand side Y-axis endstop (io1.in)
 M291 R"Left Y-axis endstop Test" P"Do you want to start test?" S4 K{"Test","Next","Cancel"}

@@ -176,7 +176,7 @@ if exists(param.A)
       G90
       G1 X-999 U999 F18000
       M98 P"0:/sys/led/resetstatus.g"
-      M98 P"0:/macros/System/Calibration/Auto Calibration Macros/Tool Height Auto Calibration" S1 C1 A1
+      M98 P"0:/user/Tool Height Auto Calibration.g" S1 C1 A1
 
     elif input == 1 ; User chose "Skip Calibration"
       M98 P"0:/sys/led/resetstatus.g"
@@ -215,10 +215,14 @@ if exists(param.A)
 
     if abs(var.ddd) < 0.05 ; ===If delta is less than allowed value===
       echo "Good, deviation is "^{var.ddd}^" mm"
+      if var.ddd < 0
+        echo >>>"0:/sys/autocali_res.g" "Nozzle deviation = "^take(""^{var.ddd},6)^"<br>"
+      else
+        echo >>>"0:/sys/autocali_res.g" "Nozzle deviation = "^take(""^{var.ddd},5)^"<br>"
       M291 S1 T10 R"Tool Height calibration successful" P" "
 
       if exists(param.C)
-        M98 P"0:/macros/System/Calibration/Auto Calibration Macros/Z - Offset Calibration" S1
+        M98 P"0:/user/Z - Offset Calibration.g" S1
 
       M98 P"0:/sys/nozzlewipe.g" T0
 
@@ -260,7 +264,10 @@ if exists(param.A)
       else
         global rtzoffset = var.mid_dev
 
-
+      if var.mid_dev < 0
+        echo >>>"0:/sys/autocali_res.g" "Nozzle deviation in the midle = "^take(""^{var.mid_dev}, 6)^"<br>"
+      else
+        echo >>>"0:/sys/autocali_res.g" "Nozzle deviation in the midle = "^take(""^{var.mid_dev}, 5)^"<br>"
       ; Generate rtzoffset.g
       echo >"0:/user/rtzoffset.g" "if exists(global.rtzoffset)"
       echo >>"0:/user/rtzoffset.g" "  set global.rtzoffset = "^{var.mid_dev}
@@ -304,7 +311,7 @@ if exists(param.A)
           G1 U-100 Z150 F18000
           M400
 
-	  M291 S2 R"Confirm Tightening" P"Ensure the heat break is fully tightened to maintain alignment.<br>Click ""OK"" to confirm."
+	        M291 S2 R"Confirm Tightening" P"Ensure the heat break is fully tightened to maintain alignment.<br>Click ""OK"" to confirm."
     
           G90
           G1 X-999 U999 F18000
@@ -338,7 +345,7 @@ if exists(param.A)
           G90
           G1 X-999 U999 F18000
         M98 P"0:/sys/led/resetstatus.g"
-        M98 P"0:/macros/System/Calibration/Auto Calibration Macros/Tool Height Auto Calibration" S1 A1
+        M98 P"0:/user/Tool Height Auto Calibration.g" S1 A1
 
   
       elif input == 1 ; User chose "Skip Calibration"

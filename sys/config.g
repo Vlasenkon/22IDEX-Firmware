@@ -160,7 +160,6 @@ M98 P"0:/user/xcomp_auto.g"                                      ; load auto cal
 M98 P"0:/user/xcomp_manual.g"                                    ; load manual calibration value
 M98 P"0:/user/xcomp_mode.g"                                      ; load compensation mode
 
-M98 P"0:/user/periodic_wiping.g" 				 ; load global variables 
 M98 P"0:/user/hepafan.g"                                         ; load hepa fan speed
 M98 P"0:/user/retraction_value.g"                                ; load global variables
 

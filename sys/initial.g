@@ -66,6 +66,7 @@ M98 P"homeall.g" Z1 S1 L1              ; Home the machine
 M98 P"0:/user/xy_square_offset.g"
 M98 P"0:/sys/xy_square_dir.g"
 M98 P"0:/sys/xy_squaring.g"
+M98 P"0:/user/periodic_wiping.g"
 
 if exists(param.A) && exists(param.B) && exists(param.D) && exists(param.J)
   M98 P"mesh.g" A{param.A} B{param.B} D{param.D} J{param.J}
@@ -86,16 +87,19 @@ if var.S0 > 0 && var.S1 > 0
   M568 P1 S{var.S1} R{var.R1}
   M568 P2 S{var.S0, var.S1} R{var.R0, var.R1}
   M568 P3 S{var.S0, var.S1} R{var.R0, var.R1}
+  M116 P0 P1 S10
 elif var.S0 > 0
   M568 P0 S{var.S0} R{var.R0}
   M568 P1 S{0} R{0}
   M568 P2 S{0} R{0}
   M568 P3 S{0} R{0}
+  M116 P0 S10
 elif var.S1 > 0
   M568 P0 S{0} R{0}
   M568 P1 S{var.S1} R{var.R1}
   M568 P2 S{0} R{0}
   M568 P3 S{0} R{0}
+  M116 P1 S10
 else
   M98 P"0:/sys/led/fault.g"
   T0 P0

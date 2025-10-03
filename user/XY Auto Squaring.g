@@ -423,6 +423,10 @@ if exists(param.A)
     elif var.CorrLengthSafety > 0
       set var.CorrLengthSafety = var.CorrLengthSafety - 1
 
+    if var.CorrLengthSafety < 0
+      echo >>>"0:/sys/autocali_res.g" "XY Square Offset = "^take(""^{var.CorrLengthSafety}, 6)^""""
+    else
+      echo >>>"0:/sys/autocali_res.g" "XY Square Offset = "^take(""^{var.CorrLengthSafety}, 5)^""""
     ; persist to a file for restoration / reuse after reboot
     echo >"0:/user/xy_square_offset.g" "if exists(global.xy_square_offset)"
     echo >>"0:/user/xy_square_offset.g" "  set global.xy_square_offset = " ^ var.CorrLengthSafety

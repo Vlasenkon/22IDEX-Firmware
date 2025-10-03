@@ -1,4 +1,4 @@
-M291 S4 K{"Enable", "Change the time", "Disable"} R"Heater fault detection" P"After a heater fault occurs, the printer will automatically shut down in 30 seconds"
+M291 S4 K{"Enable", "Change the time", "Disable"} R"Action after Detection Heater Fault" P"After a heater fault occurs, the printer will automatically shut down in 30 seconds"
 if input == 0
     echo >"0:/user/heaterfault_timer.g" "if exists(global.heaterfault_timer)"
     echo >>"0:/user/heaterfault_timer.g" "  set global.heaterfault_timer = 30"

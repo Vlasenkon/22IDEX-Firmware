@@ -75,19 +75,54 @@ This repository contains the firmware for the 3D printer IDEX22 with the followi
 - **Path** `0:/macros/System/Calibration/Temperature Tuning`  
   - **Bed Temp Sensor Tuning** – Bed temperature sensor calibration.  
   - **Chamber Temp Tuning** – Chamber temperature sensor calibration.  
-- **Path** `0:/macros/System/Calibration/Testing/Tests/`  
+- **Path** `0:/macros/System/Calibration/QC/Tests/`  
   - **Endstops Test x10** – Endstop check using ten repeated trigger presses.  
   - **Hepo Fan Test** – Filter test.  
   - **Chamber Heating Test**  – Chamber heating test.  
+  - **Bed & Chamber Heaters Test**  – Chamber / Bed heaters and fans test.  
+  - **Z-Homing Test** – Z-Homing test.  
+- **Path** `0:/macros/System/Calibration/Z Probe/`  
+  - **Disable Probe** – Disabled Probe.  
+  - **Enable Probe** – Enabled Probe.  
 - **Path** `0:/macros/System/Settings/Chamber/`  
   - **Hepa Fan Adjustment**  – Filter speed setting.  
 - **Path** `0:/macros/System/Settings/Faults/`  
-  - **Heater Fault**  – Automatic shutdown after heater fault setting.  
+  - **Action After Heater Fault**  – Automatic shutdown after heater fault setting.  
   - **Bed Fault Detection**  – Enables and disables heater fault for the bed.  
-- **Path** `0:/macros/System/Troubleshooting/`  
-  - **Chamber Heating Test**  – Calls the chamber heating test.  
-  - **Endstops Test**  – Calls the endstops test.  
-  - **Z-Probe Test**  – Calls the z-probe test.  
+- **Path** `0:/macros/System/Troubleshooting/Tests/`  
+  - **Endstops Test**  – Calls the Endstops Test x10 macro.  
+  - **Chamber Heating Test**  – Calls the Chamber Heating Test macro.  
+  - **Z-Homing Test**  – Calls the Z-Homing Test macro.  
+  - **24V Power Supply Test**  – Calls the Voltage macro.  
+  - **Lubrication of Z-Rails**  – Calls the TBL & Lube macro.  
+  - **Probe Test**  – Calls the Probe macro.  
+  - **Nozzle Tightening & Purge Test**  – Calls the Nozzle & Purge macro.  
+  - **Motor Direction Test**  – Calls the Motor Direction macro.  
+  - **LED Test**  – Calls the LED macro.  
+  - **Y-Endstops Deviation Test**  – Calls the HomeY macro.  
+  - **Tool Fans & Heaters Test**  – Calls the Fans & Heaters macro.  
+  - **Bad & Chamber Heaters Test**  – Calls the Bed & Chamber Heaters Test macro..  
+- **Path** `0:/macros/System/Troubleshooting/Z-Probe/`  
+  - **Z-Probe Test**  – Calls the Probe macro.  
+  - **Z-Probe Calibration**  – Calls the Probe Calibration macro.  
+  - **Z-Homing Test** – Calls the Z-Homing Test macro.  
+  - **Rotate holder to a set degree**  – Calls the Rotate holder to a set degree macro.  
+  - **Rotate holder to 0 degree**  – Calls the Rotate holder to 0 degree macro.  
+  - **Place the Probe**  – Calls the Place the Probe macro.  
+  - **Pick the Probe**  – Calls the Pick the Probe macro.  
+  - **Adjust pickup angle CW**  – Calls the Adjust pickup angle CW macro.  
+  - **Adjust pickup angle CCW**  – Calls the Adjust pickup angle CCW macro.  
+- **Path** `0:/macros/System/Troubleshooting/Mesh Bed Calibration/`  
+  - **Toggle Compensation Mode**  – Calls the Toggle Compensation Mode macro.  
+  - **Reset**  – Calls the Reset macro.  
+  - **↓\_↑ RHS Up**  – Calls the ↓\_↑ RHS Up macro.  
+  - **↑\_↓ RHS Down**  – Calls the ↑\_↓ RHS Down macro.  
+- **Path** `0:/macros/System/Troubleshooting/Temperature Tuning/`  
+  - **Right Head PID Tuning**  – Calls the Right Head PID Tuning macro.  
+  - **Left Head PID Tuning**  – Calls the Left Head PID Tuning macro.  
+  - **Chamber Temp Tuning**  – Calls the Chamber Temp Tuning macro.  
+  - **Bed Temp Sensor Tuning**  – Calls the Bed Temp Sensor Tuning macro.  
+  - **Bed Heater PID Tuning**  – Calls the Bed Heater PID Tuning macro.  
 - **Path** `0:/macros/System`  
   - **Change Filament**  – Macro for changing filament with Cold Pull and intermediate filament.  
   - **Reset Selected Filament**  – Macro for resetting selected filament.  
@@ -103,6 +138,7 @@ This repository contains the firmware for the 3D printer IDEX22 with the followi
   - **extrusion\_value** – Global variable for setting extrusion in nozzle\_wipe macro.  
   - **retraction\_value** – Global variable for setting retraction in nozzle\_wipe macro.  
   - **xy\_squar\_offset** – Global variable for setting XY Squaring.  
+  - **XY Auto Squaring** – New Calibration macro.  
 - **Path** `0:/gcodes/Slicer/Tests/`  
   - **Temp Tower Test\_1h5m** – New test.  
   - **Pressure Advanced Tuning Test\_13m** – New test.  
@@ -111,30 +147,29 @@ This repository contains the firmware for the 3D printer IDEX22 with the followi
 - **Path** `0:/sys/`  
   - **filament\_change.g**  – Filament change.  
   - **heater-fault.g** – Auto shutdown after heater fault.  
-  - **xy\_squaring.g** – Y axis adjustment.
+  - **xy\_squaring.g** – Y axis adjustment.  
+  - **xy\_squar\_dir.g** – Writed direction of XY squaring.  
+  - **autocali\_res.g** – Auto Calibration results.
 
 #### **Updated Macros**
 
-- **Path** `0:/macros/System/Calibration/Auto Calibration Macros/`  
-  - **Mesh Bed calibration** – Disabled the ability to run the macro separately from the Auto Calibration Macro. Disabled heating during nozzle cleaning.  
-  - **XY \- Offset Calibration** – Disabled the ability to run the macro separately from the Auto Calibration Macro. Disabled heating during nozzle cleaning.  
-  - **Z \- Offset Calibration** – Added nozzle height check and adjustment. Disabled the ability to run the macro separately from the Auto Calibration Macro. Disabled heating during nozzle cleaning. Added yellow indication when settings are required.  
-  - **Tool Height Auto Calibration** – Updated macro logic: the toolheads are now aligned at the center of their respective halves of the bed, and the height difference measured at the center is saved to a global variable. Added nozzle height check and adjustment. Disabled the ability to run the macro separately from the Auto Calibration Macro. Disabled heating during nozzle cleaning. Added yellow indication when settings are required.  
-- **Path** `0:/macros/System/Calibration/Testing`  
-  - **Test 1** – Changed the test sequence  
+- **Path** `0:/macros/System/Calibration/QC`  
+  - Folder renamed to QC.  
+  - **Test 1** – Changed the test sequence. Added Bed & Chamber Heaters Test macro.  
   - **Test 2** – Moved some tests into the Test 1 macro.  
-- **Path** `0:/macros/System/Calibration/Testing/Tests/`  
+- **Path** `0:/macros/System/Calibration/QC/Tests/`  
   - **LED** – Added a prompt before the test.  
   - **Voltage** – Increased the number of iterations.  
   - **Z-Binding** – Fixed the bugs. Improved communication with the user.  
   - **TBL & Lube** – Improved macro. Improved communication with the user.  
   - **TBL** – Improved communication with the user.  
-  - **Fans & Heaters** – Improved communication with the user.  
+  - **Fans & Heaters** – Improved communication with the user. Deleted Bed & Chamber heaters test.  
   - **Motor Direction** – Improved communication with the user.  
 - **Path** `0:/macros/`  
-  - **Auto Calibration** – Added an extra parameter A1 when calling the macros to prevent them from being run separately from the Auto Calibration Macro. Disabled heating during nozzle cleaning. Added XY Auto Squaring macro.  
+  - **Auto Calibration** – Added an extra parameter A1 when calling the macros to prevent them from being run separately from the Auto Calibration Macro. Disabled heating during nozzle cleaning. Added XY Auto Squaring macro. At the end displayed a pop-up with results. Added heater fault check at start.  
 - **Path** `0:/macros/System`  
   - **Cold Pull** – Added LED indication. Added M702 P0 command. Added parameter for calling macro without pop-ups.  
+  - **Allow movement without homing** – Renamed to Movement Without Homing. Made this macro toggle.  
 - **Path** `0:/macros/System/Settings/Chamber/`  
   - **Wait for Chamber Temp** – Added a 5-minute wait after heating.  
   - **Fault Detection** – Renamed to Chamber Fault Detection and moved to 0:/macros/System/Settings/Faults/.  
@@ -142,17 +177,24 @@ This repository contains the firmware for the 3D printer IDEX22 with the followi
   - **Connect to new WiFi network** – Added custom network name.  
   - **Enable Ethernet Mode** – Changed M552 I0 S1 to M552 I0 P0.0.0.0 S1.  
   - **Enable WiFi \- Access Point Mode** – Added custom network name.  
-- **Path:** `0:/macros/System/Settings/Filament Runout`  
+- **Path:** `0:/macros/System/Settings/Filament Runout/`  
   - **Sensor 0 Mode** – Renamed to Filament Sensor 0 ON, OFF. Added pop-up with result.  
   - **Sensor 1 Mode** – Renamed to Filament Sensor 1 ON, OFF. Added pop-up with result.  
+- **Path:** `0:/macros/System/Settings/Job End/`  
+  - **Power** – Recovered macro.  
 - **Path** `0:/user/`  
   - **chamberwait** – Now enabled by default.  
   - **faultdetection** – Renamed to chamberfaultdetection.  
   - **toolchangeretraction** – Moved to 0:/sys/  
+  - **Mesh Bed calibration** – Disabled the ability to run the macro separately from the Auto Calibration Macro. Disabled heating during nozzle cleaning. Moved to user folder.  
+  - **XY \- Offset Calibration** – Disabled the ability to run the macro separately from the Auto Calibration Macro. Disabled heating during nozzle cleaning. Writed results of calibration to autocali\_res file. Moved to user folder.  
+  - **Z \- Offset Calibration** – Added nozzle height check and adjustment. Disabled the ability to run the macro separately from the Auto Calibration Macro. Disabled heating during nozzle cleaning. Added yellow indication when settings are required. Writed results of calibration to autocali\_res file. Moved to user folder.  
+  - **Tool Height Auto Calibration** – Updated macro logic: the toolheads are now aligned at the center of their respective halves of the bed, and the height difference measured at the center is saved to a global variable. Added nozzle height check and adjustment. Disabled the ability to run the macro separately from the Auto Calibration Macro. Disabled heating during nozzle cleaning. Added yellow indication when settings are required. Writed results of calibration to autocali\_res file. Moved to user folder.  
+  - **Reset RTZ Offset** – Moved to user folder.  
 - **Path** `0:/sys/`  
   - **config** – Switching to Ethernet to PC mode is now automatic. Added filter configuration. New global variables are declared: periodic\_wiping, hepafan, retruction\_value. Bed heater fault detection is now configured via the bedfaultdetection.g macro. Made Hepafan thermodependent.  
-  - **initial** – Added filter activation. Made Hepafan not thermodependent. Removed the entoolchangeretruction.g macro call. Added XY Squaring macro call.  
-  - **end** – Added filter deactivation. Added filter fault message. Made Hepafan thermodependent. Removed the toolchangeretruction.g macro call. Bug fixed.  
+  - **initial** – Added filter activation. Made Hepafan not thermodependent. Removed the entoolchangeretruction.g macro call. Added XY Squaring macro call. The printer will wait for heating tools before nozzlewipe.  
+  - **end** – Added filter deactivation. Added filter fault message. Made Hepafan thermodependent. Removed the toolchangeretruction.g macro call. Bug fixed. Added tools cleaning.  
   - **pause** – Added filter speed reduction. Removed the toolchangeretruction.g macro call.  
   - **stop**  – Removed the toolchangeretruction.g macro call.  
   - **resume** – Added filter activation. Added a check for whether the temperature is set; if not, the user is prompted to enter it. Removed the entoolchangeretruction.g macro call.  
@@ -171,7 +213,7 @@ This repository contains the firmware for the 3D printer IDEX22 with the followi
 
 #### **Removed Macros**
 
-- **Path** `0:/macros/System/Calibration/Testing/Tests/`  
+- **Path** `0:/macros/System/Calibration/QC/Tests/`  
   - **Endstop**  – Removed, as a new one has been written: Endstops Test x10.  
   - **Chamber Heater \+ Fan** – Removed, as a new one has been written: Fans & Heaters.  
 - **Path** `0:/sys`  
@@ -239,4 +281,4 @@ There you’ll find detailed guides on printer usage, configuration, materials, 
 
 ---
 
-**Last updated:** 29.09.2025
+**Last updated:** 03.10.2025

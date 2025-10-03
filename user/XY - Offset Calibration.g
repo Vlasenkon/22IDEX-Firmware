@@ -311,7 +311,14 @@ if exists(param.A)
   
   echo "Current offsets: U"^{global.uoffset}^" Y"^{global.yoffset}^" Z"^{global.rtzoffset}
   
-  
+  if global.yoffset < 0
+    echo >>>"0:/sys/autocali_res.g" "Y - Offset = "^take(""^{global.yoffset}, 6)^"<br>"
+  else
+    echo >>>"0:/sys/autocali_res.g" "Y - Offset = "^take(""^{global.yoffset}, 5)^"<br>"
+  if global.uoffset < 0
+    echo >>>"0:/sys/autocali_res.g" "U - Offset = "^take(""^{global.uoffset}, 6)^"<br>"
+  else
+    echo >>>"0:/sys/autocali_res.g" "U - Offset = "^take(""^{global.uoffset}, 5)^"<br>"
   
   ; Generate uoffset.g
   echo >"0:/user/uoffset.g" "if exists(global.uoffset)"

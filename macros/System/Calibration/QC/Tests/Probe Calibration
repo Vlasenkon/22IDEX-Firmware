@@ -18,7 +18,7 @@ if move.axes[2].homed
 ; ///Start Ensure the Z-Probe is Horizontal ////
 G90 ; Set to absolute positioning
 G1 X-999 U999 Y-150 F18000
-M98 P"0:/macros/System/Calibration/Testing/Rotate Z - Probe to Default 0 Position"
+M98 P"0:/macros/System/Calibration/QC/Rotate Z - Probe to Default 0 Position"
 
 while true
     M291 R"Make Sure Z - Probe is Horizontal" P"Press ""Done"" when Z - Probe is Horizontal" S4 K{"Done","Test","Cancel"}
@@ -28,7 +28,7 @@ while true
             while iterations < 3
                 M98 P"0:/macros/System/Calibration/Z Probe/Rotate holder to 0 degree"
                 G4 S1
-                M98 P"0:/macros/System/Calibration/Testing/Rotate Z - Probe to Default 0 Position"
+                M98 P"0:/macros/System/Calibration/QC/Rotate Z - Probe to Default 0 Position"
                 G4 S2
         elif input == 2
             abort "Test cancelled by user"

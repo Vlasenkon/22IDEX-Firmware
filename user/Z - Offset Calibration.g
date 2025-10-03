@@ -145,7 +145,7 @@ if exists(param.A)
       G1 X-999 U999 F18000
       M98 P"0:/sys/led/resetstatus.g"
       M98 P"place.g"
-      M98 P"0:/macros/System/Calibration/Auto Calibration Macros/Tool Height Auto Calibration" C1 A1
+      M98 P"0:/user/Tool Height Auto Calibration.g" C1 A1
 
     elif input == 1 ; User chose "Skip Calibration"
       echo "Skipping calibration as per user request."
@@ -164,7 +164,11 @@ if exists(param.A)
   
     ;======= Aditional offset =======
   
-  
+    if global.zoffset < 0
+      echo >>>"0:/sys/autocali_res.g" "Z - Offset = "^take(""^{global.zoffset}, 6)^"<br>"
+    else
+      echo >>>"0:/sys/autocali_res.g" "Z - Offset = "^take(""^{global.zoffset}, 5)^"<br>"
+
     echo >"0:/user/probeoffset.g" "; Set Z probe trigger value, offset and trigger height"
     echo >>"0:/user/probeoffset.g" "G31 P500 X0 Y28.50 Z"^{global.zoffset}
     M98 P"0:/user/probeoffset.g"                       ; load global variables

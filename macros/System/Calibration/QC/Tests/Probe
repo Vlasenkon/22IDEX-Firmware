@@ -1,5 +1,5 @@
 M98 P"0:/sys/led/resetstatus.g"
-M98 P"0:/macros/System/Calibration/Testing/Disable Probe"
+M98 P"0:/macros/System/Calibration/QC/Disable Probe"
 
 
 M291 R"Servo Motor Test" P"Servo motor will rotate to 0 degree and then to a set degree" S4 K{"Test","Skip","Cancel"}
@@ -31,7 +31,7 @@ else
 
 
 ; Enable probe
-M98 P"0:/macros/System/Calibration/Testing/Enable Probe"
+M98 P"0:/macros/System/Calibration/QC/Enable Probe"
 G4 S1
 
 var max_iter = 1200 ; 120 seconds
@@ -141,6 +141,6 @@ else
     abort "Error: S4 Probe might be damaged"
 
 
-M98 P"0:/macros/System/Calibration/Testing/Disable Probe" ; Disable probe
+M98 P"0:/macros/System/Calibration/QC/Disable Probe" ; Disable probe
 
 M98 P"0:/sys/led/resetstatus.g"

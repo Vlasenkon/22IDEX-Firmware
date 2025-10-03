@@ -1,0 +1,216 @@
+M98 P"0:/sys/led/resetstatus.g"
+
+G10 P0 R0 S0
+G10 P1 R0 S0
+G10 P2 R0 S0
+G10 P3 R0 S0
+
+; ========================== T0 CONNECTION ==========================
+
+M291 R"T0 Connection Test" P"Do you want to start T0 Connection Test?" S4 K{"Test","Skip","Cancel"}
+if input == 0
+  
+  ; ///// T0 Fans Test /////
+  M106 P3 S0
+  M106 P2 H0 S1 B0 T300
+  M291 R"T0 Fans Test" P"Are both T0 Fans are OFF?" S3
+
+  M106 P3 S1
+  M291 R"T0 Part Cooling Fan Test" P"Is the T0 Part Cooling Fan spinning?" S3
+
+  M471 S"0:/sys/daemon.g" T"0:/sys/daemon.g.off"                  ; OFF daemon.g
+
+  M106 P3 S0
+  M106 P2 H1 S1 B0 T0
+  M291 R"T0 Hotend Fan Test" P"Is the T0 Hotend Fan spinning?" S4 K{"Ok","Cancel"} J0
+
+  if input == 1
+    M106 P3 S0
+    M106 P2 H0 T70 S1 B0
+    M471 S"0:/sys/daemon.g.off" T"0:/sys/daemon.g"                  ; ON daemon.g
+    abort
+  
+  M106 P3 S0
+  M106 P2 H0 T70 S1 B0
+
+  M471 S"0:/sys/daemon.g.off" T"0:/sys/daemon.g"                  ; ON daemon.g
+  ;// ///// T0 Fans Test End /////
+
+
+  ; ///// T0 Heat Test /////
+  T0 P0
+
+  var T0_Min_Temp = 60                                                                            ; Minimum temperature to start the test
+  var T0_Raise_Temp = 30                                                                          ; Raise the temperature
+  var T0_Max_Heat_Time = 60                                                                       ; Maximum time to heat up the T0 Heater
+
+  ; Check if T0 is cold enough
+  if heat.heaters[0].current > var.T0_Min_Temp
+    M98 P"0:/sys/led/fault.g"
+    M291 R"T0 Heater Test" P"T0 Heater is already hot, please wait for it to cool down" S3
+    while heat.heaters[0].current > var.T0_Min_Temp
+      G4 S1
+      if sensors.endstops[0].triggered || sensors.endstops[3].triggered
+        break
+    M98 P"0:/sys/led/resetstatus.g"
+
+  M291 R"T0 Heater Test will start" P"Make sure is is heating UP my hand" S4 K{"Test","Skip","Cancel"}
+  if input == 2
+      abort "Test cancelled by user"
+
+  if input == 0
+    var T0_Start_Temp = heat.heaters[0].current                                                     ; Save the current T0 temperature
+    var T0_Start_Time = state.time                                                                  ; Save the current time
+    var T0_Target_Temp = var.T0_Start_Temp + var.T0_Raise_Temp                                      ; Calculate the target temperature
+
+    G10 P0 R200 S200                                              ; Set the T0 temperature to the target temperature
+    M98 P"0:/sys/led/start_cold.g"                                                                  ; LED Signalize preheating
+
+    while heat.heaters[0].current < var.T0_Target_Temp
+      G4 P100
+      if sensors.endstops[0].triggered || sensors.endstops[3].triggered
+        break
+
+    G10 P0 R0 S0                                                                                    ; Turn off the T0 heater
+    M98 P"0:/sys/led/end.g"                                                                         ; LED Signalize the end of the test
+
+    var T0_Heat_Time = state.time - var.T0_Start_Time                                               ; Calculate the time it took to heat up T0
+    echo "T0 Heater took " ^ var.T0_Heat_Time ^ " seconds to heat up"
+    if var.T0_Heat_Time > var.T0_Max_Heat_Time
+      M98 P"0:/sys/led/fault.g"
+      M291 R"T0 Heater Test" P"T0 Heater took too long to heat up" S1 T200
+      abort "Error: T0 Heater took too long to heat up"
+    M98 P"0:/sys/led/resetstatus.g"
+  ; ///// T0 Heater Test End /////
+
+  ; ///// T0 Extruder Motor Direction Test /////
+  M291 R"T0 Extruder Motor Direction Test" P"Do you want to start T0 Extruder Motor Direction Test?" S4 K{"Test", "Skip", "Cancel"}
+  if input == 0
+
+    while true
+      M291 R"Remove the filament" P"Make Sure the filament is removed from T0" S3
+      if sensors.filamentMonitors[0].status != "ok"
+        break
+
+    M291 R"T0 Extruder Motor Direction Test" P"Make Sure the T0 Extruder Gear is rotating Upwards ↑" S3
+    M302 P1 ; Allow cold extrudes
+    T0 P0
+    M83 ; Extruder to relative mode
+    G1 E100 F1000 ; Feed filament
+    M400
+    M302 P0 ; Disallow cold extrudes
+  ; ///// T0 Extruder Motor Direction Test End /////
+
+
+
+
+
+
+
+
+
+
+
+; ========================== T1 CONNECTION ==========================
+
+M291 R"T1 Connection Test" P"Do you want to start T0 Connection Test?" S4 K{"Test","Skip","Cancel"}
+if input == 0
+
+  ; ///// T1 Fans Test /////
+  M106 P1 S0
+  M106 P0 H1 S1 B0 T300
+  M291 R"T1 Fans Test" P"Are both T1 Fans OFF?" S3
+
+  M106 P1 S1
+  M291 R"T1 Part Cooling Fan Test" P"Is the T1 Part Cooling Fan spinning?" S3
+
+
+  M471 S"0:/sys/daemon.g" T"0:/sys/daemon.g.off"                  ; OFF daemon.g
+
+  M106 P1 S0
+  M106 P0 H1 S1 B0 T0
+  M291 R"T1 Hotend Fan Test" P"Is the T1 Hotend Fan spinning?" S4 K{"Ok","Cancel"} J0
+
+  if input == 1
+    M106 P1 S0
+    M106 P0 H1 T70 S1 B0
+    M471 S"0:/sys/daemon.g.off" T"0:/sys/daemon.g"                  ; ON daemon.g
+    abort
+
+  M106 P1 S0
+  M106 P0 H1 T70 S1 B0
+
+  M471 S"0:/sys/daemon.g.off" T"0:/sys/daemon.g"                  ; ON daemon.g
+  ; ///// T1 Fans Test End /////
+
+
+  ; ///// T1 Heat Test /////
+  T1 P0
+
+  var T1_Min_Temp = 60                                                                          ; Minimum temperature to start the test
+  var T1_Raise_Temp = 30                                                                        ; Temperature increase
+  var T1_Max_Heat_Time = 60                                                                     ; Maximum heating time
+
+  ; Check if T1 is cold enough
+  if heat.heaters[1].current > var.T1_Min_Temp
+    M98 P"0:/sys/led/fault.g"
+    M291 R"T1 Heater Test" P"T1 Heater is already hot, please wait for it to cool down" S3
+    while heat.heaters[1].current > var.T1_Min_Temp
+      G4 S1
+      if sensors.endstops[0].triggered || sensors.endstops[3].triggered
+        break
+    M98 P"0:/sys/led/resetstatus.g"
+
+  M291 R"T1 Heater Test will start" P"Make sure is is heating UP my hand" S4 K{"Test","Skip","Cancel"}
+  if input == 2
+      abort "Test cancelled by user"
+
+  if input == 0
+
+    var T1_Start_Temp = heat.heaters[1].current                                                   ; Save current T1 temperature
+    var T1_Start_Time = state.time                                                                ; Save current time
+    var T1_Target_Temp = var.T1_Start_Temp + var.T1_Raise_Temp                                    ; Calculate target temperature
+
+    G10 P1 R200 S200                                            ; Set T1 temperature
+    M98 P"0:/sys/led/start_cold.g"                                                                ; LED Signalize preheating
+
+    while heat.heaters[1].current < var.T1_Target_Temp
+      G4 P100
+      if sensors.endstops[0].triggered || sensors.endstops[3].triggered
+        break
+
+    G10 P1 R0 S0                                                                                  ; Turn off T1 heater
+    M98 P"0:/sys/led/end.g"                                                                       ; LED Signalize end of test
+
+    var T1_Heat_Time = state.time - var.T1_Start_Time                                             ; Calculate heating time
+    echo "T1 Heater took " ^ var.T1_Heat_Time ^ " seconds to heat up"
+    if var.T1_Heat_Time > var.T1_Max_Heat_Time
+      M98 P"0:/sys/led/fault.g"
+      M291 R"T1 Heater Test" P"T1 Heater took too long to heat up" S1 T200
+      abort "Error: T1 Heater took too long to heat up"
+    M98 P"0:/sys/led/resetstatus.g"
+    ; ///// T1 Heater Test End /////
+
+    ; ///// T1 Extruder Motor Direction Test /////
+  M291 R"T1 Extruder Motor Direction Test" P"Do you want to start T1 Extruder Motor Direction Test?" S4 K{"Test", "Skip", "Cancel"}
+  if input == 0
+
+    while true
+      M291 R"Remove the filament" P"Make Sure the filament is removed from T1" S3
+      if sensors.filamentMonitors[1].status != "ok"
+        break
+
+    M291 R"T1 Extruder Motor Direction Test" P"Make Sure the T1 Extruder Gear is rotating Upwards ↑" S3
+    M302 P1
+    T1 P0
+    M83 ; Extruder to relative mode
+    G1 E100 F1000 ; Feed filament
+    M400
+    M302 P0 ; Disallow cold extrudes
+    T0 P0 
+  ; ///// T1 Extruder Motor Direction Test End /////
+
+
+
+T0 P0
+M98 P"0:/sys/led/resetstatus.g"
