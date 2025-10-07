@@ -45,7 +45,7 @@ if state.status == "printing" || state.status == "resuming"
 
 if exists(param.E)
   M83                                                             ; Relative extruder moves
-  if heat.heaters[state.currentTool].current < 160
+  if heat.heaters[state.currentTool].current > 160
     if state.currentTool == 0
       M291 S5 J1 F250 L150 H450 R"Set Left Tool Temperature" P"Please set the temperature for the filament previously loaded in the Left Tool."
       G10 P0 R{input} S{input}
