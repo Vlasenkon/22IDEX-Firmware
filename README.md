@@ -168,7 +168,7 @@ This repository contains the firmware for the 3D printer IDEX22 with the followi
 - **Path** `0:/macros/`  
   - **Auto Calibration** – Added an extra parameter A1 when calling the macros to prevent them from being run separately from the Auto Calibration Macro. Disabled heating during nozzle cleaning. Added XY Auto Squaring macro. At the end displayed a pop-up with results. Added heater fault check at start.  
 - **Path** `0:/macros/System`  
-  - **Cold Pull** – Added LED indication. Added M702 P0 command. Added parameter for calling macro without pop-ups.  
+  - **Cold Pull** – Added LED indication. Added M702 P0 command. Added parameter for calling macro without pop-ups. Added heater fault check before extrusion.  
   - **Allow movement without homing** – Renamed to Movement Without Homing. Made this macro toggle.  
 - **Path** `0:/macros/System/Settings/Chamber/`  
   - **Wait for Chamber Temp** – Added a 5-minute wait after heating.  
@@ -199,10 +199,10 @@ This repository contains the firmware for the 3D printer IDEX22 with the followi
   - **stop**  – Removed the toolchangeretruction.g macro call.  
   - **resume** – Added filter activation. Added a check for whether the temperature is set; if not, the user is prompted to enter it. Removed the entoolchangeretruction.g macro call.  
   - **cancel** – Added filter deactivation. Added an option to reset the temperature. Made Hepafan thermodependent. Added M84 XYU command.  
-  - **baseload** – Fixed the bug. The temperature is no longer reset when the printer is paused.  
+  - **baseload** – Fixed the bug. The temperature is no longer reset when the printer is paused. Added heater fault check before extrusion.  
   - **filament-error** – Added filament change.  
   - **networktest** – Changed M552 I0 S1 to M552 I0 P0.0.0.0 S1. Added custom network name. Added test Ethernet to PC.  
-  - **nozzlewipe** – Fixed the bug. toolchangeretruction.g is now only called when printing. Added temperature check before extrusion.  
+  - **nozzlewipe** – Fixed the bug. toolchangeretruction.g is now only called when printing. Added temperature check before extrusion. Added heater fault check before extrusion.  
   - **tfree0** – toolchangeretruction.g is now only called when printing.  
   - **tfree1** – toolchangeretruction.g is now only called when printing.  
   - **baseunload** –The temperature is no longer reset when the printer is paused.  
@@ -281,4 +281,4 @@ There you’ll find detailed guides on printer usage, configuration, materials, 
 
 ---
 
-**Last updated:** 03.10.2025
+**Last updated:** 11.10.2025

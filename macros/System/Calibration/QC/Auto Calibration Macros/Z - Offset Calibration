@@ -163,11 +163,12 @@ if exists(param.A)
     set global.zoffset = var.dd - {0.0}  ; Apply babystepping to zoffset (add for less Z offset)
   
     ;======= Aditional offset =======
-  
-    if global.zoffset < 0
-      echo >>>"0:/sys/autocali_res.g" "Z - Offset = "^take(""^{global.zoffset}, 6)^"<br>"
-    else
-      echo >>>"0:/sys/autocali_res.g" "Z - Offset = "^take(""^{global.zoffset}, 5)^"<br>"
+    
+    if exists(param.S)
+      if global.zoffset < 0
+        echo >>>"0:/sys/autocali_res.g" "Z - Offset = "^take(""^{global.zoffset}, 6)^"<br>"
+      else
+        echo >>>"0:/sys/autocali_res.g" "Z - Offset = "^take(""^{global.zoffset}, 5)^"<br>"
 
     echo >"0:/user/probeoffset.g" "; Set Z probe trigger value, offset and trigger height"
     echo >>"0:/user/probeoffset.g" "G31 P500 X0 Y28.50 Z"^{global.zoffset}

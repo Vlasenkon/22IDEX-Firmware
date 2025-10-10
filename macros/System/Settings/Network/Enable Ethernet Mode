@@ -50,6 +50,9 @@ if network.interfaces[0].actualIP = "0.0.0.0" || network.interfaces[0].actualIP 
 
 else
 	M98 P"0:/sys/led/end.g"
+	echo >"0:/IP_address.txt" "User was connected via Ethernet Mode"
+	echo >>"0:/IP_address.txt" "Last Connected IP is: "^{network.interfaces[0].actualIP}
+
 	echo >"0:/user/networkmode.g" "M552 I0 S1 ; Enable Ethernet mode"
 
 	var ip = network.interfaces[0].actualIP

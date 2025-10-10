@@ -64,6 +64,9 @@ else
 
 	M291 S4 K{"OK","Cancel"} R{"Success, your IP address is: """^var.ip^""""} P{"To access DWC, in your browser enter """^var.ip^""". Press ""OK"" to switch mode now or restart the machine"}
 	
+	echo >"0:/IP_address.txt" "User was connected via WiFi Client Mode"
+	echo >>"0:/IP_address.txt" "Last Connected IP is: "^{network.interfaces[1].actualIP}
+
 	echo >"0:/user/networkmode.g" "M552 I1 S1 ; Enable WiFi Client Mode"	
 
 	if input = 0
