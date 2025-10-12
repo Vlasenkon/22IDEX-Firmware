@@ -42,6 +42,14 @@ M83 ; Extruder to relative mode
 
 M291 R"Feed the filament, material will be extruded" P"Press ""Extrude"" to start or ""Cancel"" to stop." S4 K{"Extrude","Cancel"}
 if input = 0
+  if heat.heaters[0].state == "fault" || heat.heaters[1].state == "fault" || heat.heaters[2].state == "fault" || heat.heaters[3].state == "fault"
+    M568 P0 A0
+    M568 P1 A0
+    M140 S0
+    M141 S0
+    G1 X-999 U999 F18000 Y150 Z100 F18000
+    M291 S1 R"Error" P"Heater fault detected"
+    abort "Error: Heater fault detected"
   G1 E200 F{var.ss} ; Extrude
 else
   if state.status != "processing" || state.status != "pausing" || state.status != "paused" || state.status != "resuming"
@@ -53,7 +61,15 @@ else
 M400
 
 M291 R"Do you see new filament extruding?" P"Press ""Yes"" if filament is extruding or ""No"" to extrude more." S4 K{"Yes","No"}
-  while input = 1
+  while input == 1
+    if heat.heaters[0].state == "fault" || heat.heaters[1].state == "fault" || heat.heaters[2].state == "fault" || heat.heaters[3].state == "fault"
+      M568 P0 A0
+      M568 P1 A0
+      M140 S0
+      M141 S0
+      G1 X-999 U999 F18000 Y150 Z100 F18000
+      M291 S1 R"Error" P"Heater fault detected"
+      abort "Error: Heater fault detected"
     G1 E50 F{var.ss} ; Extrude
     M400
     M291 R"Do you see new filament extruding?" P"Press ""Yes"" if filament is extruding or ""No"" to extrude more." S4 K{"Yes","No"}
