@@ -3,12 +3,17 @@
 M83
 
 if exists(param.R)
-  M116 P{state.currentTool} S20
-  G1 E{global.retraction_value} F3000
+  if state.currentTool != 1
+    M98 P"0:/user/tool0retract"
+  if state.currentTool == 1
+    M98 P"0:/user/tool1retract"
 
 elif exists(param.E)
   M116 P{state.currentTool} S5
   M106 S1
-  G1 E{global.extrusion_value} F{30}*{3}
+  if state.currentTool != 1
+    M98 P"0:/user/tool0extrude"
+  if state.currentTool == 1
+    M98 P"0:/user/tool1extrude"
   G4 S1
   M106 S0

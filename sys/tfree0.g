@@ -1,5 +1,5 @@
 G90
-if state.status == "printing" || state.status == "resuming"
+if state.status == "processing" || state.status == "resuming"
   M98 P"0:/sys/toolchangeretraction.g" R1
 
 G60 S3
