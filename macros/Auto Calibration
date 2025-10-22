@@ -83,12 +83,12 @@ M400
 M98 P"0:/user/XY - Offset Calibration.g" S1 A1
 M400
 
-M98 P"0:/user/XY Auto Squaring.g" S1 A1
-M400
+;M98 P"0:/user/XY Auto Squaring.g" S1 A1
+;M400
 
-M98 P"0:/user/xy_square_offset.g"
-M98 P"0:/sys/xy_squaring.g" N1
-M400
+;M98 P"0:/user/xy_square_offset.g"
+;M98 P"0:/sys/xy_squaring.g" N1
+;M400
 
 
 

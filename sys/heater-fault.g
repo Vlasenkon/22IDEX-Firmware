@@ -1,11 +1,14 @@
 M98 P"0:/sys/led/fault.g"
+
+if state.status == "printing" || state.status != "processing"
+  M98 P"0:/sys/pause.g"
+
+M400
 M98 P"0:/user/heaterfault_timer.g"
 
 if global.heaterfault_timer >= 0
   var Time = state.time
-
   M291 P{"Heater error detected — the printer will shut down in "^global.heaterfault_timer^" seconds."} R"Heater faults" S4 K{"Shutdown",} J2 T{global.heaterfault_timer}
-
   if result == -1
     if state.time - var.Time < global.heaterfault_timer
       echo "Shutdown canceled"
