@@ -15,7 +15,7 @@ else
 M400
 G60 S0 ; Remember last tool selected
 
-if {state.status != "processing" || state.status != "pausing" || state.status != "paused" || state.status != "resuming"} && {!move.axes[0].homed || !move.axes[1].homed || !move.axes[2].homed || !move.axes[3].homed}
+if {state.status != "processing" || state.status != "printing" || state.status != "pausing" || state.status != "paused" || state.status != "resuming"} && {!move.axes[0].homed || !move.axes[1].homed || !move.axes[2].homed || !move.axes[3].homed}
   G28
   M98 P"0:/sys/led/statusoff.g"
   M98 P"0:/sys/led/restorewhite.g"
@@ -52,7 +52,7 @@ if input = 0
     abort "Error: Heater fault detected"
   G1 E200 F{var.ss} ; Extrude
 else
-  if state.status != "processing" || state.status != "pausing" || state.status != "paused" || state.status != "resuming"
+  if state.status != "processing" || state.status != "printing" || state.status != "pausing" || state.status != "paused" || state.status != "resuming"
     G10 S0 R0 ; Turn off the heater
     M84 E0:1
   M99
@@ -77,5 +77,5 @@ M291 R"Do you see new filament extruding?" P"Press ""Yes"" if filament is extrud
 M98 P"0:/sys/nozzlewipe.g" ; wipe curently active nozzle
 M84 E0:1
 
-if state.status != "processing" || state.status != "pausing" || state.status != "paused" || state.status != "resuming"
+if state.status != "processing" || state.status != "printing" || state.status != "pausing" || state.status != "paused" || state.status != "resuming"
   G10 S0 R0 ; Turn off the heater

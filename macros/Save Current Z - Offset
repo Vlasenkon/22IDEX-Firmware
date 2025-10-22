@@ -1,7 +1,7 @@
 ; Save Z - offset
 
 
-if {state.status == "processing" || state.status == "pausing" || state.status == "paused" || state.status == "resuming"} && !exists(param.S)
+if {state.status == "processing" || state.status == "printing" || state.status == "pausing" || state.status == "paused" || state.status == "resuming"} && !exists(param.S)
   echo >"0:/sys/resetzbabystep.g" "if move.axes[2].machinePosition < 10"
   echo >>"0:/sys/resetzbabystep.g" " G90"
   echo >>"0:/sys/resetzbabystep.g" " G1 Z10"
