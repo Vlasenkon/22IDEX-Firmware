@@ -39,7 +39,7 @@ if exists(param.W) && sensors.analog[{state.currentTool}].lastReading < tools[{s
   M116 S10 P{state.currentTool}
 
 ; Purge fillament
-if state.status == "printing" || state.status == "resuming"
+if state.status == "printing" || state.status == "processing" || state.status == "resuming"
   M98 P"0:/sys/toolchangeretraction.g" E1
 
 
