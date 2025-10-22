@@ -82,8 +82,6 @@ if exists(param.A)
   
   
   
-  
-  
   var Probe_Point_Y = 98
   var max_Travel = 15
   var offset = 3
@@ -91,7 +89,7 @@ if exists(param.A)
   
   ;==== T0 Z refference point ====
   G90
-  G1 X-20 Y80 Z2 F12000
+  G1 X-20 U999 Y80 Z2 F12000
   M98 P"0:/sys/nozzleprobe.g" Z1
   var T0_Ref_Z = move.axes[2].userPosition
   
@@ -299,54 +297,85 @@ if exists(param.A)
   
   
   
-  ; Calculate offsets
-  set global.uoffset = var.T0_center_X - var.T1_center_X
-  set global.yoffset = var.T0_center_Y - var.T1_center_Y
-  
-  
   G91
   G1 Z5 F12000
   G90
   M400
+
+  if !exists(param.Q)
+    echo >"0:/user/uy_offsets.g" "if param.Q == 0"
+    echo >>"0:/user/uy_offsets.g" "  echo >""0:/user/uoffset.g"" ""if exists(global.uoffset)"""
+    echo >>"0:/user/uy_offsets.g" "  echo >>""0:/user/uoffset.g"" ""  set global.uoffset = "^{var.T0_center_X - var.T1_center_X}^""""
+    echo >>"0:/user/uy_offsets.g" "  echo >>""0:/user/uoffset.g"" ""else"""
+    echo >>"0:/user/uy_offsets.g" "  echo >>""0:/user/uoffset.g"" ""  global uoffset = "^{var.T0_center_X - var.T1_center_X}^""""
+    echo >>"0:/user/uy_offsets.g" "  echo >""0:/user/yoffset.g"" ""if exists(global.yoffset)"""
+    echo >>"0:/user/uy_offsets.g" "  echo >>""0:/user/yoffset.g"" ""  set global.yoffset = "^{var.T0_center_Y - var.T1_center_Y}^""""
+    echo >>"0:/user/uy_offsets.g" "  echo >>""0:/user/yoffset.g"" ""else"""
+    echo >>"0:/user/uy_offsets.g" "  echo >>""0:/user/yoffset.g"" ""  global yoffset = "^{var.T0_center_Y - var.T1_center_Y}^""""
+    echo >>"0:/user/uy_offsets.g" "  echo >""0:/user/tooloffset.g"" ""                         ; Set tool offsets"""
+    echo >>"0:/user/uy_offsets.g" "  echo >>""0:/user/tooloffset.g"" ""G10 P1 U"^{var.T0_center_X - var.T1_center_X}^" Y"^{var.T0_center_Y - var.T1_center_Y}^" Z"^{global.rtzoffset}^""""
+    echo >>"0:/user/uy_offsets.g" "  set global.uoffset = "^{var.T0_center_X - var.T1_center_X}
+    echo >>"0:/user/uy_offsets.g" "  set global.yoffset = "^{var.T0_center_Y - var.T1_center_Y}
+    echo >>"0:/user/uy_offsets.g" "  G10 P1 U{global.uoffset} Y{global.yoffset} Z{global.rtzoffset}"
+  elif exists(param.Q)
+    echo >>"0:/user/uy_offsets.g" "elif param.Q == 1"
+    echo >>"0:/user/uy_offsets.g" "  echo >""0:/user/uoffset.g"" ""if exists(global.uoffset)"""
+    echo >>"0:/user/uy_offsets.g" "  echo >>""0:/user/uoffset.g"" ""  set global.uoffset = "^{var.T0_center_X - var.T1_center_X}^""""
+    echo >>"0:/user/uy_offsets.g" "  echo >>""0:/user/uoffset.g"" ""else"""
+    echo >>"0:/user/uy_offsets.g" "  echo >>""0:/user/uoffset.g"" ""  global uoffset = "^{var.T0_center_X - var.T1_center_X}^""""
+    echo >>"0:/user/uy_offsets.g" "  echo >""0:/user/yoffset.g"" ""if exists(global.yoffset)"""
+    echo >>"0:/user/uy_offsets.g" "  echo >>""0:/user/yoffset.g"" ""  set global.yoffset = "^{var.T0_center_Y - var.T1_center_Y}^""""
+    echo >>"0:/user/uy_offsets.g" "  echo >>""0:/user/yoffset.g"" ""else"""
+    echo >>"0:/user/uy_offsets.g" "  echo >>""0:/user/yoffset.g"" ""  global yoffset = "^{var.T0_center_Y - var.T1_center_Y}^""""
+    echo >>"0:/user/uy_offsets.g" "  echo >""0:/user/tooloffset.g"" ""                         ; Set tool offsets"""
+    echo >>"0:/user/uy_offsets.g" "  echo >>""0:/user/tooloffset.g"" ""G10 P1 U"^{var.T0_center_X - var.T1_center_X}^" Y"^{var.T0_center_Y - var.T1_center_Y}^" Z"^{global.rtzoffset}^""""
+    echo >>"0:/user/uy_offsets.g" "  set global.uoffset = "^{var.T0_center_X - var.T1_center_X}
+    echo >>"0:/user/uy_offsets.g" "  set global.yoffset = "^{var.T0_center_Y - var.T1_center_Y}
+    echo >>"0:/user/uy_offsets.g" "  G10 P1 U{global.uoffset} Y{global.yoffset} Z{global.rtzoffset}"
+
+  echo "Current offsets: U"^{var.T0_center_X - var.T1_center_X}^" Y"^{var.T0_center_Y - var.T1_center_Y}^" Z"^{global.rtzoffset}
   
-  echo "Current offsets: U"^{global.uoffset}^" Y"^{global.yoffset}^" Z"^{global.rtzoffset}
-  
-  if exists(param.S)
+  if exists(param.S) && !exists(param.Q)
     if global.yoffset < 0
-      echo >>>"0:/sys/autocali_res.g" "Y - Offset = "^take(""^{global.yoffset}, 6)^"<br>"
+      echo >>>"0:/sys/autocali_res.g" "Y - Offset = "^take(""^{var.T0_center_Y - var.T1_center_Y}, 6)^"<br>"
     else
-      echo >>>"0:/sys/autocali_res.g" "Y - Offset = "^take(""^{global.yoffset}, 5)^"<br>"
+      echo >>>"0:/sys/autocali_res.g" "Y - Offset = "^take(""^{var.T0_center_Y - var.T1_center_Y}, 5)^"<br>"
     if global.uoffset < 0
-      echo >>>"0:/sys/autocali_res.g" "U - Offset = "^take(""^{global.uoffset}, 6)^"<br>"
+      echo >>>"0:/sys/autocali_res.g" "U - Offset = "^take(""^{var.T0_center_X - var.T1_center_X}, 6)^"<br>"
     else
-      echo >>>"0:/sys/autocali_res.g" "U - Offset = "^take(""^{global.uoffset}, 5)^"<br>"
+      echo >>>"0:/sys/autocali_res.g" "U - Offset = "^take(""^{var.T0_center_X - var.T1_center_X}, 5)^"<br>"
   
-  ; Generate uoffset.g
-  echo >"0:/user/uoffset.g" "if exists(global.uoffset)"
-  echo >>"0:/user/uoffset.g" "  set global.uoffset = "^{global.uoffset}
-  echo >>"0:/user/uoffset.g" "else"
-  echo >>"0:/user/uoffset.g" "  global uoffset = "^{global.uoffset}
+  if !exists(param.Q) || param.Q == 1
+    ; Calculate offsets
+    set global.uoffset = var.T0_center_X - var.T1_center_X
+    set global.yoffset = var.T0_center_Y - var.T1_center_Y
+
+    ; Generate uoffset.g
+    echo >"0:/user/uoffset.g" "if exists(global.uoffset)"
+    echo >>"0:/user/uoffset.g" "  set global.uoffset = "^{global.uoffset}
+    echo >>"0:/user/uoffset.g" "else"
+    echo >>"0:/user/uoffset.g" "  global uoffset = "^{global.uoffset}
+
+    ; Generate yoffset.g
+    echo >"0:/user/yoffset.g" "if exists(global.yoffset)"
+    echo >>"0:/user/yoffset.g" "  set global.yoffset = "^{global.yoffset}
+    echo >>"0:/user/yoffset.g" "else"
+    echo >>"0:/user/yoffset.g" "  global yoffset = "^{global.yoffset}
+
+    ; Generate rtzoffset.g
+    echo >"0:/user/rtzoffset.g" "if exists(global.rtzoffset)"
+    echo >>"0:/user/rtzoffset.g" "  set global.rtzoffset = "^{global.rtzoffset}
+    echo >>"0:/user/rtzoffset.g" "else"
+    echo >>"0:/user/rtzoffset.g" "  global rtzoffset = "^{global.rtzoffset}
+
+
+    ; Generate tooloffset.g
+    echo >"0:/user/tooloffset.g" "                         ; Set tool offsets"
+    echo >>"0:/user/tooloffset.g" "G10 P1 U"^{global.uoffset}^" Y"^{global.yoffset}^" Z"^{global.rtzoffset}
+    ;echo >>"0:/macros/report.txt" "G10 P1 U"^{global.uoffset}^" Y"^{global.yoffset}^" Z"^{global.rtzoffset}
   
-  ; Generate yoffset.g
-  echo >"0:/user/yoffset.g" "if exists(global.yoffset)"
-  echo >>"0:/user/yoffset.g" "  set global.yoffset = "^{global.yoffset}
-  echo >>"0:/user/yoffset.g" "else"
-  echo >>"0:/user/yoffset.g" "  global yoffset = "^{global.yoffset}
-  
-  ; Generate rtzoffset.g
-  echo >"0:/user/rtzoffset.g" "if exists(global.rtzoffset)"
-  echo >>"0:/user/rtzoffset.g" "  set global.rtzoffset = "^{global.rtzoffset}
-  echo >>"0:/user/rtzoffset.g" "else"
-  echo >>"0:/user/rtzoffset.g" "  global rtzoffset = "^{global.rtzoffset}
-  
-  
-  ; Generate tooloffset.g
-  echo >"0:/user/tooloffset.g" "                         ; Set tool offsets"
-  echo >>"0:/user/tooloffset.g" "G10 P1 U"^{global.uoffset}^" Y"^{global.yoffset}^" Z"^{global.rtzoffset}
-  ;echo >>"0:/macros/report.txt" "G10 P1 U"^{global.uoffset}^" Y"^{global.yoffset}^" Z"^{global.rtzoffset}
-  
-  ; Apply changes
-  G10 P1 U{global.uoffset} Y{global.yoffset} Z{global.rtzoffset}
+    ; Apply changes
+    G10 P1 U{global.uoffset} Y{global.yoffset} Z{global.rtzoffset}
   
   
   if !exists(param.S)

@@ -176,7 +176,7 @@ if exists(param.A)
       G90
       G1 X-999 U999 F18000
       M98 P"0:/sys/led/resetstatus.g"
-      M98 P"0:/user/Tool Height Auto Calibration.g" S1 C1 A1
+      M98 P"0:/macros/System/Calibration/QC/Auto Calibration Macros/Tool Height Auto Calibration" S1 C1 A1
 
     elif input == 1 ; User chose "Skip Calibration"
       M98 P"0:/sys/led/resetstatus.g"
@@ -223,7 +223,7 @@ if exists(param.A)
       M291 S1 T10 R"Tool Height calibration successful" P" "
 
       if exists(param.C)
-        M98 P"0:/user/Z - Offset Calibration.g" S1
+        M98 P"0:/macros/System/Calibration/QC/Auto Calibration Macros/Z - Offset Calibration" S1
 
       M98 P"0:/sys/nozzlewipe.g" T0
 
@@ -347,7 +347,7 @@ if exists(param.A)
           G90
           G1 X-999 U999 F18000
         M98 P"0:/sys/led/resetstatus.g"
-        M98 P"0:/user/Tool Height Auto Calibration.g" S1 A1
+        M98 P"0:/macros/System/Calibration/QC/Auto Calibration Macros/Tool Height Auto Calibration" S1 A1
 
   
       elif input == 1 ; User chose "Skip Calibration"

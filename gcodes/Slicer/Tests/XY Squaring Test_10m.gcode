@@ -2682,10 +2682,6 @@ set var.nozz_03 = 0.05
 set var.nozz_04 = 0.035
 set var.nozz_05 = 0.01
 
-set global.extrusion_value = 20
-set global.retraction_value = -2
-
-
 M572 D0 S{var.nozz_04}
 
 

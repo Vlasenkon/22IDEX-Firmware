@@ -3,6 +3,6 @@ if move.axes[2].machinePosition < 10 && state.status != "processing"  && state.s
 	G90
 	G1 F18000 Z10
 
-M98 P"0:/sys/nozzlewipe.g" T0
+M98 P"0:/sys/nozzlewipe.g" T0 W1
 
 M106 R3

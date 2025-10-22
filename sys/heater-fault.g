@@ -1,3 +1,4 @@
+M98 P"0:/sys/led/fault.g"
 M98 P"0:/user/heaterfault_timer.g"
 
 if global.heaterfault_timer >= 0

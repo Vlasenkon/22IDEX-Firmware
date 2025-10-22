@@ -20,4 +20,4 @@ else
 if exists(global.filamenterror)
   set global.filamenterror = false
 else
-  global.filamenterror = false
+  global filamenterror = false

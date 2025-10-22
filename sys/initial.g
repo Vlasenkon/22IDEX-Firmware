@@ -80,7 +80,6 @@ T{param.E}                                  ; Load previously selected tool
 
 M98 P"0:/sys/nozzlewipe.g" C1 W1
 M42 P4 S0
-M98 P"0:/user/extrusion_value.g"
 ; Get Nozzles up to Temp ===========================================================================
 if var.S0 > 0 && var.S1 > 0
   M568 P0 S{var.S0} R{var.R0}

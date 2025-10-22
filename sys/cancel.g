@@ -1,7 +1,4 @@
-var tOut = 120
-var t0   = state.upTime
-
-M291 R"Keep the temperature?" P"Do you want to keep the current temperature?" S3 J2 T{var.tOut}
+M291 R"Keep the temperature?" P"Do you want to keep the current temperature?" S3 J2 T20
 
 var doReset = false
 
@@ -25,6 +22,10 @@ if var.doReset
 
   M140 S0 R0    ; Bed heater off
   M141 S0       ; turn off chamber heater
+echo >"0:/user/tool0retract" "G1 E-5 F3000"
+echo >"0:/user/tool1retract" "G1 E-5 F3000"
+echo >"0:/user/tool0extrude" "G1 E10 F{30}*{3}"
+echo >"0:/user/tool1extrude" "G1 E10 F{30}*{3}"
 
 M84 XYU
 

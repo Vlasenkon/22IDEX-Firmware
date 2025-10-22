@@ -13,10 +13,21 @@ M98 P"0:/user/lowerbed.g"                 ; lower the bed (if needed)
 M98 P"0:/user/bedfinishbehavior.g"	    ; decide what to do with bed after printing is finished
 M98 P"0:/user/chamberfinishbehavior.g"	; decide what to do with chamber after printing is finished
 M98 P"0:/user/powerendbehavior.g"	        ; decide what to do with power after printing is finished
-
+echo >"0:/user/tool0retract" "G1 E-5 F3000"
+echo >"0:/user/tool1retract" "G1 E-5 F3000"
+echo >"0:/user/tool0extrude" "G1 E10 F{30}*{3}"
+echo >"0:/user/tool1extrude" "G1 E10 F{30}*{3}"
 
 G90
-M98 P"0:/sys/nozzlewipe.g"
+
+if exists(param.F) & exists(param.S)
+	M98 P"0:/user/retractfinishbehavior.g" F{param.F} S{param.S}
+elif exists(param.F)
+	M98 P"0:/user/retractfinishbehavior.g" F{param.F}
+elif exists(param.S)
+	M98 P"0:/user/retractfinishbehavior.g" S{param.S}
+else
+	M98 P"0:/sys/nozzlewipe.g"
 
 T0 P0
 

@@ -110,9 +110,11 @@ if exists(param.A)
     while iterations < 2000
       G38.4 K0 Z{var.T1_Ref_Z - 0.5}                               ; Move down the Hole
       if result == 0
+        M98 P"0:/sys/led/pause.g"
         G1 Z{var.T1_Ref_Z + 1}
         M291 S3 R"Position the head above the rear left hole in the bed." P"Press ""OK"" after positioning to countinue the macro." U1 Y1
       else
+        M98 P"0:/sys/led/resetstatus.g"
         set var.LR[0] = move.axes[3].userPosition
         set var.LR[1] = move.axes[1].userPosition
         break
@@ -202,9 +204,11 @@ if exists(param.A)
     while iterations < 2000
       G38.4 K0 Z{var.T1_Ref_Z - 0.5}                               ; Move down the Hole
       if result == 0
+        M98 P"0:/sys/led/pause.g"
         G1 Z{var.T1_Ref_Z + 1}
         M291 S3 R"Position the head above the rear right hole in the bed." P"Press ""OK"" after positioning to countinue the macro." U1 Y1
       else
+        M98 P"0:/sys/led/resetstatus.g"
         set var.RR[0] = move.axes[3].userPosition
         set var.RR[1] = move.axes[1].userPosition
         break
@@ -301,9 +305,11 @@ if exists(param.A)
     while iterations < 2000
       G38.4 K0 Z{var.T1_Ref_Z - 0.5}                               ; Move down the Hole
       if result == 0
+        M98 P"0:/sys/led/pause.g"
         G1 Z{var.T1_Ref_Z + 1}
         M291 S3 R"Position the head above the front right hole in the bed." P"Press ""OK"" after positioning to countinue the macro." U1 Y1
       else
+        M98 P"0:/sys/led/resetstatus.g"
         set var.RF[0] = move.axes[3].userPosition
         set var.RF[1] = move.axes[1].userPosition
         break
