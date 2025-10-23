@@ -38,9 +38,10 @@ M400
 if exists(param.W) && sensors.analog[{state.currentTool}].lastReading < tools[{state.currentTool}].active[0]
   M116 S10 P{state.currentTool}
 
-; Purge fillament
-if state.status == "printing" || state.status == "processing" || state.status == "resuming"
-  M98 P"0:/sys/toolchangeretraction.g" E1
+; Purge fillament (skip if printer is starting up)
+if !exists(global.printerStatus) || global.printerStatus != "prt_starting"
+  if (state.status == "processing" || state.status == "printing" || state.status == "pausing" || state.status == "resuming")
+    M98 P"0:/sys/toolchangeretraction.g" E1
 
 
 if exists(param.E)

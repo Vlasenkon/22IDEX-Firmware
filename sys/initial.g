@@ -1,5 +1,11 @@
 M98 P"0:/sys/led/start_cold.g"
 
+; Set global status variable (create or overwrite)
+if !exists(global.printerStatus)
+  global printerStatus = "prt_starting"
+else
+  set global.printerStatus = "prt_starting"
+
 var S0 = tools[0].active[0]
 var S1 = tools[1].active[0]
 var R0 = tools[0].standby[0]
@@ -132,3 +138,6 @@ M208 Z-1 S1                            ; set axis minima to allow for wider rang
 M204 P5000 T5000                       ; set the accelerations
 
 M42 P4 S0
+
+; Clear the global status
+set global.printerStatus = "None"
