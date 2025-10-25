@@ -127,11 +127,11 @@ M106 P6 C"W LED" H-1 S0 B0
 ; Tools
 M563 P0 S"Left Head" D0 H0 F3                                    ; define tool
 G10 P0 X0 Y0 Z0 U0                                               ; set tool offsets
-G10 P0 R0 S0                                                     ; set initial tool active and standby temperatures
+M568 P0 R0 S0                                                     ; set initial tool active and standby temperatures
 
 M563 P1 S"Right Head" D1 H1 F1 X3                                ; define tool
 M98 P"0:/user/tooloffset.g"                                      ; Load tool offsets
-G10 P1 R0 S0                                                     ; set initial tool active and standby temperatures
+M568 P1 R0 S0                                                     ; set initial tool active and standby temperatures
 
 M563 P2 S"Duplicate Mode" D0:1 H0:1 X0:3 F1:3                    ; tool 2 uses both extruders and hot end heaters, maps X to both X and U, and uses both print cooling fans
 G10 P2 X97.5 Y0 U-97.5 S0 R0                                     ; set tool offsets and temperatures for tool 2

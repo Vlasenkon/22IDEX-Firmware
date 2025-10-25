@@ -6,7 +6,7 @@ else
   M568 P1 A2
   T1
 M291 S5 J1 F250 L150 H450 R"Unloading filament" P"Enter loaded filament printing temperature"
-G10 P{state.currentTool} S{input} R{input}
+M568 P{state.currentTool} S{input} R{input}
 
 M291 R"Please wait while the nozzle is being heated up" P"This may take a few minutes." S1 T15
 M98 P"0:/sys/led/start_cold.g"
@@ -49,7 +49,7 @@ if var.previous_tooltemp < 380
   M98 P"0:/sys/nozzlewipe.g" ; wipe curently active nozzle
 
   if state.status != "processing" || state.status != "printing" || state.status != "pausing" || state.status != "paused" || state.status != "resuming"
-    G10 S0 R0 ; Turn off the heater
+    M568 S0 R0 ; Turn off the heater
   M84 E0:1
 else
   M98 P"0:/macros/System/Cold Pull" A{var.previous_tooltemp}
@@ -58,7 +58,7 @@ else
 
 M291 S5 J1 F250 L150 H450 R"Loading filament" P"Enter new filament printing temperature"
 var current_temp = input
-G10 P{state.currentTool} S{var.current_temp} R{var.current_temp}
+M568 P{state.currentTool} S{var.current_temp} R{var.current_temp}
 
 M291 R"Please wait while the nozzle is being heated up" P"This may take a few minutes." S1 T15
 
@@ -108,7 +108,7 @@ if var.previous_tooltemp <= var.current_temp || var.previous_tooltemp - var.curr
     G1 E200 F{var.ss} ; Extrude
   else
     if state.status != "processing" || state.status != "printing" || state.status != "pausing" || state.status != "paused" || state.status != "resuming"
-      G10 S0 R0 ; Turn off the heater
+      M568 S0 R0 ; Turn off the heater
       M84 E0:1
     M99
   
@@ -125,11 +125,11 @@ if var.previous_tooltemp <= var.current_temp || var.previous_tooltemp - var.curr
   M84 E0:1
   
   if state.status != "processing" || state.status != "printing" || state.status != "pausing" || state.status != "paused" || state.status != "resuming"
-    G10 S0 R0 ; Turn off the heater
+    M568 S0 R0 ; Turn off the heater
 
 elif var.previous_tooltemp - var.current_temp <= 160
 
-  G10 P{state.currentTool} S{var.previous_tooltemp} R{var.previous_tooltemp}
+  M568 P{state.currentTool} S{var.previous_tooltemp} R{var.previous_tooltemp}
 
   G60 S0
 
@@ -158,7 +158,7 @@ elif var.previous_tooltemp - var.current_temp <= 160
 
   M291 R"Feed the filament, material will be extruded" P"Press ""Extrude"" to start or ""Cancel"" to stop." S4 K{"Extrude","Cancel"}
   if input == 0
-    G10 P{state.currentTool} S{var.current_temp} R{var.current_temp}
+    M568 P{state.currentTool} S{var.current_temp} R{var.current_temp}
     while true
       G1 E10 F300; Extrude
       if heat.heaters[state.currentTool].current <= var.current_temp + 5
@@ -166,7 +166,7 @@ elif var.previous_tooltemp - var.current_temp <= 160
     G1 E20 F300
   else
     if state.status != "processing" || state.status != "printing" || state.status != "pausing" || state.status != "paused" || state.status != "resuming"
-      G10 S0 R0 ; Turn off the heater
+      M568 S0 R0 ; Turn off the heater
       M84 E0:1
     M99
   
@@ -183,14 +183,14 @@ elif var.previous_tooltemp - var.current_temp <= 160
   M84 E0:1
   
   if state.status != "processing" || state.status != "printing" || state.status != "pausing" || state.status != "paused" || state.status != "resuming"
-    G10 S0 R0 ; Turn off the heater
+    M568 S0 R0 ; Turn off the heater
 
 else
 
   M291 S5 J1 F250 L250 H300 R"Big difference between filaments temperature." P"You need intermediate filament with 250 - 300 melting temperature(e.g. Nylon).<br>Please enter temperature of intermediate filament."
   var intermediate_temp = input
 
-  G10 P{state.currentTool} S{var.previous_tooltemp} R{var.previous_tooltemp}
+  M568 P{state.currentTool} S{var.previous_tooltemp} R{var.previous_tooltemp}
 
   G60 S0
 
@@ -219,7 +219,7 @@ else
 
   M291 R"Feed the intermediate filament, material will be extruded" P"Press ""Extrude"" to start or ""Cancel"" to stop." S4 K{"Extrude","Cancel"}
   if input = 0
-    G10 P{state.currentTool} S{var.intermediate_temp} R{var.intermediate_temp}
+    M568 P{state.currentTool} S{var.intermediate_temp} R{var.intermediate_temp}
     while true
       G1 E10 F300; Extrude
       if heat.heaters[state.currentTool].current <= var.intermediate_temp + 5
@@ -227,7 +227,7 @@ else
     G1 E20 F300
   else
     if state.status != "processing" || state.status != "printing" || state.status != "pausing" || state.status != "paused" || state.status != "resuming"
-      G10 S0 R0 ; Turn off the heater
+      M568 S0 R0 ; Turn off the heater
       M84 E0:1
     M99
   
@@ -245,7 +245,7 @@ else
 
   M98 P"0:/macros/System/Cold Pull" A{var.intermediate_temp}
   
-  G10 P{state.currentTool} S{var.intermediate_temp} R{var.intermediate_temp}
+  M568 P{state.currentTool} S{var.intermediate_temp} R{var.intermediate_temp}
 
   G60 S0
 
@@ -274,7 +274,7 @@ else
 
   M291 R"Feed the filament, material will be extruded" P"Press ""Extrude"" to start or ""Cancel"" to stop." S4 K{"Extrude","Cancel"}
   if input = 0
-    G10 P{state.currentTool} S{var.current_temp} R{var.current_temp}
+    M568 P{state.currentTool} S{var.current_temp} R{var.current_temp}
     while true
       G1 E10 F300; Extrude
       if heat.heaters[state.currentTool].current <= var.current_temp + 5
@@ -282,7 +282,7 @@ else
     G1 E20 F300
   else
     if state.status != "processing" || state.status != "printing" || state.status != "pausing" || state.status != "paused" || state.status != "resuming"
-      G10 S0 R0 ; Turn off the heater
+      M568 S0 R0 ; Turn off the heater
       M84 E0:1
     M99
   
@@ -299,7 +299,7 @@ else
   M84 E0:1
 
   if state.status != "processing" || state.status != "printing" || state.status != "pausing" || state.status != "paused" || state.status != "resuming"
-    G10 S0 R0 ; Turn off the heater
+    M568 S0 R0 ; Turn off the heater
 
 M702 P0
 

@@ -1,9 +1,9 @@
 M98 P"0:/sys/led/resetstatus.g"
 
-G10 P0 R0 S0
-G10 P1 R0 S0
-G10 P2 R0 S0
-G10 P3 R0 S0
+M568 P0 R0 S0
+M568 P1 R0 S0
+M568 P2 R0 S0
+M568 P3 R0 S0
 
 ; ========================== T0 CONNECTION ==========================
 
@@ -63,7 +63,7 @@ if input == 0
     var T0_Start_Time = state.time                                                                  ; Save the current time
     var T0_Target_Temp = var.T0_Start_Temp + var.T0_Raise_Temp                                      ; Calculate the target temperature
 
-    G10 P0 R200 S200                                              ; Set the T0 temperature to the target temperature
+    M568 P0 R200 S200                                              ; Set the T0 temperature to the target temperature
     M98 P"0:/sys/led/start_cold.g"                                                                  ; LED Signalize preheating
 
     while heat.heaters[0].current < var.T0_Target_Temp
@@ -71,7 +71,7 @@ if input == 0
       if sensors.endstops[0].triggered || sensors.endstops[3].triggered
         break
 
-    G10 P0 R0 S0                                                                                    ; Turn off the T0 heater
+    M568 P0 R0 S0                                                                                    ; Turn off the T0 heater
     M98 P"0:/sys/led/end.g"                                                                         ; LED Signalize the end of the test
 
     var T0_Heat_Time = state.time - var.T0_Start_Time                                               ; Calculate the time it took to heat up T0
@@ -171,7 +171,7 @@ if input == 0
     var T1_Start_Time = state.time                                                                ; Save current time
     var T1_Target_Temp = var.T1_Start_Temp + var.T1_Raise_Temp                                    ; Calculate target temperature
 
-    G10 P1 R200 S200                                            ; Set T1 temperature
+    M568 P1 R200 S200                                            ; Set T1 temperature
     M98 P"0:/sys/led/start_cold.g"                                                                ; LED Signalize preheating
 
     while heat.heaters[1].current < var.T1_Target_Temp
@@ -179,7 +179,7 @@ if input == 0
       if sensors.endstops[0].triggered || sensors.endstops[3].triggered
         break
 
-    G10 P1 R0 S0                                                                                  ; Turn off T1 heater
+    M568 P1 R0 S0                                                                                  ; Turn off T1 heater
     M98 P"0:/sys/led/end.g"                                                                       ; LED Signalize end of test
 
     var T1_Heat_Time = state.time - var.T1_Start_Time                                             ; Calculate heating time

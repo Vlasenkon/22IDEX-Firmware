@@ -7,10 +7,10 @@
   var bedTemp = heat.heaters[2].active
   var chamberTemp = heat.heaters[3].active
 
-  G10 P0 S0 R0
-  G10 P1 S0 R0
-  G10 P2 S0 R0
-  G10 P3 S0 R0
+  M568 P0 S0 R0
+  M568 P1 S0 R0
+  M568 P2 S0 R0
+  M568 P3 S0 R0
 
   M140 S0 R0    ; Bed heater off
   M141 S0       ; turn off chamber heater

@@ -70,7 +70,7 @@ else                                                       ; Low Temp
 M568 P{var.tool} A2
 
 ; Set the tool temperature to 'temp'
-G10 P{var.tool} R{var.temp} S{var.temp}
+M568 P{var.tool} R{var.temp} S{var.temp}
 
 ; Check if any of the axes are not homed, and home all if necessary
 if !move.axes[0].homed || !move.axes[1].homed || !move.axes[2].homed || !move.axes[3].homed
@@ -107,7 +107,7 @@ G1 E50 F{5 * 60}
 M400
 
 ; Lower the temperature below cold pull temp
-G10 P{var.tool} R{var.temp_pull * 0.8} S{var.temp_pull * 0.8}
+M568 P{var.tool} R{var.temp_pull * 0.8} S{var.temp_pull * 0.8}
 
 ; Turn on the fan
 M106 S1
@@ -142,12 +142,12 @@ while sensors.analog[{var.tool}].lastReading > var.temp_stop
 M116 P{var.tool} S10
 
 ; Set cold pull temp and wait
-G10 P{var.tool} R{var.temp_pull} S{var.temp_pull}
+M568 P{var.tool} R{var.temp_pull} S{var.temp_pull}
 M116 P{var.tool} S5
 M106 S0
 
 ; Set the tool temperature to temp_stop
-G10 P{var.tool} R{var.temp_stop} S{var.temp_stop}
+M568 P{var.tool} R{var.temp_stop} S{var.temp_stop}
 
 ; Extrude while lowering the temperature further
 while sensors.analog[{var.tool}].lastReading < {(var.temp_stop + var.temp_pull) / 2}
@@ -181,7 +181,7 @@ M400
 M302 P0
 
 ; Set the tool temperature to 0
-G10 P{var.tool} R{0} S{0}
+M568 P{var.tool} R{0} S{0}
 
 M98 P"0:/sys/led/end.g"
 M702 P0

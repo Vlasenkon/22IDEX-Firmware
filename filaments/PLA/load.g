@@ -1,5 +1,5 @@
 var ttt = 210
-G10 S{var.ttt} R{var.ttt} ; Set current tool temperature
+M568 S{var.ttt} R{var.ttt} ; Set current tool temperature
 
 M291 R"Warning" P"This material should be printed with front door and LID opened" S2 T5
 
