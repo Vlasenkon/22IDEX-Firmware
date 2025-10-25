@@ -8,7 +8,7 @@ var ll = input
 M291 S5 J1 F{var.ll} L150 H450 R"Set Right Tool Temperature" P"Please set the temperature for the filament previously loaded in the Right Tool.<br>If new machine, set to 250°C"
 var rr = input
 
-var delta = -75
+var delta = -40
 
 G10 P0 R{var.ll + var.delta} S{var.ll + var.delta}
 G10 P1 R{var.rr + var.delta} S{var.rr + var.delta}
@@ -77,13 +77,13 @@ M400
 M98 P"0:/macros/System/Calibration/QC/Auto Calibration Macros/Z - Offset Calibration" S1 A1
 M400
 
-M98 P"0:/user/Mesh Bed calibration.g" S1 A1
+M98 P"0:/macros/System/Calibration/QC/Auto Calibration Macros/Mesh Bed calibration" S1 A1
 M400
 
-M98 P"0:/user/XY - Offset Calibration.g" S1 A1
+M98 P"0:/macros/System/Calibration/QC/Auto Calibration Macros/XY - Offset Calibration" S1 A1
 M400
 
-;M98 P"0:/user/XY Auto Squaring.g" S1 A1
+;M98 P"0:/macros/System/Calibration/QC/Auto Calibration Macros/XY Auto Squaring" S1 A1
 ;M400
 
 ;M98 P"0:/user/xy_square_offset.g"

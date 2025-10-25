@@ -4,11 +4,13 @@ if exists(param.A)
     M291 S5 J1 F250 L150 H450 R"Set Left Tool Temperature" P"Please set the temperature for the filament previously loaded in the Left Tool."
     var ll = input
     var rr = 0
+
+    var delta = -40
     
-    G10 P0 R{var.ll} S{var.ll}
+    G10 P0 R{var.ll + var.delta} S{var.ll + var.delta}
     G10 P1 R{var.rr} S{var.rr}
-    G10 P2 R{var.ll,var.rr} S{var.ll,var.rr}
-    G10 P3 R{var.ll,var.rr} S{var.ll,var.rr}
+    G10 P2 R{var.ll + var.delta,var.rr} S{var.ll + var.delta,var.rr}
+    G10 P3 R{var.ll + var.delta,var.rr} S{var.ll + var.delta,var.rr}
     
     M568 P0 A2
     M568 P1 A2
