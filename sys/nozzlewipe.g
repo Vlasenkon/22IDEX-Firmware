@@ -1,14 +1,29 @@
 var activetool = {state.currentTool}
+var shouldRestore = exists(param.R)
+
+if var.shouldRestore
+  M400                                                             ; ensure all queued motion has finished
+  G4 P300                                                          ; allow the object model to settle before saving
+  G60 S0                                                           ; store current position in slot 0 for later restore
+
+var targetTool = var.activetool
+if exists(param.T)
+  set var.targetTool = (param.T)
+
+var changedTool = false
+if var.targetTool >= 0 && var.targetTool != state.currentTool
+  T{var.targetTool} P0                                            ; temporarily activate the requested tool without running change macros
+  set var.changedTool = true
 
 var ttt = 0
-if exists(param.T)
-  set var.ttt = (param.T)
-elif state.currentTool == 0 || state.currentTool == 2 || state.currentTool == 3
-  set var.ttt = 0
-elif state.currentTool == 1
+if var.targetTool == 1
   set var.ttt = 1
+elif var.targetTool == 0 || var.targetTool == 2 || var.targetTool == 3
+  set var.ttt = 0
 
-if var.activetool == 2
+var usedParkingSwap = false
+if var.targetTool == 2
+  set var.usedParkingSwap = true
   T3
 
 var brush_min = -87
@@ -175,6 +190,23 @@ if var.ttt = 1
 
 G1 Y{var.y_center}                           ; Go to the center of purging bucket
 
-if var.activetool != state.currentTool
+if var.usedParkingSwap
   T2
-echo >"0:/sys/resetzbabystep.g" "; do nothing"
+
+if var.changedTool
+  if var.activetool >= 0
+    T{var.activetool} P0
+  else
+    T-1 P0
+
+if var.shouldRestore
+  G90
+  var liftedZ = move.axes[2].machinePosition + 2
+  if move.axes[2].max != null && var.liftedZ > move.axes[2].max
+    set var.liftedZ = move.axes[2].max
+  G1 Z{var.liftedZ} F18000
+  if var.activetool == 1
+    G1 R0 U0 Y0 F18000
+  else
+    G1 R0 X0 Y0 F18000
+  G1 R0 Z0 F18000
