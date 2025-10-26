@@ -1,9 +1,16 @@
 ; Homing XYU axis if they are not homed
-if !move.axes[1].homed || !move.axes[0].homed || !move.axes[3].homed
+if !move.axes[0].homed || !move.axes[1].homed || !move.axes[2].homed || !move.axes[3].homed
+  var homingPerformed = true
   M98 P"homeall.g" S1 L1 Z1
 
 T0                 ; Select first tool
 M204 T2000
+
+; Save current position if K parameter is provided (keep current XY position for probing)
+; Only save if homing was NOT performed (position is already accurate)
+if exists(param.K) && !exists(var.homingPerformed)
+  var savedX = move.axes[0].machinePosition
+  var savedY = move.axes[1].machinePosition
 
 if !exists(param.Z)
   G91                ; relative positioning
@@ -40,7 +47,12 @@ if !exists(param.C)
   M558 K0 P8 C"1.io4.in" H5 F300 T18000 A3
   M98 P"0:/user/ProbeOffset.g"
 
-  G1 X{0-sensors.probes[0].offsets[0]} Y{0-sensors.probes[0].offsets[1]} F18000
+  ; Use saved position if K parameter was provided, otherwise default to 0,0
+  if exists(param.K) && exists(var.savedX) && exists(var.savedY)
+    G1 X{var.savedX - sensors.probes[0].offsets[0]} Y{var.savedY - sensors.probes[0].offsets[1]} F18000
+  else
+    G1 X{0-sensors.probes[0].offsets[0]} Y{0-sensors.probes[0].offsets[1]} F18000
+  
   G30
   if result !=0
     M98 P"0:/sys/led/fault.g"
@@ -65,3 +77,4 @@ M204 T5000
 ;C1 - Do a slow 2nd Probe
 ;L1 - Do not Place the Probe
 ;T1 - Do not Test if GND Wire isn't Shorted
+;K1 - Keep current XY position for probing (instead of moving to bed center)

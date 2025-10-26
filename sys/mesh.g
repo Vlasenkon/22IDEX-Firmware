@@ -40,6 +40,10 @@ if exists(param.A) && exists(param.B) && exists(param.D) && exists(param.J)
   if var.proby < 3
     set var.proby = 3
   
+  ; calculate the center of the print area for Z-homing
+  var centerX = (var.Xmin + var.Xmax) / 2
+  var centerY = (var.Ymin + var.Ymax) / 2
+  
   M557 X{var.Xmin, var.Xmax} Y{var.Ymin, var.Ymax} P{var.probx, var.proby} ; define mesh grid
 else
   ; Default mesh grid if parameters are not provided
@@ -59,4 +63,10 @@ M376 H40                                    ; enable compensation taper
 M98 P"0:/sys/compensatex.g"                 ; run X - rail twist compensation
 M98 P"0:/sys/compensatey.g"                 ; run X - rail twist compensation
 G29 S1                                      ; enable MBC
-M98 P"homez.g" Z1 S1 F1 T1                    ; fine home z to get final reference
+
+; Move to center of print area before Z-homing (if adaptive mesh was used)
+if exists(var.centerX) && exists(var.centerY)
+  G1 X{var.centerX} Y{var.centerY} F18000   ; move to center of print area
+  M98 P"homez.g" Z1 S1 F1 T1 K1             ; fine home z at current position (center of print area)
+else
+  M98 P"homez.g" Z1 S1 F1 T1                ; fine home z at bed center (default)
