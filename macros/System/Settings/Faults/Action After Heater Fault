@@ -1,21 +1,45 @@
-M291 S4 K{"Enable", "Change the time", "Disable"} R"Action after Detection Heater Fault" P"After a heater fault occurs, the printer will automatically shut down in 30 seconds"
-if input == 0
-    echo >"0:/user/heaterfault_timer.g" "if exists(global.heaterfault_timer)"
-    echo >>"0:/user/heaterfault_timer.g" "  set global.heaterfault_timer = 30"
-    echo >>"0:/user/heaterfault_timer.g" "else"
-    echo >>"0:/user/heaterfault_timer.g" "  global heaterfault_timer = 30"
-    echo "Printer auto-shutdown after heater fault is enabled with a 30-second timer"
-if input == 1
-    M291 S5 F30 R"Heater fault timer" P"Enter the shutdown delay time after a heater fault in a seconds"
-    echo >"0:/user/heaterfault_timer.g" "if exists(global.heaterfault_timer)"
-    echo >>"0:/user/heaterfault_timer.g" "  set global.heaterfault_timer = "^input
-    echo >>"0:/user/heaterfault_timer.g" "else"
-    echo >>"0:/user/heaterfault_timer.g" "  global heaterfault_timer = "^input
-    echo "Printer auto-shutdown after heater fault is enabled with a "^input^"-second timer"
-if input == 2
-    echo >"0:/user/heaterfault_timer.g" "if exists(global.heaterfault_timer)"
-    echo >>"0:/user/heaterfault_timer.g" "  set global.heaterfault_timer = -1"
-    echo >>"0:/user/heaterfault_timer.g" "else"
-    echo >>"0:/user/heaterfault_timer.g" "  global heaterfault_timer = -1"
-    echo "Printer auto-shutdown after heater fault is disable"
+var timerFile = "0:/user/heaterfault_timer.g"
+
+M291 S4 K{"Disable", "Immediate (0 s)", "Delay 30 s", "Delay 60 s", "Delay 120 s", "Custom"} R"Action after Detection Heater Fault" P"Choose how long to wait before the printer shuts down after a heater fault."
+var choice = input
+var delay = -1
+var promptCanceled = false
+
+if var.choice == 0
+    echo >{var.timerFile} ";Printer auto-shutdown after heater fault is disabled"
+    if exists(global.heaterfault_timer)
+        set global.heaterfault_timer = -1
+    echo "Printer auto-shutdown after heater fault is disabled"
+else
+    if var.choice == 1
+        set var.delay = 0
+    elif var.choice == 2
+        set var.delay = 30
+    elif var.choice == 3
+        set var.delay = 60
+    elif var.choice == 4
+        set var.delay = 120
+    elif var.choice == 5
+        M291 S5 L0 R"Heater fault timer" P"Enter the shutdown delay time after a heater fault in seconds"
+        if result == -1
+            set var.promptCanceled = true
+        else
+            set var.delay = input
+    if var.promptCanceled
+        echo "Heater fault timer change canceled"
+    elif var.delay < 0
+        abort "Invalid heater fault timer selection"
+    else
+        echo >{var.timerFile} "if exists(global.heaterfault_timer)"
+        echo >>{var.timerFile} "  set global.heaterfault_timer = "^var.delay
+        echo >>{var.timerFile} "else"
+        echo >>{var.timerFile} "  global heaterfault_timer = "^var.delay
+        if exists(global.heaterfault_timer)
+            set global.heaterfault_timer = var.delay
+        else
+            global heaterfault_timer = var.delay
+        if var.delay == 0
+            echo "Printer auto-shutdown after heater fault is enabled with no delay"
+        else
+            echo "Printer auto-shutdown after heater fault is enabled with a "^var.delay^"-second timer"
 
