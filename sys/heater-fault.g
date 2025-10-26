@@ -1,6 +1,6 @@
 M400
 if state.status == "printing" || state.status != "processing"
-  M98 P"0:/sys/pause.g"
+  M25
 
 M98 P"0:/sys/led/fault.g"
 
