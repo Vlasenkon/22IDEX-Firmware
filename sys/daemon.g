@@ -15,4 +15,4 @@ while !fileexists("/sys/daemon.g.bak") && !fileexists("/sys/daemon.g.off")
 
     M106 P0 H1 T{var.targetTemp} S1 B0
     M106 P2 H0 T{var.targetTemp} S1 B0
-    G4 S15
+    G4 S30
