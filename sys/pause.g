@@ -2,7 +2,6 @@
 ; called when a print from SD card is paused
 
 M400
-G60 S4
 M204 T5000
 
 

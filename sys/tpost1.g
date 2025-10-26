@@ -7,4 +7,4 @@ if move.axes[2].machinePosition < 10 && (state.status != "processing" || state.s
 if !exists(global.printerStatus) || global.printerStatus != "prt_starting"
   M98 P"0:/sys/nozzlewipe.g" T1 W1
 
-M106 R3
+M106 R2

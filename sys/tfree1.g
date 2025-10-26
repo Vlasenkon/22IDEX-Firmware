@@ -8,7 +8,6 @@ if !exists(global.printerStatus) || global.printerStatus != "prt_starting"
 		else
 			G1 E-5 F3000
 
-G60 S3
 M106 S0
 
 ; Move Z to 10mm if lower than that for safety
