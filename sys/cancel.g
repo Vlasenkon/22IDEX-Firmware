@@ -1,19 +1,19 @@
-  M106 P1 S0
-  M106 P3 S0
-  M98 P"0:/user/hepafan.g"
-  M106 P7 H3 T50 X{global.hepafan}
+M106 S0
+M106 P1 S0
+M106 P3 S0
 
-  ; Save current temperatures before resetting
-  var bedTemp = heat.heaters[2].active
-  var chamberTemp = heat.heaters[3].active
 
-  M568 P0 S0 R0
-  M568 P1 S0 R0
-  M568 P2 S0 R0
-  M568 P3 S0 R0
-
-  M140 S0 R0    ; Bed heater off
-  M141 S0       ; turn off chamber heater
+M98 P"0:/user/hepafan.g"
+M106 P7 H3 T50 X{global.hepafan}
+; Save current temperatures before resetting
+var bedTemp = heat.heaters[2].active
+var chamberTemp = heat.heaters[3].active
+M568 P0 S0 R0
+M568 P1 S0 R0
+M568 P2 S0 R0
+M568 P3 S0 R0
+M140 S0 R0    ; Bed heater off
+M141 S0       ; turn off chamber heater
 echo >"0:/user/tool0retract" "G1 E-5 F3000"
 echo >"0:/user/tool1retract" "G1 E-5 F3000"
 echo >"0:/user/tool0extrude" "G1 E10 F{30}*{3}"
