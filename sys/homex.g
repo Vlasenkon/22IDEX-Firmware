@@ -2,6 +2,8 @@ T0 P0
 
 M204 T2000
 
+var xMaxTravel = abs(move.axes[0].max) + abs(move.axes[0].min) + 10
+
 G91
 G1 H2 Z10 F18000        ; lift Z relative to current position
 G1 H2 X5 F18000
@@ -10,7 +12,7 @@ G1 Y172 F18000
 
 
 G91                     ; relative positioning
-G1 H1 X-375 F1800       ; move quickly to X axis endstop and stop there (first pass)
+G1 H1 X{-var.xMaxTravel} F1800       ; move quickly to X axis endstop and stop there (first pass)
 if result !=0
   M98 P"0:/sys/led/fault.g"
   echo >>"0:/sys/eventlog.txt" "Error: Home X failed"

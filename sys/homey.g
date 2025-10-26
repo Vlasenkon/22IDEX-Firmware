@@ -10,6 +10,8 @@ M280 P0 S0                            ; Move the probe out of the way (to its de
 
 M204 T2000                            ; Set acceleration for non-printing moves
 
+var yMaxTravel = abs(move.axes[1].max) + abs(move.axes[1].min) + 10
+
 ;=== Move the X & U axes ===
 G91                                   ; Switch to relative positioning
 G1 H2 Z20 F18000                      ; Lift the Z axis by 20 mm at 18000 mm/min
@@ -17,7 +19,7 @@ G1 H2 X10 U-10 F18000                 ; Move the X and U axes 10 mm in opposite 
 
 ;=== Home with Y End Stops ===
 G91                                   ; Switch to absolute positioning
-G1 H1 Y-400 F1800                     ; Move the Y axis back quickly to hit the endstop
+G1 H1 Y{-var.yMaxTravel} F1800        ; Move the Y axis back quickly to hit the endstop
 if result !=0
   M98 P"0:/sys/led/fault.g"
   echo >>"0:/sys/eventlog.txt" "Error: Y axis homing failed"
