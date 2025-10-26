@@ -44,7 +44,7 @@ if !exists(param.C)
   G90                 ; absolute positioning
   G1 U999 F18000      ; Move second tool out of the way
   M98 R1 P"0:/sys/attachedcheck.g" ; make sure probe is conected, pick if negative and leave relay active
-  M558 K0 P8 C"1.io4.in" H5 F300 T18000 A3
+  M558 K0 P8 C"1.io4.in" H5 F300 T18000 A3 S-1 ; three averaged slow probes regardless of consistency
   M98 P"0:/user/ProbeOffset.g"
 
   ; Use saved position if K parameter was provided, otherwise default to 0,0
@@ -67,14 +67,11 @@ if !exists(param.L)
 
 M204 T5000
 
-
-
-
-
-;Z1 - Do not Lower Z before probing
-;S1 - Do not lower Z after probing
-;F1 - Do a fast 1st Probe
-;C1 - Do a slow 2nd Probe
-;L1 - Do not Place the Probe
-;T1 - Do not Test if GND Wire isn't Shorted
-;K1 - Keep current XY position for probing (instead of moving to bed center)
+; Parameters:
+; Z1 - Skip initial Z lift (do not raise Z before probing)
+; S1 - Skip final Z lift (do not raise Z after probing)
+; F1 - Skip fast probe (do not perform initial fast probe at F18000)
+; C1 - Skip slow probe (do not perform careful probe at F300)
+; L1 - Skip probe placement (do not place probe back after homing)
+; T1 - Skip probe test (do not test if probe wire is shorted before probing)
+; K1 - Keep current XY position for probing (instead of moving to bed center 0,0)
