@@ -3,7 +3,7 @@ if !move.axes[0].homed || !move.axes[1].homed || !move.axes[2].homed || !move.ax
   var homingPerformed = true
   M98 P"homeall.g" S1 L1 Z1
 
-T0                 ; Select first tool
+T0 P0                 ; Select first tool
 M204 T2000
 
 ; Save current position if K parameter is provided (keep current XY position for probing)
