@@ -1,10 +1,5 @@
 G60 S0
 
-;if sensors.filamentMonitors[0].status == "noFilament"
-;  T1
-;elif sensors.filamentMonitors[1].status == "noFilament"
-;  T0
-
 if !exists(param.A)
   M291 R"Filament runout was detected" P"Select the option." S4 K{"Change Filament", "Cancel"}
 
