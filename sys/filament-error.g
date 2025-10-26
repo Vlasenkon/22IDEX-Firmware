@@ -16,6 +16,7 @@ if exists(global.filamentbackup) && global.filamentbackup == true
   M24 ; Resume the print
 else
   M98 P"0:/sys/filament_change.g"
+
 ; Reset the filamenterror flag
 if exists(global.filamenterror)
   set global.filamenterror = false
