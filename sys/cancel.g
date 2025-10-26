@@ -14,10 +14,12 @@ M568 P2 S0 R0
 M568 P3 S0 R0
 M140 S0 R0    ; Bed heater off
 M141 S0       ; turn off chamber heater
-echo >"0:/user/tool0retract" "G1 E-5 F3000"
-echo >"0:/user/tool1retract" "G1 E-5 F3000"
-echo >"0:/user/tool0extrude" "G1 E10 F{30}*{3}"
-echo >"0:/user/tool1extrude" "G1 E10 F{30}*{3}"
+
+; Reload tool change values for next job
+M98 P"0:/user/tool0retract"
+M98 P"0:/user/tool1retract"
+M98 P"0:/user/tool0extrude"
+M98 P"0:/user/tool1extrude"
 
 M98 P"0:/sys/led/stop.g"
 

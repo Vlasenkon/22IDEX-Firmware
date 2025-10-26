@@ -16,3 +16,9 @@ M98 P"0:/user/chamberfinishbehavior.g"	; decide what to do with chamber after pr
 M98 P"0:/sys/resetzbabystep.g"
 M400
 echo >"0:/sys/resetzbabystep.g" "; do nothing"
+
+; Reload tool change values for next job
+M98 P"0:/user/tool0retract"
+M98 P"0:/user/tool1retract"
+M98 P"0:/user/tool0extrude"
+M98 P"0:/user/tool1extrude"

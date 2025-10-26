@@ -41,7 +41,17 @@ if exists(param.W) && sensors.analog[{state.currentTool}].lastReading < tools[{s
 ; Purge fillament (skip if printer is starting up)
 if !exists(global.printerStatus) || global.printerStatus != "prt_starting"
   if (state.status == "processing" || state.status == "printing" || state.status == "pausing" || state.status == "resuming")
-    M98 P"0:/sys/toolchangeretraction.g" E1
+    M83
+    if state.currentTool == 0
+      if exists(global.tool0ExtrudeDistance) && global.tool0ExtrudeDistance != null
+        G1 E{global.tool0ExtrudeDistance} F9000
+      else
+        G1 E10 F9000
+    if state.currentTool == 1
+      if exists(global.tool1ExtrudeDistance) && global.tool1ExtrudeDistance != null
+        G1 E{global.tool1ExtrudeDistance} F9000
+      else
+        G1 E10 F9000
 
 
 if exists(param.E)

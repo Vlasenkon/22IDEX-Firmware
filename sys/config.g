@@ -159,14 +159,12 @@ M98 P"0:/user/filamentbackup.g"                                  ; load filament
 M98 P"0:/user/xcomp_auto.g"                                      ; load auto calibration value
 M98 P"0:/user/xcomp_manual.g"                                    ; load manual calibration value
 M98 P"0:/user/xcomp_mode.g"                                      ; load compensation mode
-
 M98 P"0:/user/hepafan.g"                                         ; load hepa fan speed
-echo >"0:/user/tool0retract" "G1 E-5 F3000"
-echo >"0:/user/tool1retract" "G1 E-5 F3000"
-echo >"0:/user/tool0extrude" "G1 E10 F{30}*{3}"
-echo >"0:/user/tool1extrude" "G1 E10 F{30}*{3}"
+M98 P"0:/user/tool0retract"                                     ; load tool 0 retract value
+M98 P"0:/user/tool1retract"                                     ; load tool 1 retract value
+M98 P"0:/user/tool0extrude"                                     ; load tool 0 extrude value
+M98 P"0:/user/tool1extrude"                                     ; load tool 1 extrude value
 
-echo >"0:/user/toolchangeretraction.g" "                         ; ToolChange Retraction Disabled"
 echo >"0:/sys/resetzbabystep.g" "                                ; do nothing"
 
 ; Custom settings

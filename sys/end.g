@@ -13,10 +13,6 @@ M98 P"0:/user/lowerbed.g"                 ; lower the bed (if needed)
 M98 P"0:/user/bedfinishbehavior.g"	    ; decide what to do with bed after printing is finished
 M98 P"0:/user/chamberfinishbehavior.g"	; decide what to do with chamber after printing is finished
 M98 P"0:/user/powerendbehavior.g"	        ; decide what to do with power after printing is finished
-echo >"0:/user/tool0retract" "G1 E-5 F3000"
-echo >"0:/user/tool1retract" "G1 E-5 F3000"
-echo >"0:/user/tool0extrude" "G1 E10 F{30}*{3}"
-echo >"0:/user/tool1extrude" "G1 E10 F{30}*{3}"
 
 G90
 
@@ -48,6 +44,12 @@ M106 P7 H3 T50 X{global.hepafan}
 M98 P"0:/sys/resetzbabystep.g"
 G4 S1
 echo >"0:/sys/resetzbabystep.g" "; do nothing"
+
+; Reload tool change values for next job
+M98 P"0:/user/tool0retract"
+M98 P"0:/user/tool1retract"
+M98 P"0:/user/tool0extrude"
+M98 P"0:/user/tool1extrude"
 
 if move.axes[2].babystep != 0
 	echo "Warning: Adjustment of "^move.axes[2].babystep^" mm was detected, please save Z - Offset"

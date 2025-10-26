@@ -2,7 +2,11 @@ G90
 ; Skip retraction if printer is starting up
 if !exists(global.printerStatus) || global.printerStatus != "prt_starting"
   if state.status == "processing" || state.status == "printing" || state.status == "resuming"
-    M98 P"0:/sys/toolchangeretraction.g" R1
+		M83
+		if exists(global.tool1RetractDistance) && global.tool1RetractDistance != null
+			G1 E{global.tool1RetractDistance} F3000
+		else
+			G1 E-5 F3000
 
 G60 S3
 M106 S0
