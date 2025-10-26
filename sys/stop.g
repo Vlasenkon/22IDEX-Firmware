@@ -18,7 +18,7 @@ M400
 echo >"0:/sys/resetzbabystep.g" "; do nothing"
 
 ; Reload tool change values for next job
-M98 P"0:/user/tool0retract"
-M98 P"0:/user/tool1retract"
-M98 P"0:/user/tool0extrude"
-M98 P"0:/user/tool1extrude"
+M98 P"0:/user/tool0retract.g"
+M98 P"0:/user/tool1retract.g"
+M98 P"0:/user/tool0extrude.g"
+M98 P"0:/user/tool1extrude.g"

@@ -16,10 +16,10 @@ M140 S0 R0    ; Bed heater off
 M141 S0       ; turn off chamber heater
 
 ; Reload tool change values for next job
-M98 P"0:/user/tool0retract"
-M98 P"0:/user/tool1retract"
-M98 P"0:/user/tool0extrude"
-M98 P"0:/user/tool1extrude"
+M98 P"0:/user/tool0retract.g"
+M98 P"0:/user/tool1retract.g"
+M98 P"0:/user/tool0extrude.g"
+M98 P"0:/user/tool1extrude.g"
 
 M98 P"0:/sys/led/stop.g"
 

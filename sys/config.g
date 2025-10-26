@@ -160,10 +160,10 @@ M98 P"0:/user/xcomp_auto.g"                                      ; load auto cal
 M98 P"0:/user/xcomp_manual.g"                                    ; load manual calibration value
 M98 P"0:/user/xcomp_mode.g"                                      ; load compensation mode
 M98 P"0:/user/hepafan.g"                                         ; load hepa fan speed
-M98 P"0:/user/tool0retract"                                     ; load tool 0 retract value
-M98 P"0:/user/tool1retract"                                     ; load tool 1 retract value
-M98 P"0:/user/tool0extrude"                                     ; load tool 0 extrude value
-M98 P"0:/user/tool1extrude"                                     ; load tool 1 extrude value
+M98 P"0:/user/tool0retract.g"                                   ; load tool 0 retract value
+M98 P"0:/user/tool1retract.g"                                   ; load tool 1 retract value
+M98 P"0:/user/tool0extrude.g"                                   ; load tool 0 extrude value
+M98 P"0:/user/tool1extrude.g"                                   ; load tool 1 extrude value
 
 echo >"0:/sys/resetzbabystep.g" "                                ; do nothing"
 
