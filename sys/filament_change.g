@@ -1,41 +1,79 @@
-; I think we are making it too complex. what we need to do is inside this macro we need to handle filament change and And if user selects to change filament, we just need to retract the filament and then push the new one in. See how base unload and base load works. We already have the temperature setting for the tool where Renault happened. So what I want to do is ask user if they want to change filament, then retract, I heat up to slightly lower temperature, then retract, and prompt user through inserting a new filament. make sure it's coming out from the nozzle and so on. Maybe even use base load and base unload macros that we already have. This should be pretty simple Also make sure that we somehow store temperate tool temperature to be sure that we don't lose it. 
-; The reason for all of this is that a user... we can create more problems than we solve because it's not always the same filament that is selected we have in the nozzle. If they loaded one filament, then manually change it and have completely different filament inside. So I would rather rely on more stable information like what nozzle temperature is there, and then just simply unload this material and help load in you one
-
-
 G60 S0
 
 var changeRequested = exists(param.A)
 
 if !var.changeRequested
-  M291 R"Filament runout was detected" P"Select the option." S4 K{"Change Filament", "Don't Change"} F0
+  M291 R"Filament runout was detected" P"Change filament now?" S4 K{"Change Filament", "Don't Change"} F0
   if result = -1 || input == 1
-    abort "Operation cancelled"
+    T R0
+    M99
   set var.changeRequested = true
 
-if var.changeRequested
-  if state.currentTool == 2 || state.currentTool == 3
-    M291 R"Select Tool" P"Which Tool do you want to change filament on?" S4 K{"Left Tool (T0)", "Right Tool (T1)", "Cancel"} F0
-    if result = -1 || input == 2
-      abort "Operation cancelled"
-    if input == 0
-      T0
-    else
-      T1
+if !var.changeRequested
+  T R0
+  M99
 
-  var filamentName = move.extruders[state.currentTool].filament
-  if var.filamentName = null || var.filamentName = ""
-    M291 S1 R"No Filament Assigned" P"Assign a filament to the active tool before running the filament change routine."
-    abort
+; Choose a tool if we are in a combined/duplicate mode
+if state.currentTool == -1
+  M291 S1 R"No Tool Selected" P"Select a tool before running the filament change routine."
+  abort
 
-  var base = "0:/filaments/" ^ var.filamentName
-  if !fileexists(var.base ^ "/unload.g") || !fileexists(var.base ^ "/load.g")
-    M291 S1 R"Missing Filament Macros" P{"Expected unload/load macros in " ^ var.base ^ " but they were not found."}
-    abort
-
-  M98 P{var.base ^ "/unload.g"}
-
-  M291 R"Loading new filament" P"Prepare the new filament for loading." S4 K{"Load", "Cancel"}
+if state.currentTool == 2 || state.currentTool == 3
+  M291 R"Select Tool" P"Which tool should be serviced?" S4 K{"Left Tool (T0)", "Right Tool (T1)", "Cancel"} F0
+  if result = -1 || input == 2
+    abort "Operation cancelled"
   if input == 0
-    M98 P{var.base ^ "/load.g"}
+    T0
+  else
+    T1
+
+var tool = state.currentTool
+
+; Capture the current tool temperature configuration so we can restore it afterwards
+var originalActive = tools[var.tool].active
+var originalStandby = tools[var.tool].standby
+var originalState = tools[var.tool].state
+var heaterCount = #var.originalActive
+
+if var.heaterCount = 0
+  M291 S1 R"Unsupported Tool" P"Selected tool has no heaters defined. Aborting filament change."
+  abort
+
+; Determine a working temperature – fall back to user input if the tool is currently cold
+var targetTemp = 0.0
+var i = 0
+while var.i < var.heaterCount
+  if var.originalActive[var.i] != null && var.originalActive[var.i] > var.targetTemp
+    set var.targetTemp = var.originalActive[var.i]
+  if var.originalStandby[var.i] != null && var.originalStandby[var.i] > var.targetTemp
+    set var.targetTemp = var.originalStandby[var.i]
+  set var.i = var.i + 1
+
+var heaters = tools[var.tool].heaters
+if #var.heaters > 0
+  var primaryHeater = var.heaters[0]
+  if heat.heaters[var.primaryHeater].current > var.targetTemp
+    set var.targetTemp = heat.heaters[var.primaryHeater].current
+
+if var.targetTemp < 120
+  M291 S5 R"Filament Change" P{"Enter nozzle temperature for T" ^ var.tool} L0 H450 J1
+  if result = -1
+    abort "Operation cancelled"
+  set var.targetTemp = input
+
+var workingTemps = vector(var.heaterCount, var.targetTemp)
+M568 P{var.tool} S{var.workingTemps} R{var.workingTemps} A2
+
+; Execute the standard retract/load helpers with change-mode behaviour
+M98 P"0:/sys/baseunload.g" C1
+
+M291 R"Load New Filament" P"Insert the new filament, then choose Load." S4 K{"Load", "Cancel"}
+if result != -1 && input = 0
+  M98 P"0:/sys/baseload.g" C1
+else
+  echo "Filament unload completed; loading skipped."
+
+; Restore the original temperature targets and tool state
+M568 P{var.tool} S{var.originalActive} R{var.originalStandby} A{var.originalState}
 
 T R0

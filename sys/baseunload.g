@@ -1,5 +1,13 @@
-M291 R"Please wait while the nozzle is being heated up" P"This may take a few minutes." S1 T15
-M98 P"0:/sys/led/start_cold.g"
+var changeMode = exists(param.C) && param.C != 0
+
+if !var.changeMode
+  M291 R"Please wait while the nozzle is being heated up" P"This may take a few minutes." S1 T15
+  M98 P"0:/sys/led/resetstatus.g"
+  M98 P"0:/sys/led/start_cold.g"
+
+else
+  M291 S2 R"Preparing to retract filament" P"Heating the active nozzle for filament change..."
+  M98 P"0:/sys/led/resetstatus.g"
 
 
 ;Unload Speed
@@ -37,6 +45,7 @@ M400 ; Wait for the moves to finish
 
 M98 P"0:/sys/nozzlewipe.g" ; wipe curently active nozzle
 
-if state.status != "processing" || state.status != "printing" || state.status != "pausing" || state.status != "paused" || state.status != "resuming"
-  M568 S0 R0 ; Turn off the heater
+if !var.changeMode
+  if state.status != "processing" || state.status != "printing" || state.status != "pausing" || state.status != "paused" || state.status != "resuming"
+    M568 S0 R0 ; Turn off the heater
 M84 E0:1

@@ -1,4 +1,9 @@
-M291 R"Please wait while the nozzle is being heated up" P"This may take a few minutes." S1 T15
+var changeMode = exists(param.C) && param.C != 0
+
+if !var.changeMode
+  M291 R"Please wait while the nozzle is being heated up" P"This may take a few minutes." S1 T15
+else
+  M291 S2 R"Preparing to load filament" P"Heating the active nozzle for filament change..."
 
 M98 P"0:/sys/led/resetstatus.g"
 M98 P"0:/sys/led/start_cold.g"
@@ -52,9 +57,10 @@ if input = 0
     abort "Error: Heater fault detected"
   G1 E200 F{var.ss} ; Extrude
 else
-  if state.status != "processing" || state.status != "printing" || state.status != "pausing" || state.status != "paused" || state.status != "resuming"
-    M568 S0 R0 ; Turn off the heater
-    M84 E0:1
+  if !var.changeMode
+    if state.status != "processing" || state.status != "printing" || state.status != "pausing" || state.status != "paused" || state.status != "resuming"
+      M568 S0 R0 ; Turn off the heater
+  M84 E0:1
   M99
 
 
@@ -77,5 +83,6 @@ M291 R"Do you see new filament extruding?" P"Press ""Yes"" if filament is extrud
 M98 P"0:/sys/nozzlewipe.g" ; wipe curently active nozzle
 M84 E0:1
 
-if state.status != "processing" || state.status != "printing" || state.status != "pausing" || state.status != "paused" || state.status != "resuming"
-  M568 S0 R0 ; Turn off the heater
+if !var.changeMode
+  if state.status != "processing" || state.status != "printing" || state.status != "pausing" || state.status != "paused" || state.status != "resuming"
+    M568 S0 R0 ; Turn off the heater
