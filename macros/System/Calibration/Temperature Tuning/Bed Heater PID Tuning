@@ -23,9 +23,17 @@ if heat.heaters[2].current > 50
 M98 P"0:/sys/led/dimmwhite.g"
 M98 P"0:/sys/led/red.g"
 
-M303 H2 S150 A{heat.heaters[3].current}
+; Validate chamber air temperature before tuning
+var ambient = heat.heaters[3].current
+if var.ambient < 10 || var.ambient > 100
+    M98 P"0:/sys/led/fault.g"
+    M291 R"Chamber Temperature Out of Range" P{"Chamber air temperature "^var.ambient^"°C is outside 10-100°C. Adjust the chamber and rerun PID tuning."} S1
+    abort "Error: Chamber air temperature is not within range to start."
+
+M303 H2 S150 A{var.ambient} Q1
 if result != 0
-    M291 R"PID Tune Failed" P"PID tuning has failed." S1 T10
+    M98 P"0:/sys/led/fault.g"
+    M291 R"PID Tune Failed" P"PID tuning did not complete. Review heater status and retry." S1
     abort "Error: PID tuning has failed."
     M99
 
@@ -43,4 +51,4 @@ var vv = heat.heaters[2].model.standardVoltage
 
 echo >"0:/user/PIDBedHead.g" "M307 H2 R"^{var.rr}^" K"^{var.kk1}^":"^{var.kk2}^" D"^{var.dd}^" E"^{var.ee}^" S1.00 B0"
 
-M291 R"PID tune has been finished" P"New values were saved" S1 T10
+M291 R"PID Tune Complete" P"Bed PID values have been saved." S1
