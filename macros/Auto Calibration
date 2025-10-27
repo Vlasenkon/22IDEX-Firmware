@@ -77,23 +77,24 @@ M400
 M98 P"0:/macros/System/Calibration/QC/Auto Calibration Macros/Z - Offset Calibration" S1 A1
 M400
 
-M98 P"0:/macros/System/Calibration/QC/Auto Calibration Macros/Mesh Bed calibration" S1 A1
-M400
+if exists(global.xcomp_mode) && global.xcomp_mode == "manual"
+  echo "Skipping Mesh Bed calibration because compensation mode is manual"
+  echo >>>"0:/sys/autocali_res.g" "Mesh Bed calibration skipped (manual mode)<br>"
+else
+  M98 P"0:/macros/System/Calibration/QC/Auto Calibration Macros/Mesh Bed calibration" S1 A1
+  M400
 
 M98 P"0:/macros/System/Calibration/QC/Auto Calibration Macros/XY - Offset Calibration" S1 A1
 M400
 
-;M98 P"0:/macros/System/Calibration/QC/Auto Calibration Macros/XY Auto Squaring" S1 A1
-;M400
-
-;M98 P"0:/user/xy_square_offset.g"
-;M98 P"0:/sys/xy_squaring.g" N1
-;M400
-
-
-
-
-
+if exists(global.xy_square_mode) && global.xy_square_mode == "manual"
+  echo "Skipping XY Auto Squaring because mode is manual"
+  echo >>>"0:/sys/autocali_res.g" "XY Auto Squaring skipped (manual mode)<br>"
+else
+  M98 P"0:/macros/System/Calibration/QC/Auto Calibration Macros/XY Auto Squaring" S1 A1
+  M400
+  M98 P"0:/sys/xy_squaring.g"
+  M400
 
 
 

@@ -1,3 +1,24 @@
+M98 P"0:/user/xy_square_manual.g"
+M98 P"0:/user/xy_square_auto.g"
+M98 P"0:/user/xy_square_mode.g"
+
+if !exists(global.xy_square_manual)
+  global xy_square_manual = 0.0
+
+if !exists(global.xy_square_auto)
+  global xy_square_auto = 0.0
+
+if !exists(global.xy_square_mode)
+  global xy_square_mode = "manual"
+
+var xyActive = global.xy_square_manual
+if global.xy_square_mode != "manual"
+  set var.xyActive = global.xy_square_auto
+
+if global.xy_square_mode == "manual"
+  echo "XY Auto Squaring skipped because mode is manual"
+  M99
+
 if exists(param.A)
     if !exists(param.S)
     
@@ -71,9 +92,6 @@ if exists(param.A)
 
     ; Do if only Iter=1
     if var.Iter == 1
-      if !exists(global.xy_square_offset)
-        M291 P"global.xy_square_offset is not defined" R"Error" S2
-        M99
       ; Go to Y0 
       G90
       G1 Y0 F6000
@@ -83,11 +101,11 @@ if exists(param.A)
       ;M291 P"Right" S2
       M584 Y0.4
       G91
-      G1 Y{-global.xy_square_offset} F150   ; Crossbar Alignment
+      G1 Y{-var.xyActive} F150   ; Crossbar Alignment
       M400
       ;M291 P"Left" S2
       M584 Y0.1
-      G1 Y{global.xy_square_offset} F150   ; Crossbar Alignment
+      G1 Y{var.xyActive} F150   ; Crossbar Alignment
       M400 
       M584 Y0.1:0.4
       G90
@@ -429,16 +447,24 @@ if exists(param.A)
     ; Echo suggestions
     echo "Correction Length = ", {var.CorrLengthSafety}
 
+    if exists(global.xy_square_auto)
+      set global.xy_square_auto = var.CorrLengthSafety
+    else
+      global xy_square_auto = var.CorrLengthSafety
+
+    echo >"0:/user/xy_square_auto.g" "if exists(global.xy_square_auto)"
+    echo >>"0:/user/xy_square_auto.g" "  set global.xy_square_auto = " ^ var.CorrLengthSafety
+    echo >>"0:/user/xy_square_auto.g" "else"
+    echo >>"0:/user/xy_square_auto.g" "  global xy_square_auto = " ^ var.CorrLengthSafety
+
+    if global.xy_square_mode == "auto"
+      M98 P"0:/sys/xy_squaring.g"
+
     if exists(param.S)
       if var.CorrLengthSafety < 0
-        echo >>>"0:/sys/autocali_res.g" "XY Square Offset = "^take(""^{var.CorrLengthSafety}, 6)^""""
+        echo >>>"0:/sys/autocali_res.g" "XY Auto Squaring = "^take(""^{var.CorrLengthSafety}, 6)^"<br>"
       else
-        echo >>>"0:/sys/autocali_res.g" "XY Square Offset = "^take(""^{var.CorrLengthSafety}, 5)^""""
-    ; persist to a file for restoration / reuse after reboot
-    echo >"0:/user/xy_square_offset.g" "if exists(global.xy_square_offset)"
-    echo >>"0:/user/xy_square_offset.g" "  set global.xy_square_offset = " ^ var.CorrLengthSafety
-    echo >>"0:/user/xy_square_offset.g" "else"
-    echo >>"0:/user/xy_square_offset.g" "  global xy_square_offset = " ^ var.CorrLengthSafety
+        echo >>>"0:/sys/autocali_res.g" "XY Auto Squaring = "^take(""^{var.CorrLengthSafety}, 5)^"<br>"
 
     if !exists(param.S)
       M568 P0 S0 R0

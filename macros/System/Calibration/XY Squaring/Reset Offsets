@@ -1,0 +1,30 @@
+M98 P"0:/user/xy_square_manual.g"
+M98 P"0:/user/xy_square_auto.g"
+M98 P"0:/user/xy_square_mode.g"
+
+if exists(global.xy_square_manual)
+  set global.xy_square_manual = 0.0
+else
+  global xy_square_manual = 0.0
+
+if exists(global.xy_square_auto)
+  set global.xy_square_auto = 0.0
+else
+  global xy_square_auto = 0.0
+
+if !exists(global.xy_square_mode)
+  global xy_square_mode = "manual"
+
+echo >"0:/user/xy_square_manual.g" "if exists(global.xy_square_manual)"
+echo >>"0:/user/xy_square_manual.g" "  set global.xy_square_manual = 0.0"
+echo >>"0:/user/xy_square_manual.g" "else"
+echo >>"0:/user/xy_square_manual.g" "  global xy_square_manual = 0.0"
+
+echo >"0:/user/xy_square_auto.g" "if exists(global.xy_square_auto)"
+echo >>"0:/user/xy_square_auto.g" "  set global.xy_square_auto = 0.0"
+echo >>"0:/user/xy_square_auto.g" "else"
+echo >>"0:/user/xy_square_auto.g" "  global xy_square_auto = 0.0"
+
+echo "XY squaring offsets reset to 0.0"
+
+M98 P"0:/sys/xy_squaring.g"

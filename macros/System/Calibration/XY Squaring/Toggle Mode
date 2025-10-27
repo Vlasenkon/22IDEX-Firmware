@@ -1,0 +1,32 @@
+M98 P"0:/user/xy_square_manual.g"
+M98 P"0:/user/xy_square_auto.g"
+M98 P"0:/user/xy_square_mode.g"
+
+if !exists(global.xy_square_manual)
+  global xy_square_manual = 0.0
+
+if !exists(global.xy_square_auto)
+  global xy_square_auto = 0.0
+
+if exists(global.xy_square_mode)
+  if global.xy_square_mode == "auto"
+    set global.xy_square_mode = "manual"
+  else
+    set global.xy_square_mode = "auto"
+else
+  global xy_square_mode = "manual"
+
+var active = 0.0
+if global.xy_square_mode == "manual"
+  set var.active = global.xy_square_manual
+else
+  set var.active = global.xy_square_auto
+
+echo >"0:/user/xy_square_mode.g" "if exists(global.xy_square_mode)"
+echo >>"0:/user/xy_square_mode.g" "  set global.xy_square_mode = """^{global.xy_square_mode}^""""
+echo >>"0:/user/xy_square_mode.g" "else"
+echo >>"0:/user/xy_square_mode.g" "  global xy_square_mode = """^{global.xy_square_mode}^""""
+
+echo "XY squaring mode set to "^{global.xy_square_mode}^", active offset "^{var.active}
+
+M98 P"0:/sys/xy_squaring.g"

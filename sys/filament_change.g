@@ -1,3 +1,7 @@
+; I think we are making it too complex. what we need to do is inside this macro we need to handle filament change and And if user selects to change filament, we just need to retract the filament and then push the new one in. See how base unload and base load works. We already have the temperature setting for the tool where Renault happened. So what I want to do is ask user if they want to change filament, then retract, I heat up to slightly lower temperature, then retract, and prompt user through inserting a new filament. make sure it's coming out from the nozzle and so on. Maybe even use base load and base unload macros that we already have. This should be pretty simple Also make sure that we somehow store temperate tool temperature to be sure that we don't lose it. 
+; The reason for all of this is that a user... we can create more problems than we solve because it's not always the same filament that is selected we have in the nozzle. If they loaded one filament, then manually change it and have completely different filament inside. So I would rather rely on more stable information like what nozzle temperature is there, and then just simply unload this material and help load in you one
+
+
 G60 S0
 
 var changeRequested = exists(param.A)

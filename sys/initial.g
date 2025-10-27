@@ -67,8 +67,9 @@ G4 S2
 
 M98 P"homeall.g" Z1 S1 L1              ; Home the machine  
 
-M98 P"0:/user/xy_square_offset.g"
-M98 P"0:/sys/xy_square_dir.g"
+M98 P"0:/user/xy_square_manual.g"
+M98 P"0:/user/xy_square_auto.g"
+M98 P"0:/user/xy_square_mode.g"
 M98 P"0:/sys/xy_squaring.g"
 M98 P"0:/user/periodic_wiping.g"
 
