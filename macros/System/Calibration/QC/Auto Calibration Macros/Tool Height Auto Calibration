@@ -217,11 +217,11 @@ if exists(param.A)
 
     if abs(var.ddd) < 0.05 ; ===If delta is less than allowed value===
       echo "Good, deviation is "^{var.ddd}^" mm"
-      if exists(param.S)
-        if var.ddd < 0
-          echo >>>"0:/sys/autocali_res.g" "Nozzle deviation = "^take(""^{var.ddd},6)^"<br>"
-        else
-          echo >>>"0:/sys/autocali_res.g" "Nozzle deviation = "^take(""^{var.ddd},5)^"<br>"
+      ;=if exists(param.S)
+      ;=  if var.ddd < 0
+      ;=    echo >>>"0:/sys/autocali_res.g" "Nozzle deviation = "^take(""^{var.ddd},6)^"<br>"
+      ;=  else
+      ;=    echo >>>"0:/sys/autocali_res.g" "Nozzle deviation = "^take(""^{var.ddd},5)^"<br>"
       M291 S1 T10 R"Tool Height calibration successful" P" "
 
       if exists(param.C)
@@ -267,11 +267,11 @@ if exists(param.A)
       else
         global rtzoffset = var.mid_dev
 
-      if exists(param.S)
-        if var.mid_dev < 0
-          echo >>>"0:/sys/autocali_res.g" "Nozzle deviation in the midle = "^take(""^{var.mid_dev}, 6)^"<br>"
-        else
-          echo >>>"0:/sys/autocali_res.g" "Nozzle deviation in the midle = "^take(""^{var.mid_dev}, 5)^"<br>"
+      ;=if exists(param.S)
+      ;=  if var.mid_dev < 0
+      ;=    echo >>>"0:/sys/autocali_res.g" "Nozzle deviation in the midle = "^take(""^{var.mid_dev}, 6)^"<br>"
+      ;=  else
+      ;=    echo >>>"0:/sys/autocali_res.g" "Nozzle deviation in the midle = "^take(""^{var.mid_dev}, 5)^"<br>"
       ; Generate rtzoffset.g
       echo >"0:/user/rtzoffset.g" "if exists(global.rtzoffset)"
       echo >>"0:/user/rtzoffset.g" "  set global.rtzoffset = "^{var.mid_dev}

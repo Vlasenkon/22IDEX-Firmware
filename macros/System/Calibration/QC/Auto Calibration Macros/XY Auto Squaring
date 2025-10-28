@@ -460,11 +460,11 @@ if exists(param.A)
     if global.xy_square_mode == "auto"
       M98 P"0:/sys/xy_squaring.g"
 
-    if exists(param.S)
-      if var.CorrLengthSafety < 0
-        echo >>>"0:/sys/autocali_res.g" "XY Auto Squaring = "^take(""^{var.CorrLengthSafety}, 6)^"<br>"
-      else
-        echo >>>"0:/sys/autocali_res.g" "XY Auto Squaring = "^take(""^{var.CorrLengthSafety}, 5)^"<br>"
+    ;=if exists(param.S)
+    ;=  if var.CorrLengthSafety < 0
+    ;=    echo >>>"0:/sys/autocali_res.g" "XY Auto Squaring = "^take(""^{var.CorrLengthSafety}, 6)^"<br>"
+    ;=  else
+    ;=    echo >>>"0:/sys/autocali_res.g" "XY Auto Squaring = "^take(""^{var.CorrLengthSafety}, 5)^"<br>"
 
     if !exists(param.S)
       M568 P0 S0 R0

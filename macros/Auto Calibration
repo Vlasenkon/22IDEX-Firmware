@@ -68,8 +68,8 @@ M42 P4 S1                                              ; Turn on relay
 
 
 
-echo >"0:/sys/autocali_res.g" "; Auto Calibration Results"
-echo >>>"0:/sys/autocali_res.g" "M291 S2 R""Auto Calibration was Successfull"" P""Results:<br>"
+;=echo >"0:/sys/autocali_res.g" "; Auto Calibration Results"
+;=echo >>>"0:/sys/autocali_res.g" "M291 S2 R""Auto Calibration was Successfull"" P""Results:<br>"
 
 M98 P"0:/macros/System/Calibration/QC/Auto Calibration Macros/Tool Height Auto Calibration" S1 A1
 M400
@@ -79,7 +79,7 @@ M400
 
 if exists(global.xcomp_mode) && global.xcomp_mode == "manual"
   echo "Skipping Mesh Bed calibration because compensation mode is manual"
-  echo >>>"0:/sys/autocali_res.g" "Mesh Bed calibration skipped (manual mode)<br>"
+  ;=echo >>>"0:/sys/autocali_res.g" "Mesh Bed calibration skipped (manual mode)<br>"
 else
   M98 P"0:/macros/System/Calibration/QC/Auto Calibration Macros/Mesh Bed calibration" S1 A1
   M400
@@ -89,7 +89,7 @@ M400
 
 if exists(global.xy_square_mode) && global.xy_square_mode == "manual"
   echo "Skipping XY Auto Squaring because mode is manual"
-  echo >>>"0:/sys/autocali_res.g" "XY Auto Squaring skipped (manual mode)<br>"
+  ;=echo >>>"0:/sys/autocali_res.g" "XY Auto Squaring skipped (manual mode)<br>"
 else
   M98 P"0:/macros/System/Calibration/QC/Auto Calibration Macros/XY Auto Squaring" S1 A1
   M400
@@ -109,4 +109,15 @@ M98 P"0:/user/probeoffset.g"                       ; load global variables
 
 G90
 G1 X-999 U999 Y150 Z100 F18000
-M98 P"0:/sys/autocali_res.g"
+
+
+;=M98 P"0:/sys/autocali_res.g"
+
+; Build calibration results message
+var msg = "Auto Calibration Successful"
+set var.msg = var.msg ^ "<br>Tool 1 Z Offset = " ^ global.rtzoffset ^ " mm"
+set var.msg = var.msg ^ "<br>Z-Offset = " ^ global.zoffset ^ " mm"
+set var.msg = var.msg ^ "<br>Tool 1 Y-Offset = " ^ global.yoffset ^ " mm"
+set var.msg = var.msg ^ "<br>Tool 1 U-Offset = " ^ global.uoffset ^ " mm"
+set var.msg = var.msg ^ "<br>XY Skew = " ^ global.xy_square_auto ^ " mm"
+M291 S2 R"Calibration Complete" P{var.msg}
