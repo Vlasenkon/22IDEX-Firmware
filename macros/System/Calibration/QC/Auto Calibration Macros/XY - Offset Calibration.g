@@ -336,14 +336,14 @@ if exists(param.A)
   echo "Current offsets: U"^{var.T0_center_X - var.T1_center_X}^" Y"^{var.T0_center_Y - var.T1_center_Y}^" Z"^{global.rtzoffset}
   
   if exists(param.S) && !exists(param.Q)
-    if global.yoffset < 0
-      echo >>>"0:/sys/autocali_res.g" "Y - Offset = "^take(""^{var.T0_center_Y - var.T1_center_Y}, 6)^"<br>"
-    else
-      echo >>>"0:/sys/autocali_res.g" "Y - Offset = "^take(""^{var.T0_center_Y - var.T1_center_Y}, 5)^"<br>"
-    if global.uoffset < 0
-      echo >>>"0:/sys/autocali_res.g" "U - Offset = "^take(""^{var.T0_center_X - var.T1_center_X}, 6)^"<br>"
-    else
-      echo >>>"0:/sys/autocali_res.g" "U - Offset = "^take(""^{var.T0_center_X - var.T1_center_X}, 5)^"<br>"
+    ;if global.yoffset < 0
+      ;echo >>>"0:/sys/autocali_res.g" "Y - Offset = "^take(""^{var.T0_center_Y - var.T1_center_Y}, 6)^"<br>"
+    ;else
+      ;echo >>>"0:/sys/autocali_res.g" "Y - Offset = "^take(""^{var.T0_center_Y - var.T1_center_Y}, 5)^"<br>"
+    ;if global.uoffset < 0
+      ;echo >>>"0:/sys/autocali_res.g" "U - Offset = "^take(""^{var.T0_center_X - var.T1_center_X}, 6)^"<br>"
+    ;else
+      ;echo >>>"0:/sys/autocali_res.g" "U - Offset = "^take(""^{var.T0_center_X - var.T1_center_X}, 5)^"<br>"
   
   if !exists(param.Q) || param.Q == 1
     ; Calculate offsets

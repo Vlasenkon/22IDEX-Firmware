@@ -16,7 +16,7 @@ if input == 0
   echo >>"0:/sys/xy_squaring.g" "  M584 Y0.1:0.4"
   echo >>"0:/sys/xy_squaring.g" "  G90"
   echo >>"0:/sys/xy_squaring.g" "if state.status == ""busy"""
-  echo >>"0:/sys/xy_squaring.g" "  M98 P""0:/user/XY - Offset Calibration.g"" Q1 S1 A1"
+  echo >>"0:/sys/xy_squaring.g" "  M98 P""0:/macros/System/Calibration/QC/Auto Calibration Macros/XY - Offset Calibration.g"" Q1 S1 A1"
   M98 P"0:/user/uy_offsets.g" Q1
   echo "XY squaring is enabled"
 else
@@ -35,6 +35,6 @@ else
   echo >>"0:/sys/xy_squaring.g" "  M584 Y0.1:0.4"
   echo >>"0:/sys/xy_squaring.g" "  G90"
   echo >>"0:/sys/xy_squaring.g" "if state.status == ""busy"""
-  echo >>"0:/sys/xy_squaring.g" "  M98 P""0:/user/XY - Offset Calibration.g"" Q0 S1 A1"
+  echo >>"0:/sys/xy_squaring.g" "  M98 P""0:/macros/System/Calibration/QC/Auto Calibration Macros/XY - Offset Calibration.g"" Q0 S1 A1"
   M98 P"0:/user/uy_offsets.g" Q0
   echo "XY squaring is disabled"

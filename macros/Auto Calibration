@@ -77,10 +77,10 @@ M400
 M98 P"0:/macros/System/Calibration/QC/Auto Calibration Macros/Z - Offset Calibration" S1 A1
 M400
 
-M98 P"0:/user/Mesh Bed calibration.g" S1 A1
+M98 P"0:/macros/System/Calibration/QC/Auto Calibration Macros/Mesh Bed calibration.g" S1 A1
 M400
 
-M98 P"0:/user/XY - Offset Calibration.g" S1 A1
+M98 P"0:/macros/System/Calibration/QC/Auto Calibration Macros/XY - Offset Calibration.g" S1 A1
 M400
 
 ;M98 P"0:/user/XY Auto Squaring.g" S1 A1
