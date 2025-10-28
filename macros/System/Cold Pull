@@ -11,11 +11,44 @@ if !exists(param.A)
     ; Store the selected tool in a variable
     set var.tool = input
 
-    ; Prompt the user to set the material print temperature
-    M291 S5 J1 F250 L150 H450 R"Set Material Print Temperature" P"Enter the temperature for the filament last used in the selected tool."
+    if move.extruders[input].filament == ""
+        ; Prompt the user to set the material print temperature
+        M291 S5 J1 F250 L150 H450 R"Set Material Print Temperature" P"Enter the temperature for the filament last used in the selected tool."
 
-    ; Store the user input in the 'temp' variable
-    set var.temp = input
+        ; Store the user input in the 'temp' variable
+        set var.temp = input
+    else
+        if move.extruders[state.currentTool].filament == "TPU (FLEX)"            ;TPU (FLEX)
+          set var.temp = 200
+        elif move.extruders[state.currentTool].filament == "ABS or ASA"          ;ABS os ASA
+          set var.temp = 260
+        elif move.extruders[state.currentTool].filament == "HIPS"                ;HIPS
+          set var.temp = 235
+        elif move.extruders[state.currentTool].filament == "IGUS A350"           ;IGUS A350
+          set var.temp = 350
+        elif move.extruders[state.currentTool].filament == "IGUS i151"           ;IGUS i151
+          set var.temp = 250
+        elif move.extruders[state.currentTool].filament == "Nylon"               ;Nylon
+          set var.temp = 290
+        elif move.extruders[state.currentTool].filament == "PC"                  ;PC
+          set var.temp = 290
+        elif move.extruders[state.currentTool].filament == "PEEK"                ;PEEK
+          set var.temp = 410
+        elif move.extruders[state.currentTool].filament == "PEI (9085 or 1010)"  ;PEI (9085 or 1010)
+          set var.temp = 380
+        elif move.extruders[state.currentTool].filament == "PEKK"                ;PEKK
+          set var.temp = 375
+        elif move.extruders[state.currentTool].filament == "PETG"                ;PETG
+          set var.temp = 240
+        elif move.extruders[state.currentTool].filament == "PLA"                 ;PLA
+          set var.temp = 210
+        elif move.extruders[state.currentTool].filament == "PP"                  ;PP
+          set var.temp = 250
+        elif move.extruders[state.currentTool].filament == "PSU or PPSU"         ;PSU or PPSU
+          set var.temp = 380
+        elif move.extruders[state.currentTool].filament == "Support - PVA"        ;Support - PVA
+          set var.temp = 220
+
 else
     set var.tool = state.currentTool
     set var.temp = param.A
@@ -26,7 +59,6 @@ var temp_pull = 0
 var temp_stop = 0
 
 ; Check the temperature range and calculate temp_pull and temp_stop accordingly
-echo {var.temp}
 if var.temp > 350                                          ; High Temp
     set var.temp_pull = {var.temp * 0.75}                  ; Calculate 'temp_pull'
     set var.temp_stop = {(var.temp + var.temp_pull) * 0.5} ; Calculate 'temp_stop'
@@ -45,7 +77,8 @@ if !move.axes[0].homed || !move.axes[1].homed || !move.axes[2].homed || !move.ax
     M98 P"0:/sys/homeall.g" S1
 
 G91
-G1 Z100 F6000
+if !exists(param.C)
+  G1 Z100 F6000
 
 ; Deselect any active tool
 T-1
@@ -61,7 +94,14 @@ M302 P1
 
 ; Set extruder moves to relative
 M83
-
+if heat.heaters[0].state == "fault" || heat.heaters[1].state == "fault" || heat.heaters[2].state == "fault" || heat.heaters[3].state == "fault"
+  M568 P0 A0
+  M568 P1 A0
+  M140 S0
+  M141 S0
+  G1 X-999 U999 F18000 Y150 Z100 F18000
+  M291 S1 R"Error" P"Heater fault detected"
+  abort "Error: Heater fault detected"
 ; Extrude filament
 G1 E50 F{5 * 60}
 M400
@@ -75,11 +115,27 @@ M106 S1
 ; Extrude while lowering the temperature
 while sensors.analog[{var.tool}].lastReading > {(var.temp_stop + var.temp) / 2}
     M400
+    if heat.heaters[0].state == "fault" || heat.heaters[1].state == "fault" || heat.heaters[2].state == "fault" || heat.heaters[3].state == "fault"
+      M568 P0 A0
+      M568 P1 A0
+      M140 S0
+      M141 S0
+      G1 X-999 U999 F18000 Y150 Z100 F18000
+      M291 S1 R"Error" P"Heater fault detected"
+      abort "Error: Heater fault detected"
     G1 E1 F{3 * 60}
 
 ; Extrude slowly while lowering the temperature
 while sensors.analog[{var.tool}].lastReading > var.temp_stop
     M400
+    if heat.heaters[0].state == "fault" || heat.heaters[1].state == "fault" || heat.heaters[2].state == "fault" || heat.heaters[3].state == "fault"
+      M568 P0 A0
+      M568 P1 A0
+      M140 S0
+      M141 S0
+      G1 X-999 U999 F18000 Y150 Z100 F18000
+      M291 S1 R"Error" P"Heater fault detected"
+      abort "Error: Heater fault detected"
     G1 E1 F{1 * 60}
 
 ; Wait for the tool to reach the set temperature
@@ -96,9 +152,25 @@ G10 P{var.tool} R{var.temp_stop} S{var.temp_stop}
 ; Extrude while lowering the temperature further
 while sensors.analog[{var.tool}].lastReading < {(var.temp_stop + var.temp_pull) / 2}
     M400
+    if heat.heaters[0].state == "fault" || heat.heaters[1].state == "fault" || heat.heaters[2].state == "fault" || heat.heaters[3].state == "fault"
+      M568 P0 A0
+      M568 P1 A0
+      M140 S0
+      M141 S0
+      G1 X-999 U999 F18000 Y150 Z100 F18000
+      M291 S1 R"Error" P"Heater fault detected"
+      abort "Error: Heater fault detected"
     G1 E-1 F{1 * 60}
     G4 P200
 
+if heat.heaters[0].state == "fault" || heat.heaters[1].state == "fault" || heat.heaters[2].state == "fault" || heat.heaters[3].state == "fault"
+  M568 P0 A0
+  M568 P1 A0
+  M140 S0
+  M141 S0
+  G1 X-999 U999 F18000 Y150 Z100 F18000
+  M291 S1 R"Error" P"Heater fault detected"
+  abort "Error: Heater fault detected"
 ; Retract filament
 G1 E-20 F{5 * 60}
 M400
@@ -114,5 +186,5 @@ G10 P{var.tool} R{0} S{0}
 M98 P"0:/sys/led/end.g"
 M702 P0
 ; Prompt the user to manually remove the filament
-M291 R"Manual Filament Removal" P"Pull out the filament manually now." S2 T15
+M291 R"Manual Filament Removal" P"Pull out the filament manually now." S1 T15
 M98 P"0:/sys/led/resetstatus.g"

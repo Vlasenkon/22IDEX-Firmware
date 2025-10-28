@@ -14,6 +14,9 @@ if network.interfaces[0].actualIP != "0.0.0.0"
 	if network.interfaces[0].gateway != "0.0.0.0"
 		echo >>"0:/user/networkmode.g" "M554 P"^{network.interfaces[0].gateway}
 
+	echo >"0:/IP_address.txt" "User was connected via Ethernet"
+	echo >>"0:/IP_address.txt" "Last Connected IP is: "^{network.interfaces[0].actualIP}
+	
 	echo "Ethernet Configuration: Ethernet IP address was saved."
 
 

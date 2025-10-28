@@ -1,7 +1,7 @@
 if fileexists("/sys/daemon.g.bak")
     M472 P"/sys/daemon.g.bak"
 
-while !fileexists("/sys/daemon.g.bak")
+while !fileexists("/sys/daemon.g.bak") && !fileexists("/sys/daemon.g.off")
     var chamberTemp = sensors.analog[3].lastReading
     var targetTemp = var.chamberTemp + 20
 

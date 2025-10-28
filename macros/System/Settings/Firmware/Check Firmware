@@ -1,4 +1,1 @@
-; Update with a new firmware version refferance.
-
-
 M291 S1 T60 R" Your 22IDEX V3 is running firmware version: 2.1" P"Release Date: 03-2025<br><a href=https://github.com/Vlasenkon/AddWise-IDEX-Firmware/releases target=_blank>Check firmware updates</a>"

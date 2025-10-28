@@ -774,7 +774,7 @@ if result == -1
 var t1 = input
 
 ; --- Bed ---
-M291 R"Temperatures" P"Enter Bed (°C)" S5 L0 H200 F60 J2
+M291 R"Temperatures" P"Enter Bed (°C)" S5 L0 H200 F110 J2
 if result == -1
   abort "User cancelled at Bed prompt"
 var bed = input

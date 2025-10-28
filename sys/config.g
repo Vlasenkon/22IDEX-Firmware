@@ -160,9 +160,11 @@ M98 P"0:/user/xcomp_auto.g"                                      ; load auto cal
 M98 P"0:/user/xcomp_manual.g"                                    ; load manual calibration value
 M98 P"0:/user/xcomp_mode.g"                                      ; load compensation mode
 
-M98 P"0:/user/periodic_wiping.g" 				 ; load global variables 
 M98 P"0:/user/hepafan.g"                                         ; load hepa fan speed
-M98 P"0:/user/retraction_value.g"                                ; load global variables
+echo >"0:/user/tool0retract" "G1 E-5 F3000"
+echo >"0:/user/tool1retract" "G1 E-5 F3000"
+echo >"0:/user/tool0extrude" "G1 E10 F{30}*{3}"
+echo >"0:/user/tool1extrude" "G1 E10 F{30}*{3}"
 
 echo >"0:/user/toolchangeretraction.g" "                         ; ToolChange Retraction Disabled"
 echo >"0:/sys/resetzbabystep.g" "                                ; do nothing"
@@ -188,3 +190,4 @@ M98 P"0:/sys/led/startup.g"                                      ; startup LED
 ; test internet connection
 echo >"0:/sys/runonce.g" "G4 S5"
 echo >>"0:/sys/runonce.g" "M98 P""0:/sys/networktest.g"""
+echo >>"0:/sys/runonce.g" "echo 2"

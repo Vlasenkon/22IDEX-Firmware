@@ -13,7 +13,7 @@ else
 M400
 G60 S0 ; Remember last tool selected
 
-if {state.status != "processing" || state.status != "pausing" || state.status != "paused" || state.status != "resuming"} && {!move.axes[0].homed || !move.axes[1].homed || !move.axes[2].homed || !move.axes[3].homed}
+if {state.status != "processing" || state.status != "printing" || state.status != "pausing" || state.status != "paused" || state.status != "resuming"} && {!move.axes[0].homed || !move.axes[1].homed || !move.axes[2].homed || !move.axes[3].homed}
   G28
 
 
@@ -37,6 +37,6 @@ M400 ; Wait for the moves to finish
 
 M98 P"0:/sys/nozzlewipe.g" ; wipe curently active nozzle
 
-if state.status != "processing" || state.status != "pausing" || state.status != "paused" || state.status != "resuming"
+if state.status != "processing" || state.status != "printing" || state.status != "pausing" || state.status != "paused" || state.status != "resuming"
   G10 S0 R0 ; Turn off the heater
 M84 E0:1

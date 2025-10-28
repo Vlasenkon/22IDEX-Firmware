@@ -11,7 +11,6 @@ while network.interfaces[0].actualIP == "0.0.0.0" && network.interfaces[1].actua
 
 ; Check if network connection was established before the test started
 if network.interfaces[0].actualIP != "0.0.0.0" || network.interfaces[1].actualIP != "0.0.0.0"
-  echo >"0:/IP_address.txt" "Network Connection was established before the test started. IP: "^{network.interfaces[0].actualIP != "0.0.0.0" ? network.interfaces[0].actualIP : network.interfaces[1].actualIP}
   abort "Network Connection was established before the test started"
 
 ; Initialize variable to store the network module state
@@ -51,7 +50,8 @@ while network.interfaces[{var.module}].actualIP == "0.0.0.0" && iterations < 20
 echo "IF 1 with Mode = "^{var.module}
 if network.interfaces[{var.module}].actualIP != "0.0.0.0"
   M98 P"0:/sys/led/mint.g"
-  echo >"0:/IP_address.txt" "Last Connected IP is: "^{network.interfaces[{var.module}].actualIP}
+  echo >"0:/IP_address.txt" "User was connected via WiFi"
+  echo >>"0:/IP_address.txt" "Last Connected IP is: "^{network.interfaces[{var.module}].actualIP}
   G4 S1
   M98 P"0:/sys/led/resetstatus.g"
   echo >"0:/user/networkmode.g" "M552 I0 S1"
@@ -77,7 +77,8 @@ if var.module == 0 && network.interfaces[{var.module}].actualIP == "0.0.0.0"
     echo >"0:/user/networkmode.g" "M552 I0 S1"
     echo >>"0:/user/networkmode.g" "M98 P""0:/user/ip_ethernettopc.g"""
 
-    echo >"0:/IP_address.txt" "Last Connected IP is: "^{network.interfaces[{var.module}].actualIP}
+    echo >"0:/IP_address.txt" "User was connected via Ethernet to PC"
+    echo >>"0:/IP_address.txt" "Last Connected IP is: "^{network.interfaces[{var.module}].actualIP}
     G4 S1
     M98 P"0:/sys/led/resetstatus.g"
     M99                                       ; Exit the script
@@ -114,9 +115,11 @@ while network.interfaces[{var.module}].actualIP == "0.0.0.0" && iterations < 20
 
 echo "IF 2 with var.module = "^{var.module}
 if network.interfaces[{var.module}].actualIP != "0.0.0.0"
-  M98 P"0:/sys/led/orange.g"                 ; Turn on yellow LEDs to indicate mode switch
-  echo >"0:/IP_address.txt" "Last Connected IP is: "^{network.interfaces[{var.module}].actualIP}
-  M291 S1 T600 R"Network Mode was automaticaly switched" P" "
+  M98 P"0:/sys/led/orange.g"                 ; Turn on orange LEDs to indicate mode switch
+
+  echo >"0:/IP_address.txt" "User was connected via Ethernet"
+  echo >>"0:/IP_address.txt" "Last Connected IP is: "^{network.interfaces[{var.module}].actualIP}
+  
   echo >"0:/user/networkmode.g" "M552 I1 S1"
   M98 P"0:/sys/led/resetstatus.g"
   M99                                       ; Exit the script
@@ -176,8 +179,8 @@ if result != 0
 else
   echo "M552: WiFi AP Mode started"
 G4 S5                                       ; Wait
-if network.interfaces[1].actualIP != "0.0.0.0"
-  echo >"0:/IP_address.txt" "WiFi was switched to AP Mode. IP: "^{network.interfaces[1].actualIP}
+
+echo >"0:/IP_address.txt" "WiFi was switched to AP Mode. IP: "^{network.interfaces[1].actualIP}
 
 M291 S2 R"Connection was not established" P"WiFi module was automatically switched to Access Point Mode"
 ; Display message indicating that WiFi has been switched to Access Point mode due to failed connection attempts

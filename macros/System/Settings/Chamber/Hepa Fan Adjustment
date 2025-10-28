@@ -1,7 +1,4 @@
-; Explain user in the prompt that this is a default speed at which HEPA will be rotating to slowly filter the air at the end of print HEPA will kick in at full speed to During the print and at the end of the print HEPA will be working at full speed. 
-
-
-M291 S5 J1 F50 L0 H100 R"Set Hepa Fan Speed in %" P"Recommended values: 50–55%."
+M291 S5 J1 F53 L0 H100 R"Set Hepa Fan Speed in %" P"Recommended values: 50–55%."
 var speed = floor(255 * input / 100)
 set global.hepafan = var.speed
 echo >"0:/user/hepafan.g" "if exists(global.hepafan)"

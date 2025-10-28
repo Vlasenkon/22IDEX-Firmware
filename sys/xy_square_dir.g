@@ -1,0 +1,1 @@
+set global.xy_square_offset = global.xy_square_offset * 1

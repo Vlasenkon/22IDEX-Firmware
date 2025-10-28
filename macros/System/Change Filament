@@ -24,7 +24,7 @@ if var.previous_tooltemp < 380
   M400
   G60 S0 ; Remember last tool selected
   
-  if {state.status != "processing" || state.status != "pausing" || state.status != "paused" || state.status != "resuming"} && {!move.axes[0].homed || !move.axes[1].homed || !move.axes[2].homed || !move.axes[3].homed}
+  if {state.status != "processing" || state.status != "printing" || state.status != "pausing" || state.status != "paused" || state.status != "resuming"} && {!move.axes[0].homed || !move.axes[1].homed || !move.axes[2].homed || !move.axes[3].homed}
     G28
   
   
@@ -48,7 +48,7 @@ if var.previous_tooltemp < 380
 
   M98 P"0:/sys/nozzlewipe.g" ; wipe curently active nozzle
 
-  if state.status != "processing" || state.status != "pausing" || state.status != "paused" || state.status != "resuming"
+  if state.status != "processing" || state.status != "printing" || state.status != "pausing" || state.status != "paused" || state.status != "resuming"
     G10 S0 R0 ; Turn off the heater
   M84 E0:1
 else
@@ -78,7 +78,7 @@ if var.previous_tooltemp <= var.current_temp || var.previous_tooltemp - var.curr
   M400
   G60 S0 ; Remember last tool selected
   
-  if {state.status != "processing" || state.status != "pausing" || state.status != "paused" || state.status != "resuming"} && {!move.axes[0].homed || !move.axes[1].homed || !move.axes[2].homed || !move.axes[3].homed}
+  if {state.status != "processing" || state.status != "printing" || state.status != "pausing" || state.status != "paused" || state.status != "resuming"} && {!move.axes[0].homed || !move.axes[1].homed || !move.axes[2].homed || !move.axes[3].homed}
     G28
     M98 P"0:/sys/led/statusoff.g"
     M98 P"0:/sys/led/restorewhite.g"
@@ -107,7 +107,7 @@ if var.previous_tooltemp <= var.current_temp || var.previous_tooltemp - var.curr
   if input == 0
     G1 E200 F{var.ss} ; Extrude
   else
-    if state.status != "processing" || state.status != "pausing" || state.status != "paused" || state.status != "resuming"
+    if state.status != "processing" || state.status != "printing" || state.status != "pausing" || state.status != "paused" || state.status != "resuming"
       G10 S0 R0 ; Turn off the heater
       M84 E0:1
     M99
@@ -124,7 +124,7 @@ if var.previous_tooltemp <= var.current_temp || var.previous_tooltemp - var.curr
   M98 P"0:/sys/nozzlewipe.g" ; wipe curently active nozzle
   M84 E0:1
   
-  if state.status != "processing" || state.status != "pausing" || state.status != "paused" || state.status != "resuming"
+  if state.status != "processing" || state.status != "printing" || state.status != "pausing" || state.status != "paused" || state.status != "resuming"
     G10 S0 R0 ; Turn off the heater
 
 elif var.previous_tooltemp - var.current_temp <= 160
@@ -133,7 +133,7 @@ elif var.previous_tooltemp - var.current_temp <= 160
 
   G60 S0
 
-  if {state.status != "processing" || state.status != "pausing" || state.status != "paused" || state.status != "resuming"} && {!move.axes[0].homed || !move.axes[1].homed || !move.axes[2].homed || !move.axes[3].homed}
+  if {state.status != "processing" || state.status != "printing" || state.status != "pausing" || state.status != "paused" || state.status != "resuming"} && {!move.axes[0].homed || !move.axes[1].homed || !move.axes[2].homed || !move.axes[3].homed}
     G28
     M98 P"0:/sys/led/statusoff.g"
     M98 P"0:/sys/led/restorewhite.g"
@@ -165,7 +165,7 @@ elif var.previous_tooltemp - var.current_temp <= 160
         break
     G1 E20 F300
   else
-    if state.status != "processing" || state.status != "pausing" || state.status != "paused" || state.status != "resuming"
+    if state.status != "processing" || state.status != "printing" || state.status != "pausing" || state.status != "paused" || state.status != "resuming"
       G10 S0 R0 ; Turn off the heater
       M84 E0:1
     M99
@@ -182,7 +182,7 @@ elif var.previous_tooltemp - var.current_temp <= 160
   M98 P"0:/sys/nozzlewipe.g" ; wipe curently active nozzle
   M84 E0:1
   
-  if state.status != "processing" || state.status != "pausing" || state.status != "paused" || state.status != "resuming"
+  if state.status != "processing" || state.status != "printing" || state.status != "pausing" || state.status != "paused" || state.status != "resuming"
     G10 S0 R0 ; Turn off the heater
 
 else
@@ -194,7 +194,7 @@ else
 
   G60 S0
 
-  if {state.status != "processing" || state.status != "pausing" || state.status != "paused" || state.status != "resuming"} && {!move.axes[0].homed || !move.axes[1].homed || !move.axes[2].homed || !move.axes[3].homed}
+  if {state.status != "processing" || state.status != "printing" || state.status != "pausing" || state.status != "paused" || state.status != "resuming"} && {!move.axes[0].homed || !move.axes[1].homed || !move.axes[2].homed || !move.axes[3].homed}
     G28
     M98 P"0:/sys/led/statusoff.g"
     M98 P"0:/sys/led/restorewhite.g"
@@ -226,7 +226,7 @@ else
         break
     G1 E20 F300
   else
-    if state.status != "processing" || state.status != "pausing" || state.status != "paused" || state.status != "resuming"
+    if state.status != "processing" || state.status != "printing" || state.status != "pausing" || state.status != "paused" || state.status != "resuming"
       G10 S0 R0 ; Turn off the heater
       M84 E0:1
     M99
@@ -249,7 +249,7 @@ else
 
   G60 S0
 
-  if {state.status != "processing" || state.status != "pausing" || state.status != "paused" || state.status != "resuming"} && {!move.axes[0].homed || !move.axes[1].homed || !move.axes[2].homed || !move.axes[3].homed}
+  if {state.status != "processing" || state.status != "printing" || state.status != "pausing" || state.status != "paused" || state.status != "resuming"} && {!move.axes[0].homed || !move.axes[1].homed || !move.axes[2].homed || !move.axes[3].homed}
     G28
     M98 P"0:/sys/led/statusoff.g"
     M98 P"0:/sys/led/restorewhite.g"
@@ -281,7 +281,7 @@ else
         break
     G1 E20 F300
   else
-    if state.status != "processing" || state.status != "pausing" || state.status != "paused" || state.status != "resuming"
+    if state.status != "processing" || state.status != "printing" || state.status != "pausing" || state.status != "paused" || state.status != "resuming"
       G10 S0 R0 ; Turn off the heater
       M84 E0:1
     M99
@@ -298,7 +298,7 @@ else
   M98 P"0:/sys/nozzlewipe.g" ; wipe curently active nozzle
   M84 E0:1
 
-  if state.status != "processing" || state.status != "pausing" || state.status != "paused" || state.status != "resuming"
+  if state.status != "processing" || state.status != "printing" || state.status != "pausing" || state.status != "paused" || state.status != "resuming"
     G10 S0 R0 ; Turn off the heater
 
 M702 P0

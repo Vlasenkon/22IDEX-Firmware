@@ -1,0 +1,43 @@
+M291 R"Z-Binding Test" P"Choose an option:" K{"Start","Skip","Cancel"} S4
+if input == 1
+    M99
+elif input == 2
+    abort "Error: Z - Binding test cancelled by user."
+
+M564 H0 S0 Z
+G91
+
+M291 R"Adjust the Bed Position" P"Please adjust the bed position.<br>Attantion: the bed must be positioned at a sufficient distance from the extreme positions." S3 Z1
+
+M913 Z60 ; Reduce Z-axis current
+
+M291 R"Information" P"The bed will move up and down 20 units several times.<br>Pay attention to any unusual sounds or actions.<br>Press ""Ok"" to contimue." S3
+
+; Move Z-axis up and down five times
+G91
+var iter = 0
+while var.iter < 5
+    G1 Z-20 F18000
+    G1 Z20 F18000
+    set var.iter = var.iter + 1
+
+M913 Z100 ; Reset Z-axis current
+G1 Z25 F18000
+
+M291 R"Was the motion smooth?" P"Choose an option:" K{"Yes","No"} S4
+
+G91
+if input == 0
+    M98 P"0:/sys/led/end.g"
+    G4 S1
+    M98 P"0:/sys/led/resetstatus.g"
+    G1 Z-50 F18000
+elif input == 1
+    M98 P"0:/sys/led/fault.g"
+    G4 S1
+    M98 P"0:/sys/led/resetstatus.g"
+    M291 R"Perform Z - Motor alignment Required" P"Perform Z - Motor alignment Required" S1 T120
+    abort "Error: Z - Motor binding reported."
+
+M564 H1 S1
+G91

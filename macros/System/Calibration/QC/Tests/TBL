@@ -1,0 +1,10 @@
+M84 Z
+
+M291 R"True Bed Leveling Test" P"Tilt the bed manually to test the True Bed Leveling." S4 K{"Test","Skip","Cancel"}
+if input == 1
+    M99
+elif input == 2
+    abort "Test cancelled by user"
+
+M291 R"True Bed Leveling Test" P"Please adjust the bed position manually. After pressing “OK,” homing Z will start." S2
+G28

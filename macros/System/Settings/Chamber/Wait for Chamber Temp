@@ -1,5 +1,3 @@
-; Rewrite this macro completely. What should happen? If user selects to wait for chamber temperature, we need to Write M one one six command waiting for chamber temperature and then waiting another 10 minutes for temperature to stabilize. Also we want to write that when it gets to this point before M116 I want to to give a user prompt saying, which will be non-blocking, something like M291 now waiting for chamber to reach this temperature then Then it will say after it reaches the temperature and starts to wait, we'll say waiting for 10 minutes to heat soak. and give user options to skip it. So maybe instead of having M116, let's have a while loop. and then if customer if a user skips it then we will proceed without heating without waiting for the chamber. and the same way we can do with the heat soaking. If user selects not to wait for the chamber temperature, let's just don't have anything there. 
-
 M291 S4 P"Chamber Temperature Wait" R"Select Option" K{"Wait","Don't Wait"} F0
 
 if input = 0

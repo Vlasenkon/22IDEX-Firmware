@@ -1,1 +1,1 @@
-; Please edit contents of the original file
+; Stay idle after print is finished

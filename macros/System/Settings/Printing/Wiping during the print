@@ -1,0 +1,11 @@
+M291 S4 R"Nozzle wiping during printing" P"Select Option" K{"On","Off"} F0
+
+if input = 0
+    echo >"0:/user/periodic_wiping.g" "if exists(global.periodic_wiping)"
+    echo >>"0:/user/periodic_wiping.g" "  set global.periodic_wiping = 1"
+    echo >>"0:/user/periodic_wiping.g" "else"
+    echo >>"0:/user/periodic_wiping.g" "  global periodic_wiping = 1"
+    echo "Nozzle wiping during printing is enabled"
+else
+    echo >"0:/user/periodic_wiping.g" "; Nozzle wiping during printing is disabled"
+    echo "Nozzle wiping during printing is disabled"

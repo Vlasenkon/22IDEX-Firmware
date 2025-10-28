@@ -1,0 +1,2 @@
+; Auto Calibration Results
+M291 S2 R"Auto Calibration was Successfull" P"Results:<br>Nozzle deviation = 0<br>Nozzle deviation in the midle = 0<br>Z - Offset = 0<br>Y - Offset = 0<br>U - Offset = 0<br>XY Square Offset = 0"

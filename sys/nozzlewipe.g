@@ -38,25 +38,26 @@ M400
 if exists(param.W) && sensors.analog[{state.currentTool}].lastReading < tools[{state.currentTool}].active[0]
   M116 S10 P{state.currentTool}
 
-; Purge fillament
-if state.status == "printing" || state.status == "resuming"
-  M98 P"0:/sys/toolchangeretraction.g" E1
+; Purge fillament (skip if printer is starting up)
+if !exists(global.printerStatus) || global.printerStatus != "prt_starting"
+  if (state.status == "processing" || state.status == "printing" || state.status == "pausing" || state.status == "resuming")
+    M98 P"0:/sys/toolchangeretraction.g" E1
 
 
 if exists(param.E)
   M83                                                             ; Relative extruder moves
-  if heat.heaters[state.currentTool].current < 160
-    if state.currentTool == 0
-      M291 S5 J1 F250 L150 H450 R"Set Left Tool Temperature" P"Please set the temperature for the filament previously loaded in the Left Tool."
-      G10 P0 R{input} S{input}
-      M568 P0 A2
-      M116 P0 S10
-    elif state.currentTool == 1
-      M291 S5 J1 F250 L150 H450 R"Set Right Tool Temperature" P"Please set the temperature for the filament previously loaded in the Right Tool."
-      G10 P1 R{input} S{input}
-      M568 P1 A2
-      M116 P1 S10
-    else
+  if state.currentTool == 0 && heat.heaters[state.currentTool].current < 160
+    M291 S5 J1 F250 L150 H450 R"Set Left Tool Temperature" P"Please set the temperature for the filament previously loaded in the Left Tool."
+    G10 P0 R{input} S{input}
+    M568 P0 A2
+    M116 P0 S10
+  elif state.currentTool == 1 && heat.heaters[state.currentTool].current < 160
+    M291 S5 J1 F250 L150 H450 R"Set Right Tool Temperature" P"Please set the temperature for the filament previously loaded in the Right Tool."
+    G10 P1 R{input} S{input}
+    M568 P1 A2
+    M116 P1 S10
+  elif state.currentTool != 0 && state.currentTool != 1
+    if heat.heaters[0].current < 160 || heat.heaters[1].current < 160
       M291 S5 J1 F250 L150 H450 R"Set Left Tool Temperature" P"Please set the temperature for the filament previously loaded in the Left Tool."
       G10 P2 R{input} S{input}
       G10 P3 R{input} S{input}
@@ -67,6 +68,15 @@ if exists(param.E)
       M568 P1 A2
       M116 P0 S10
       M116 P1 S10
+
+  if heat.heaters[0].state == "fault" || heat.heaters[1].state == "fault" || heat.heaters[2].state == "fault" || heat.heaters[3].state == "fault"
+    M568 P0 A0
+    M568 P1 A0
+    M140 S0
+    M141 S0
+    G1 X-999 U999 F18000 Y150 Z100 F18000
+    M291 S1 R"Error" P"Heater fault detected"
+    abort "Error: Heater fault detected"
   G1 E{(param.E)} F{60}*{3}                                       ; extrude filament
   M400
   G4 S1

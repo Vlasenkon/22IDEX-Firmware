@@ -1,1 +1,1 @@
-M587 S"Vision Miner" P"p33kisawesome!"
+M587 S"AddWise" P"SubtractWise"

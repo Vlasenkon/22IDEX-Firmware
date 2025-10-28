@@ -1,3 +1,7 @@
+if heat.heaters[0].state == "fault" || heat.heaters[1].state == "fault" || heat.heaters[2].state == "fault" || heat.heaters[3].state == "fault"
+  M291 S1 R"Error" P"Heater fault detected"
+  abort "Error: Heater fault detected"
+
 M291 S5 J1 F250 L150 H450 R"Set Left Tool Temperature" P"Please set the temperature for the filament previously loaded in the Left Tool.<br>If new machine, set to 250°C"
 var ll = input
   
@@ -18,8 +22,8 @@ M568 P1 A2
 M291 S2 R"Please Remove the Build Plate" P"To avoid damaging your machine, remove the build plate from the build platform.<br>Click ""OK"" when you are ready to proceed."
 
 if !move.axes[0].homed || !move.axes[1].homed || !move.axes[2].homed || !move.axes[3].homed
-  M98 P"0:/sys/homeall.g" S1
   M291 S0 T15 R"Homing Axes" P"Axes are not homed. Homing now. Please wait..."
+  M98 P"0:/sys/homeall.g" S1
 
 if state.currentTool != 0
   T0
@@ -64,22 +68,27 @@ M42 P4 S1                                              ; Turn on relay
 
 
 
+echo >"0:/sys/autocali_res.g" "; Auto Calibration Results"
+echo >>>"0:/sys/autocali_res.g" "M291 S2 R""Auto Calibration was Successfull"" P""Results:<br>"
 
-
-
-M98 P"0:/macros/System/Calibration/Auto Calibration Macros/Tool Height Auto Calibration" S1 A1
+M98 P"0:/macros/System/Calibration/QC/Auto Calibration Macros/Tool Height Auto Calibration" S1 A1
 M400
 
-M98 P"0:/macros/System/Calibration/Auto Calibration Macros/Z - Offset Calibration" S1 A1
+M98 P"0:/macros/System/Calibration/QC/Auto Calibration Macros/Z - Offset Calibration" S1 A1
 M400
 
-M98 P"0:/macros/System/Calibration/Auto Calibration Macros/Mesh Bed calibration" S1 A1
+M98 P"0:/user/Mesh Bed calibration.g" S1 A1
 M400
 
-M98 P"0:/macros/System/Calibration/Auto Calibration Macros/XY - Offset Calibration" S1 A1
+M98 P"0:/user/XY - Offset Calibration.g" S1 A1
 M400
 
+;M98 P"0:/user/XY Auto Squaring.g" S1 A1
+;M400
 
+;M98 P"0:/user/xy_square_offset.g"
+;M98 P"0:/sys/xy_squaring.g" N1
+;M400
 
 
 
@@ -99,3 +108,4 @@ M98 P"0:/user/probeoffset.g"                       ; load global variables
 
 G90
 G1 X-999 U999 Y150 Z100 F18000
+M98 P"0:/sys/autocali_res.g"

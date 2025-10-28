@@ -14,7 +14,7 @@ if exists(global.filamenterror) && exists(global.filamentbackup) && global.filam
   ; Prepare new tool after filament runout  
   T{global.nextTool}                         ; Select the tool active before pause
 else
-  T R5
+  T R4
 
 if tools[state.currentTool].active[0] == 0
   M291 S5 J1 F250 L0 H450 R"Set Left Tool Temperature" P"Please set the temperature for the filament previously loaded in the Left Tool."
@@ -37,7 +37,7 @@ M208 Z-1 S1                                ; Set axis minima for Z-offset
 
 ; Move to resume position
 G90
-G1 R4 Z2 F18000                            ; Move above last print position
+G1 R4 Z5 F18000                            ; Move above last print position
 G1 R4 X0 Y0 F18000                         ; Move to last print position
 G1 R4 Z0                                   ; Lower to last print position
 
