@@ -4,10 +4,12 @@ while true
     M291 J1 R"Move Z Down?" P"Move the Build Plate down unit all 3 motors reach bottom and the bed is leveled, expect to hear grinding noise" S4 K{"Move Z Down","Already at the bottom",}
     if input = 0
         M84 Z
+        M913 Z60        ; Reduce Z motor current to 60% for downward movement
         G91
         G1 Z25 F18000
         G90
         M400
+        M913 Z100       ; Restore Z motor current to 100%
     else
         break
 
