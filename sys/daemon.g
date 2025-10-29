@@ -7,7 +7,7 @@ while !fileexists("/sys/daemon.g.bak") && !fileexists("/sys/daemon.g.off")
 
 
     if var.chamberTemp < 50
-        set var.targetTemp = 50
+        set var.targetTemp = 70
 
     if var.chamberTemp > 100
         set var.targetTemp = 120
