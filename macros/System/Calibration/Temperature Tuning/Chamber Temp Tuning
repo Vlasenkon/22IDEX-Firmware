@@ -1,0 +1,327 @@
+; ---- User confirmation for fault detection ----
+var startMsg = "Start simplified chamber sensor calibration?<br><br>Remove low-melting materials first."
+set var.startMsg = var.startMsg ^ "<br>Hold X or U endstop to abort at any time."
+set var.startMsg = var.startMsg ^ "<br><br>Immediate calibration skips heating/soaking phases."
+M291 S4 K{"Start test","Start (No fault detection)","Immediate calibration","Cancel"} R"Chamber Temperature Calibration" P{var.startMsg}
+
+; Track fault detection state
+var disableFaultDetection = false
+var immediateCalibration = false
+var heatingMinutes = 30  ; Default heating duration
+
+if input == 0
+  ; Starting with normal fault detection
+elif input == 1
+  set var.disableFaultDetection = true
+  M570 H3 P999999 T999999 R50    ; Disable chamber fault detection
+elif input == 2
+  set var.immediateCalibration = true
+else
+  abort "Calibration cancelled by user."
+
+; ---- Calibration method selection ----
+M291 S4 K{"Automatic (T0+T1 avg)","Manual (IR/Probe)","Cancel"} R"Calibration Method" P"Select calibration method:<br><br>Automatic: Uses tool temperatures<br>Manual: You measure with IR/probe"
+
+var useManualCalibration = false
+
+if input == 0
+  ; Automatic calibration selected
+elif input == 1
+  set var.useManualCalibration = true
+else
+  abort "Calibration cancelled by user."
+
+; ---- Heating duration selection ----
+if !var.immediateCalibration
+  var heatMsg = "Select heating duration:<br><br>30 minutes is recommended for most cases."
+  set var.heatMsg = var.heatMsg ^ "<br>Longer heating ensures better thermal stability."
+  M291 S4 K{"30 minutes (Default)","Custom duration","Cancel"} R"Heating Duration" P{var.heatMsg}
+  
+  ; heatingMinutes already initialized to 30 at top of file
+  
+  if input == 0
+    ; Using default 30 minutes (already set)
+  elif input == 1
+    ; Ask for custom heating duration
+    var customMsg = "Enter heating duration (5-120 minutes):<br><br>Recommended: 30-60 minutes"
+    set var.customMsg = var.customMsg ^ "<br>Minimum: 5 minutes for safety"
+    M291 J1 L5 H120 F30 P{var.customMsg} R"Custom Heating Duration" S5
+    if result == -1
+      abort "Calibration cancelled by user."
+    set var.heatingMinutes = input
+  else
+    abort "Calibration cancelled by user."
+else
+  ; Skip heating duration selection for immediate calibration
+  set var.heatingMinutes = 0
+
+; ---- Safety preparations ----
+if !var.immediateCalibration
+  M291 S4 K{"Continue","Cancel"} R"Remove Plastics" P"Remove low-temperature filaments from chamber.<br><br>This prevents damage during heating."
+  
+  if input != 0
+    ; Reset temperatures and abort
+    M568 P0 S{0} R{0}
+    M568 P1 S{0} R{0}  
+    M568 P2 S{0} R{0}
+    M568 P3 S{0} R{0}
+    M140 S0
+    M141 S0
+    abort "Calibration cancelled - all temperatures reset."
+
+  M291 S2 R"Close Chamber" P"Close the chamber lid and door" S2
+
+; Reset all heaters to safe state
+M568 P0 S{0} R{0}
+M568 P1 S{0} R{0}
+M568 P2 S{0} R{0}
+M568 P3 S{0} R{0}
+
+; Reset sensor to default configuration first
+M308 S3 A"Chamber Air" P"1.temp0" Y"thermistor" T200000 B3950 C0 R2200
+G4 S2  ; Brief pause for sensor to reset
+
+; Check sensor health before starting
+var initialReading = sensors.analog[3].lastReading
+echo "Initial chamber sensor reading: " ^ var.initialReading ^ "°C"
+
+if var.initialReading > 1500 || var.initialReading < -50
+  M140 S0
+  M141 S0
+  if var.disableFaultDetection
+    M570 H3 P600 T70 R5
+  echo "SENSOR FAULT: " ^ var.initialReading ^ "°C - Check wiring"
+  abort "Chamber sensor fault detected"
+
+; Check temperature difference between nozzles for automatic calibration
+if !var.useManualCalibration
+  var temp0 = heat.heaters[0].current
+  var temp1 = heat.heaters[1].current
+  var tempDifference = abs(var.temp0 - var.temp1)
+  echo "Nozzle temperatures - T0: " ^ var.temp0 ^ "°C, T1: " ^ var.temp1 ^ "°C"
+  echo "Temperature difference: " ^ var.tempDifference ^ "°C"
+
+  if var.tempDifference > 30
+    echo "Error: Nozzle temperature difference too high (" ^ var.tempDifference ^ "°C > 30°C)"
+    M98 P"0:/sys/led/fault.g"
+    abort "Temperature difference too large - calibration aborted"
+
+;========= START HEATING FIRST =========
+if !var.immediateCalibration
+  echo "=== STARTING HEATING (Chamber: 105°C, Bed: 160°C) ==="
+  ; Set temperatures for regular calibration
+  M140 S160    ; Heat bed to 160°C
+  M141 S105    ; Heat chamber to 105°C
+  
+  ; Set status LED to indicate heating
+  M98 P"0:/sys/led/pause.g"
+else
+  ; For immediate calibration, don't heat anything - use current conditions
+  echo "=== IMMEDIATE CALIBRATION - Using current temperatures ==="
+  ; No heating commands for immediate calibration
+
+; Combined homing and positioning for automatic calibration
+if !var.useManualCalibration
+  ; Home axes if needed (only for regular calibration, not immediate)
+  if !var.immediateCalibration
+    if !move.axes[0].homed||!move.axes[1].homed||!move.axes[2].homed||!move.axes[3].homed
+      echo "Homing axes for automatic calibration..."
+      G28
+  
+  ; Move to safe position for automatic calibration (both regular and immediate)
+  if move.axes[0].homed && move.axes[1].homed && move.axes[2].homed && move.axes[3].homed
+    echo "Moving to safe position for automatic calibration..."
+    G1 F18000 X-200 Y0 U200 Z150
+
+
+;========= HEATING DURATION MONITORING =========
+; Set status LED to indicate heating
+M98 P"0:/sys/led/pause.g"
+
+if !var.immediateCalibration
+  echo "=== HEATING " ^ var.heatingMinutes ^ " MINUTES (Hold X/U endstop to skip) ==="
+
+  ; User-selected heating period
+  var heatingStartTime = state.upTime
+  var heatingDuration = var.heatingMinutes * 60  ; Convert minutes to seconds
+  var lastHeatingUpdate = 0
+
+  var heatingFinished = false
+  while true
+    ; Check for endstop trigger
+    if sensors.endstops[0].triggered || sensors.endstops[3].triggered
+      echo "Heating skipped by endstop"
+      break
+    
+    var heatingRemaining = var.heatingDuration - (state.upTime - var.heatingStartTime)
+    
+    if var.heatingRemaining <= 0
+      set var.heatingFinished = true
+      break
+    
+    ; Calculate variables outside conditional for proper scope
+    var remainingMinutes = var.heatingRemaining / 60.0
+    var currentTemp = (heat.heaters[0].current + heat.heaters[1].current) / 2
+    
+    ; Progress update every 1 minute
+    if (state.upTime - var.lastHeatingUpdate) >= 60 || var.lastHeatingUpdate == 0
+      set var.lastHeatingUpdate = state.upTime
+      echo "Heating - Time remaining: " ^ var.remainingMinutes ^ " minutes, Chamber: " ^ var.currentTemp ^ "°C"
+    
+    G4 S1  ; Wait 1 second
+
+; Only perform stabilization if not immediate calibration
+if !var.immediateCalibration
+  ;========= STABILIZATION PHASE =========
+  echo "=== STABILIZING 5 MINUTES (Hold X/U endstop to skip) ==="
+
+  ;========= CLEANUP =========
+  ; Turn off heaters
+  M140 S0
+  M141 S0
+  M141 S-273.15   ; Turn off chamber heater (absolute zero = off)
+  
+  G4 S2
+  ; Restore fault detection if disabled
+  if var.disableFaultDetection
+    M570 H3 P600 T70 R5  
+
+  ; 5-minute stabilization
+  var stabilizationStart = state.upTime
+  var stabilizationDuration = 300  ; 5 minutes = 300 seconds
+
+  var stabilizationFinished = false
+  while true
+    ; Check for endstop trigger
+    if sensors.endstops[0].triggered || sensors.endstops[3].triggered
+      echo "Stabilization skipped by endstop"
+      break
+    
+    var stabilizationRemaining = var.stabilizationDuration - (state.upTime - var.stabilizationStart)
+    
+    if var.stabilizationRemaining <= 0
+      set var.stabilizationFinished = true
+      break
+    
+    ; Update every 30 seconds
+    if mod((state.upTime - var.stabilizationStart), 30) == 0
+      var currentTemp = (heat.heaters[0].current + heat.heaters[1].current) / 2
+      echo "Stabilizing - " ^ (var.stabilizationRemaining / 60.0) ^ " minutes remaining, Chamber: " ^ var.currentTemp ^ "°C"
+    
+    G4 S5
+
+; End of heating/stabilization conditional for immediate calibration
+;========= CALIBRATION PHASE =========
+echo "=== CALIBRATION PHASE ==="
+
+; Physically disable chamber heater to prevent faults during calibration
+M141 S-273.15   ; Turn off chamber heater (absolute zero = off)
+G4 S1           ; Brief pause for heater to disable
+
+; Get reference temperature
+var referenceTemp = 0.0
+if var.useManualCalibration
+  ; Manual measurement - ask user to measure chamber temperature
+  var currentChamberTemp = sensors.analog[3].lastReading
+  M291 S5 L0 H200 F{var.currentChamberTemp} P"Measure chamber temperature with IR gun or probe and enter the value (°C):" R"Manual Temperature Measurement" J1
+  if result == -1
+    M140 S0
+    M141 S0
+    abort "Calibration cancelled"
+  set var.referenceTemp = input
+else
+  ; Automatic - use T0+T1 average
+  set var.referenceTemp = (heat.heaters[0].current + heat.heaters[1].current) / 2
+  
+  echo "Reference temperature (T0+T1 avg): " ^ var.referenceTemp ^ "°C"
+
+;========= BINARY SEARCH ALGORITHM =========
+
+; Binary search parameters
+var tolerance = 0.5
+var cLow = -5.0e-7
+var cHigh = 5.0e-7
+var bestC = 0.0
+var bestError = 1.0e9
+var iterations = 0
+var maxIterations = 20
+
+echo "Starting binary search calibration..."
+echo "Reference temperature: " ^ var.referenceTemp ^ "°C"
+echo "Search range: " ^ var.cLow ^ " to " ^ var.cHigh
+echo "Target accuracy: ±" ^ var.tolerance ^ "°C"
+
+; Binary search loop
+while var.iterations < var.maxIterations
+  set var.iterations = var.iterations + 1
+  
+  ; Calculate middle point
+  var cMid = (var.cLow + var.cHigh) / 2.0
+  
+  ; Apply test coefficient
+  M308 S3 C{var.cMid}
+  G4 S2
+  
+  ; Read sensor and calculate error
+  var sensorReading = sensors.analog[3].lastReading
+  var error = abs(var.sensorReading - var.referenceTemp)
+  
+  ; Update best values if improved
+  if var.error < var.bestError
+    set var.bestError = var.error
+    set var.bestC = var.cMid
+  
+  echo "Iteration " ^ var.iterations ^ ": C=" ^ var.cMid ^ ", Sensor=" ^ var.sensorReading ^ "°C, Error=" ^ var.error ^ "°C"
+  
+  ; Check if good enough
+  if var.error <= var.tolerance
+    echo "Target accuracy reached!"
+    break
+  
+  ; Check convergence
+  if abs(var.cHigh - var.cLow) < 1e-9
+    echo "Convergence reached"
+    break
+  
+  ; Adjust search range based on error
+  if var.sensorReading > var.referenceTemp
+    set var.cHigh = var.cMid
+  else
+    set var.cLow = var.cMid
+
+; Format result for display and saving
+var cSign = (var.bestC < 0) ? "-" : ""
+var cMagnitude = abs(var.bestC) / 1e-8
+var cFormatted = ceil(var.cMagnitude * 100 - 0.5) / 100
+
+; Check if error is acceptable (threshold: 0.5°C)
+var maxAcceptableError = 0.5
+
+if var.bestError > var.maxAcceptableError
+  ; Reset to default parameters (C=0)
+  M98 P"0:/user/ChamberTempSensor.g"
+  
+  ; Build failure message in parts to stay under 256 char limit
+  var failMsg = "CALIBRATION FAILED - Results:<br>Best C coefficient: " ^ var.cSign ^ var.cFormatted ^ "e-8<br>"
+  set var.failMsg = var.failMsg ^ "Final error: " ^ var.bestError ^ "°C (>" ^ var.maxAcceptableError ^ "°C)<br>"
+  set var.failMsg = var.failMsg ^ "Iterations: " ^ var.iterations ^ "<br><br>Error too large - using default sensor settings"
+  M291 R"Calibration Failed" P{var.failMsg} S2 T0
+else
+  ; Save calibrated result
+  var sensorConfig = "M308 S3 A""Chamber Air"" P""1.temp0"" Y""thermistor"" T200000 B3950 R2200 C" ^ var.cSign ^ var.cFormatted ^ "e-8"
+  echo >"0:/user/ChamberTempSensor.g" var.sensorConfig
+
+  ; Apply the calibrated configuration
+  M98 P"0:/user/ChamberTempSensor.g"
+
+  ; Set green LED to indicate success
+  M98 P"0:/sys/led/end.g"
+
+  ; Build success message in parts to stay under 256 char limit
+  var successMsg = "CALIBRATION SUCCESS - Results:<br>Best C coefficient: " ^ var.cSign ^ var.cFormatted ^ "e-8<br>"
+  set var.successMsg = var.successMsg ^ "Final error: " ^ var.bestError ^ "°C (≤" ^ var.maxAcceptableError ^ "°C)<br>"
+  set var.successMsg = var.successMsg ^ "Iterations: " ^ var.iterations ^ "<br><br>Configuration saved and applied"
+  M291 R"Calibration Successful" P{var.successMsg} S2 T0
+
+; Restore white LED
+M98 P"0:/sys/led/restorewhite.g"
