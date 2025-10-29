@@ -2,11 +2,14 @@ M204 P5000 T5000  ; reset accelerations
 M208 Z-1 S1       ; set axis minima to default
 
 M83               ; relative extruder moves
-G1 E-20 F3600     ; retract 10mm of filament
+G1 E-20 F3600     ; retract 20mm of filament
 
 G91
 G1 Z10
 G90
+
+; Always wipe nozzle(s)
+M98 P"0:/sys/nozzlewipe.g"
 
 M98 P"0:/sys/led/end.g"
 M98 P"0:/user/lowerbed.g"                 ; lower the bed (if needed)
@@ -16,14 +19,8 @@ M98 P"0:/user/powerendbehavior.g"	        ; decide what to do with power after p
 
 G90
 
-if exists(param.F) & exists(param.S)
-	M98 P"0:/user/retractfinishbehavior.g" F{param.F} S{param.S}
-elif exists(param.F)
-	M98 P"0:/user/retractfinishbehavior.g" F{param.F}
-elif exists(param.S)
-	M98 P"0:/user/retractfinishbehavior.g" S{param.S}
-else
-	M98 P"0:/sys/nozzlewipe.g"
+; Extended retraction based on user settings
+M98 P"0:/user/retractfinishbehavior.g"
 
 T0 P0
 
