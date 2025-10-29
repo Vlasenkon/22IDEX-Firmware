@@ -4,30 +4,6 @@ if !exists(param.A)
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 var x_test_pos = -105
 var mid_y_test_pos = -101
 var add_z_offset = -0.070
@@ -286,7 +262,7 @@ else
         G90
         G1 X-999 U999 F18000
       M98 P"0:/sys/led/resetstatus.g"
-      M98 P"0:/macros/System/Calibration/QC/AutoCal/Tool Height Auto Calibration" S1 A1
+      M98 P"0:/macros/System/Calibration/QC/AutoCal/Tool Height Auto Calibration" A1
 
 
     elif input == 1 ; User chose "Skip Calibration"
