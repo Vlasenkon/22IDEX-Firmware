@@ -1,12 +1,12 @@
 var changeMode = exists(param.C) && param.C != 0
 
 if !var.changeMode
-  M291 R"Please wait while the nozzle is being heated up" P"This may take a few minutes." S1 T15
+  M291 R"Filament will be retracted" P"Please wait while the nozzle heats up. This may take a few minutes." S1 T15
   M98 P"0:/sys/led/resetstatus.g"
   M98 P"0:/sys/led/start_cold.g"
 
 else
-  M291 S2 R"Preparing to retract filament" P"Heating the active nozzle for filament change..."
+  M291 S2 R"Preparing to unload filament" P"Heating the active nozzle for filament removal. Please wait..."
   M98 P"0:/sys/led/resetstatus.g"
 
 
@@ -35,7 +35,7 @@ if move.axes[0].homed && move.axes[1].homed && move.axes[2].homed && move.axes[3
 M116 P{state.currentTool} S15; Wait for the temperatures to be reached
 M98 P"0:/sys/led/start_hot.g"
   
-M291 R"Retracting Filament" P" " S1 T15 ; Display  message
+M291 R"Retracting Filament" P"Filament is now being retracted from the extruder. Please wait..." S1 T15 ; Display message
 
 M83 ; Extruder to relative mode
 G1 E20 F{var.ss} ; Extrude

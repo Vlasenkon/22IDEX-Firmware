@@ -1,9 +1,9 @@
 var changeMode = exists(param.C) && param.C != 0
 
 if !var.changeMode
-  M291 R"Please wait while the nozzle is being heated up" P"This may take a few minutes." S1 T15
+  M291 R"Filament will be loaded" P"Please wait while the nozzle heats up. This may take a few minutes." S1 T15
 else
-  M291 S2 R"Preparing to load filament" P"Heating the active nozzle for filament change..."
+  M291 S2 R"Preparing to load filament" P"Heating the active nozzle for filament loading. Please wait..."
 
 M98 P"0:/sys/led/resetstatus.g"
 M98 P"0:/sys/led/start_cold.g"
@@ -45,7 +45,7 @@ M83 ; Extruder to relative mode
 
 
 
-M291 R"Feed the filament, material will be extruded" P"Press ""Extrude"" to start or ""Cancel"" to stop." S4 K{"Extrude","Cancel"}
+M291 R"Feed the filament, material will be extruded" P"Insert filament into extruder and press ""Start Extrusion"" to begin, or ""Cancel"" to abort." S4 K{"Start Extrusion","Cancel"}
 if input = 0
   if heat.heaters[0].state == "fault" || heat.heaters[1].state == "fault" || heat.heaters[2].state == "fault" || heat.heaters[3].state == "fault"
     M568 P0 A0
@@ -53,7 +53,7 @@ if input = 0
     M140 S0
     M141 S0
     G1 X-999 U999 F18000 Y150 Z100 F18000
-    M291 S1 R"Error" P"Heater fault detected"
+    M291 S1 R"Error" P"Heater fault detected. Operation aborted."
     abort "Error: Heater fault detected"
   G1 E200 F{var.ss} ; Extrude
 else
@@ -66,7 +66,7 @@ else
 
 M400
 
-M291 R"Do you see new filament extruding?" P"Press ""Yes"" if filament is extruding or ""No"" to extrude more." S4 K{"Yes","No"}
+M291 R"Filament Loading Check" P"Is new filament visible coming out of the nozzle?" S4 K{"Yes - Filament Visible","No - Extrude More"}
   while input == 1
     if heat.heaters[0].state == "fault" || heat.heaters[1].state == "fault" || heat.heaters[2].state == "fault" || heat.heaters[3].state == "fault"
       M568 P0 A0
@@ -74,11 +74,11 @@ M291 R"Do you see new filament extruding?" P"Press ""Yes"" if filament is extrud
       M140 S0
       M141 S0
       G1 X-999 U999 F18000 Y150 Z100 F18000
-      M291 S1 R"Error" P"Heater fault detected"
+      M291 S1 R"Error" P"Heater fault detected. Operation aborted."
       abort "Error: Heater fault detected"
     G1 E50 F{var.ss} ; Extrude
     M400
-    M291 R"Do you see new filament extruding?" P"Press ""Yes"" if filament is extruding or ""No"" to extrude more." S4 K{"Yes","No"}
+    M291 R"Filament Loading Check" P"Is new filament visible coming out of the nozzle?" S4 K{"Yes - Filament Visible","No - Extrude More"}
 
 M98 P"0:/sys/nozzlewipe.g" ; wipe curently active nozzle
 M84 E0:1
