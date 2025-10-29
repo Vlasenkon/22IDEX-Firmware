@@ -1,9 +1,9 @@
-M291 S7 J1 R"Enter Password" P"Enter the password to start the test."
-var pp = {input}
+; Prompt user to confirm starting the test
+M291 R"Start Test 2" P"Do you want to start Test 2?" K{"Start Test","Cancel"} S4 J1
 
-if var.pp != "vmawt"
-	abort "Error: Incorrect password entered."
-	M99
+; Check if user selected to start the test (index 0 = Start Test, index 1 = Cancel)
+if input == 1
+	abort "Test cancelled by user."
 
 ; Test Y - Homming Error
 ;M98 P"0:/macros/System/Calibration/QC/Tests/HomeY"

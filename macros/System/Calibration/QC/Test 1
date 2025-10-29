@@ -1,12 +1,11 @@
 M98 P"0:/sys/led/resetstatus.g"
 
-; Prompt user to enter password
-M291 S7 J1 R"Enter Password" P"Enter the password to start the test."
-var pp = {input}
+; Prompt user to confirm starting the test
+M291 R"Start Test 1" P"Do you want to start Test 1?" K{"Start Test","Cancel"} S4 J1
 
-; Check if the entered password is correct
-if var.pp != "vmawt"
-	abort "Error: Incorrect password entered."
+; Check if user selected to start the test (index 0 = Start Test, index 1 = Cancel)
+if input == 1
+	abort "Test cancelled by user."
 
 ; Check voltage for both boards
 if boards[0].vIn.current < 23 || boards[0].vIn.current > 24.8
