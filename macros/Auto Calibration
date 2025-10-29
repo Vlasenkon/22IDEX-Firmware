@@ -71,27 +71,27 @@ M42 P4 S1                                              ; Turn on relay
 ;=echo >"0:/sys/autocali_res.g" "; Auto Calibration Results"
 ;=echo >>>"0:/sys/autocali_res.g" "M291 S2 R""Auto Calibration was Successfull"" P""Results:<br>"
 
-M98 P"0:/macros/System/Calibration/QC/AutoCal/Tool Height Auto Calibration" S1 A1
+M98 P"0:/macros/System/Calibration/QC/AutoCal/Tool Height Auto Calibration" A1
 M400
 
-M98 P"0:/macros/System/Calibration/QC/AutoCal/Z - Offset Calibration" S1 A1
+M98 P"0:/macros/System/Calibration/QC/AutoCal/Z - Offset Calibration" A1
 M400
 
 if exists(global.xcomp_mode) && global.xcomp_mode == "manual"
   echo "Skipping Mesh Bed calibration because compensation mode is manual"
   ;=echo >>>"0:/sys/autocali_res.g" "Mesh Bed calibration skipped (manual mode)<br>"
 else
-  M98 P"0:/macros/System/Calibration/QC/AutoCal/Mesh Bed Calibration" S1 A1
+  M98 P"0:/macros/System/Calibration/QC/AutoCal/Mesh Bed Calibration" A1
   M400
 
-M98 P"0:/macros/System/Calibration/QC/AutoCal/XY - Offset Calibration" S1 A1
+M98 P"0:/macros/System/Calibration/QC/AutoCal/XY - Offset Calibration" A1
 M400
 
 if exists(global.xy_square_mode) && global.xy_square_mode == "manual"
   echo "Skipping XY Auto Squaring because mode is manual"
   ;=echo >>>"0:/sys/autocali_res.g" "XY Auto Squaring skipped (manual mode)<br>"
 else
-  M98 P"0:/macros/System/Calibration/QC/AutoCal/XY Auto Squaring" S1 A1
+  M98 P"0:/macros/System/Calibration/QC/AutoCal/XY Auto Squaring" A1
   M400
   M98 P"0:/sys/xy_squaring.g"
   M400
