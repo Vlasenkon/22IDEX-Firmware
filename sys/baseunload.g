@@ -1,5 +1,9 @@
 var changeMode = exists(param.C) && param.C != 0
 
+; Set temperature if provided via T parameter
+if exists(param.T)
+  M568 P{state.currentTool} S{param.T} R{param.T}
+
 if !var.changeMode
   M291 R"Filament will be retracted" P"Please wait while the nozzle heats up. This may take a few minutes." S1 T15
   M98 P"0:/sys/led/resetstatus.g"

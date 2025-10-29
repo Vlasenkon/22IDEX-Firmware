@@ -1,4 +1,9 @@
 var changeMode = exists(param.C) && param.C != 0
+var rampMode = exists(param.R) && param.R != 0
+
+; Set temperature if provided via T parameter
+if exists(param.T)
+  M568 P{state.currentTool} S{param.T} R{param.T}
 
 if !var.changeMode
   M291 R"Filament will be loaded" P"Please wait while the nozzle heats up. This may take a few minutes." S1 T15
@@ -55,7 +60,17 @@ if input = 0
     G1 X-999 U999 F18000 Y150 Z100 F18000
     M291 S1 R"Error" P"Heater fault detected. Operation aborted."
     abort "Error: Heater fault detected"
-  G1 E200 F{var.ss} ; Extrude
+  
+  ; If ramp mode, extrude while temperature ramps down
+  if var.rampMode && exists(param.T)
+    while true
+      G1 E10 F300 ; Extrude slowly
+      if heat.heaters[state.currentTool].current <= param.T + 5
+        break
+    G1 E20 F300 ; Final extrusion
+  else
+    ; Normal extrusion
+    G1 E200 F{var.ss} ; Extrude
 else
   if !var.changeMode
     if state.status != "processing" || state.status != "printing" || state.status != "pausing" || state.status != "paused" || state.status != "resuming"
