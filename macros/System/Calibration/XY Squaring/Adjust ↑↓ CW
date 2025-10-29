@@ -1,12 +1,8 @@
 M98 P"0:/user/xy_square_manual.g"
-M98 P"0:/user/xy_square_auto.g"
 M98 P"0:/user/xy_square_mode.g"
 
 if !exists(global.xy_square_manual)
   global xy_square_manual = 0.0
-
-if !exists(global.xy_square_auto)
-  global xy_square_auto = 0.0
 
 if !exists(global.xy_square_mode)
   global xy_square_mode = "manual"
@@ -41,5 +37,4 @@ echo >>"0:/user/xy_square_mode.g" "  set global.xy_square_mode = ""manual"""
 echo >>"0:/user/xy_square_mode.g" "else"
 echo >>"0:/user/xy_square_mode.g" "  global xy_square_mode = ""manual"""
 
-M98 P"0:/sys/xy_squaring.g"
-echo "Manual XY squaring offset adjusted clockwise to "^{var.newValue}^"mm and applied."
+echo "Mode changed to manual. XY squaring offset adjusted clockwise to "^{var.newValue}^"mm and saved."
