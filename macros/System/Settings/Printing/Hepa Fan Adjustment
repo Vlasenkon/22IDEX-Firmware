@@ -1,7 +1,11 @@
-M291 S5 J1 F53 L0 H100 R"Set Hepa Fan Speed in %" P"Recommended values: 50–55%."
+M291 S5 J1 F60 L0 H100 R"Set Hepa Fan Speed in %" P"Recommended values: 50–80%."
 var speed = floor(255 * input / 100)
+
 set global.hepafan = var.speed
+
 echo >"0:/user/hepafan.g" "if exists(global.hepafan)"
 echo >>"0:/user/hepafan.g" "  set global.hepafan = "^{var.speed}
 echo >>"0:/user/hepafan.g" "else"
 echo >>"0:/user/hepafan.g" "  global hepafan = "^{var.speed}
+
+M106 P7 H3 T50 X{global.hepafan}         ; Configure thermostatic control

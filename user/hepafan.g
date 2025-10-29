@@ -1,4 +1,4 @@
 if exists(global.hepafan)
-  set global.hepafan = 135
+  set global.hepafan = 191
 else
-  global hepafan = 135
+  global hepafan = 191
