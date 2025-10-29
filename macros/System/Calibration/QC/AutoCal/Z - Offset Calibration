@@ -147,7 +147,7 @@ if exists(param.A)
       G1 X-999 U999 F18000
       M98 P"0:/sys/led/resetstatus.g"
       M98 P"place.g"
-      M98 P"0:/macros/System/Calibration/QC/Auto Calibration Macros/Tool Height Auto Calibration" C1 A1
+      M98 P"0:/macros/System/Calibration/QC/AutoCal/Tool Height Auto Calibration" C1 A1
 
     elif input == 1 ; User chose "Skip Calibration"
       echo "Skipping calibration as per user request."
