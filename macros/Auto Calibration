@@ -81,7 +81,7 @@ if exists(global.xcomp_mode) && global.xcomp_mode == "manual"
   echo "Skipping Mesh Bed calibration because compensation mode is manual"
   ;=echo >>>"0:/sys/autocali_res.g" "Mesh Bed calibration skipped (manual mode)<br>"
 else
-  M98 P"0:/macros/System/Calibration/QC/AutoCal/Mesh Bed calibration" S1 A1
+  M98 P"0:/macros/System/Calibration/QC/AutoCal/Mesh Bed Calibration" S1 A1
   M400
 
 M98 P"0:/macros/System/Calibration/QC/AutoCal/XY - Offset Calibration" S1 A1

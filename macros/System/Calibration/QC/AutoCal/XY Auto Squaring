@@ -1,7 +1,7 @@
 if !exists(param.A)
   M291 S2 R"Use Auto Calibration macro" P"Using separate calibration macros may cause issues.<br>Please use the Auto Calibration macro"
   abort "Error: Auto Calibration macro required."
-  
+
 
 M98 P"0:/user/xy_square_manual.g"
 M98 P"0:/user/xy_square_auto.g"
@@ -81,6 +81,9 @@ if !exists(param.S)
 
 
 
+
+
+M98 P"0:/sys/detachedcheck.g" ; Check if the probe is detached
 
 ;Start of Calculation
 

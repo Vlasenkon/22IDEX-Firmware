@@ -2,7 +2,7 @@ if !exists(param.A)
   M291 S2 R"Use Auto Calibration macro" P"Using separate calibration macros may cause issues.<br>Please use the Auto Calibration macro"
   abort "Error: Auto Calibration macro required."
 
-  
+
 
 if !exists(param.S)
 
@@ -87,7 +87,7 @@ if !exists(param.S)
 
 
 
-
+M98 P"0:/sys/detachedcheck.g" ; Check if the probe is detached
 
 var Probe_Point_Y = 98
 var max_Travel = 15
