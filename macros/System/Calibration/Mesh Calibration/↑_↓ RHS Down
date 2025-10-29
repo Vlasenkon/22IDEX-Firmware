@@ -1,11 +1,9 @@
 M400
 
-var step = 0.05
+var step = 0.04
 
-
-if  exists(global.xcomp_mode) && global.xcomp_mode != "manual"
+if exists(global.xcomp_mode) && global.xcomp_mode != "manual"
   set global.xcomp_mode = "manual"
-
 
 if exists(global.xcomp_manual)
   set global.xcomp_manual = {global.xcomp_manual + var.step}
@@ -18,9 +16,10 @@ echo >>"0:/user/xcomp_manual.g" "  set global.xcomp_manual = "^{global.xcomp_man
 echo >>"0:/user/xcomp_manual.g" "else"
 echo >>"0:/user/xcomp_manual.g" "  global xcomp_manual = "^{global.xcomp_manual}
 
-if global.xcomp_manual > 0
-  echo "RHS of Build Plate will move Down by: "^abs(global.xcomp_manual)^" mm"
-elif global.xcomp_manual < 0
-  echo "RHS of Build Plate will move Up by: "^abs(global.xcomp_manual)^" mm"
-else
-  echo "Compensation is set to 0"
+; Update xcomp_mode.g to save the mode
+echo >"0:/user/xcomp_mode.g" "if exists(global.xcomp_mode)"
+echo >>"0:/user/xcomp_mode.g" "  set global.xcomp_mode = ""manual"""
+echo >>"0:/user/xcomp_mode.g" "else"
+echo >>"0:/user/xcomp_mode.g" "  global xcomp_mode = ""manual"""
+
+echo "Mode changed to manual. RHS of Build Plate adjusted down to "^{global.xcomp_manual}^"mm and saved."

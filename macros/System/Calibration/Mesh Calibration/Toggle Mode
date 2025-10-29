@@ -13,3 +13,9 @@ echo >"0:/user/xcomp_mode.g" "if exists(global.xcomp_mode)"
 echo >>"0:/user/xcomp_mode.g" "  set global.xcomp_mode = """^{global.xcomp_mode}^""""
 echo >>"0:/user/xcomp_mode.g" "else"
 echo >>"0:/user/xcomp_mode.g" "  global xcomp_mode = """^{global.xcomp_mode}^""""
+
+; Prompt user to run Auto Calibration when switching to auto mode
+if global.xcomp_mode == "auto"
+  M291 S4 K{"Run Auto Calibration Now", "Skip for Now"} F0 R"Mode Changed to Auto" P"Mesh Calibration mode has been changed to Auto.<br><br>To get an accurate value, Auto Calibration is required."
+  if input == 0
+    M98 P"0:/macros/Auto Calibration"
