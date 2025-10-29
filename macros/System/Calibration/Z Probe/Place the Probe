@@ -4,6 +4,5 @@ if !move.axes[1].homed || !move.axes[0].homed || !move.axes[3].homed
   G28 X
   G28 U
   
-  
 ; Place the Probe using standart macro
 M98 P"place.g"
