@@ -47,3 +47,9 @@ else
 ; Clear filament data and show completion message
 M702 P0
 M291 S1 T15 R"Filament changed" P"Filament change completed successfully!"
+
+; Reset temperatures to zero
+M568 P0 S0 R0
+M568 P1 S0 R0
+M568 P2 S0 R0
+M568 P3 S0 R0
