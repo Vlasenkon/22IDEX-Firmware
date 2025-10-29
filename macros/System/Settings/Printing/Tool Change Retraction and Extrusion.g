@@ -16,7 +16,7 @@ var distance = 0.0
 var distanceGlobal = ""
 
 if var.isRetraction
-  M291 R{var.toolLabel^" Retraction"} P"Enter retraction distance (mm, positive)" S5 L0.1 H50 J1 F0
+  M291 R{var.toolLabel^" Retraction"} P"Enter retraction distance (mm, positive)" S5 L0 H50 J1 F0
   if result = -1
     abort "Operation cancelled"
   set var.distance = -abs(input)
@@ -26,7 +26,7 @@ if var.isRetraction
   else
     set var.distanceGlobal = "tool1RetractDistance"
 else
-  M291 R{var.toolLabel^" Extrusion"} P"Enter extrusion distance (mm, positive)" S5 L0.1 H50 J1 F0
+  M291 R{var.toolLabel^" Extrusion"} P"Enter extrusion distance (mm, positive)" S5 L0 H50 J1 F0
   if result = -1
     abort "Operation cancelled"
   set var.distance = abs(input)
