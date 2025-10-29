@@ -1,8 +1,6 @@
 ; Home Y
 M98 P"0:/sys/homey.g" L1
 
-;G28 X
-;G28 U
 M98 P"0:/sys/homex.g"
 M98 P"0:/sys/homeu.g"
 
