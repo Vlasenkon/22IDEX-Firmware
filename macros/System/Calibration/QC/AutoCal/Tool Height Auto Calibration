@@ -3,70 +3,6 @@ if !exists(param.A)
   abort "Error: Auto Calibration macro required."
 
 
-if !exists(param.S)
-  M291 S5 J1 F250 L150 H450 R"Set Left Tool Temperature" P"Please set the temperature for the filament previously loaded in the Left Tool."
-  var ll = input
-  
-  M291 S5 J1 F{var.ll} L150 H450 R"Set Right Tool Temperature" P"Please set the temperature for the filament previously loaded in the Right Tool."
-  var rr = input
-
-  var delta = -40
-
-  M568 P0 R{var.ll + var.delta} S{var.ll + var.delta}
-  M568 P1 R{var.rr + var.delta} S{var.rr + var.delta}
-  M568 P2 R{var.ll + var.delta,var.rr + var.delta} S{var.ll + var.delta,var.rr + var.delta}
-  M568 P3 R{var.ll + var.delta,var.rr + var.delta} S{var.ll + var.delta,var.rr + var.delta}
-
-  M568 P0 A2
-  M568 P1 A2
-
-  M291 S2 R"Please Remove the Build Sheet" P"To avoid damaging your machine, remove the build sheet from the build plate.<br>Click ""OK"" when you are ready to proceed or ""Cancel"" to stop."
-
-  if !move.axes[0].homed || !move.axes[1].homed || !move.axes[2].homed || !move.axes[3].homed
-    M98 P"0:/sys/homeall.g" S1
-
-  G90
-  G1 X-999 U999 Y-75 F18000
-
-  M116 P0 S10
-  M116 P1 S10
-
-  T3
-  M83                 ; relative extruder moves
-  G1 E-50 F{60}*{10}   ; retract filament
-
-  M98 P"0:/sys/nozzlewipe.g" C1
-  M400
-  while iterations < 2
-    M98 P"0:/sys/nozzlewipe.g" L1 C1
-    M400
-
-  G1 F18000 X-50 Y-150 Z125  ; Move tools to the cleaning position
-
-  M568 P3 A0
-
-  M291 S2 R"Please Clean Both Nozzles" P"Use a metal brush to clean both nozzles thoroughly to prevent machine damage.<br>Click ""OK"" when you are ready to proceed or ""Cancel"" to stop." S2
-
-  M568 P3 A2
-
-  M98 P"0:/sys/homeall.g" S1
-
-  G29 S2     ; disable Mesh Bed Leveling
-  M290 R0 S0
-  M208 Z-5 S1
-  M558 K0 P8 C"1.io4.in" H5 F100 T18000              ; define Z probe parameters
-  M98 P"0:/user/probeoffset.g"                       ; load global variables
-  T0
-  G1 U999 F18000
-  M42 P4 S1                                              ; Turn on relay
-
-
-
-
-
-
-
-
 
 
 
@@ -220,7 +156,6 @@ else
 
   if abs(var.ddd) < 0.05 ; ===If delta is less than allowed value===
     echo "Good, deviation is "^{var.ddd}^" mm"
-    ;=if exists(param.S)
     ;=  if var.ddd < 0
     ;=    echo >>>"0:/sys/autocali_res.g" "Nozzle deviation = "^take(""^{var.ddd},6)^"<br>"
     ;=  else
@@ -270,7 +205,6 @@ else
     else
       global rtzoffset = var.mid_dev
 
-    ;=if exists(param.S)
     ;=  if var.mid_dev < 0
     ;=    echo >>>"0:/sys/autocali_res.g" "Nozzle deviation in the midle = "^take(""^{var.mid_dev}, 6)^"<br>"
     ;=  else
@@ -362,50 +296,3 @@ else
     elif input == 2 ; User chose "Cancel Calibration"
       M98 P"0:/sys/led/resetstatus.g"
       abort "Calibration cancelled by user."
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-if !exists(param.S)
-
-  M568 P0 S0 R0
-  M568 P1 S0 R0
-  M568 P2 S0 R0
-  M568 P3 S0 R0
-
-  M208 Z0 S1
-  M558 K0 P8 C"1.io4.in" H5 F300 T18000
-  M98 P"0:/user/probeoffset.g"                       ; load global variables
-
-  G90
-  G1 X-999 U999 Y150 Z100 F18000
