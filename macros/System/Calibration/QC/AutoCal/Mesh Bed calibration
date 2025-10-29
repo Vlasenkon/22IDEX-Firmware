@@ -1,197 +1,197 @@
-if exists(param.A)
-  if !exists(param.S)
-   
-    M291 S5 J1 F250 L150 H450 R"Set Left Tool Temperature" P"Please set the temperature for the filament previously loaded in the Left Tool."
-    var ll = input
-    
-    var rr = 0
+if !exists(param.A)
+  M291 S2 R"Use Auto Calibration macro" P"Using separate calibration macros may cause issues.<br>Please use the Auto Calibration macro"
+  abort "Error: Auto Calibration macro required."
 
-    var delta = -40
-    
-    M568 P0 R{var.ll + var.delta} S{var.ll + var.delta}
-    M568 P1 R{var.rr} S{var.rr}
-    M568 P2 R{var.ll + var.delta,var.rr} S{var.ll + var.delta,var.rr}
-    M568 P3 R{var.ll + var.delta,var.rr} S{var.ll + var.delta,var.rr}
-    
-    M568 P0 A2
-    M568 P1 A2
-    
-    M291 S2 R"Please Remove the Build Sheet" P"To avoid damaging your machine, remove the build sheet from the build plate.<br>Click ""OK"" when you are ready to proceed or ""Cancel"" to stop." S2
-    
-    if !move.axes[0].homed || !move.axes[1].homed || !move.axes[2].homed || !move.axes[3].homed
-      M98 P"0:/sys/homeall.g" S1
-    
-    M116 P0 S10
-    M116 P1 S10
-    
-    G90
-    G1 X-999 U999 Y-75 F18000
-    
-    T3
-    M83                 ; relative extruder moves
-    G1 E-50 F{60}*{10}   ; retract filament
-    
-    M98 P"0:/sys/nozzlewipe.g" C1
-    M400
-    while iterations < 2
-      M98 P"0:/sys/nozzlewipe.g" L1 C1
-      M400
-    
-    G1 F18000 X-50 Y-150 Z125  ; Move tools to the cleaning position
+  
+if !exists(param.S)
+  M291 S5 J1 F250 L150 H450 R"Set Left Tool Temperature" P"Please set the temperature for the filament previously loaded in the Left Tool."
+  var ll = input
+  
+  var rr = 0
 
-    M568 P3 A0
-
-    M291 S2 R"Please Clean Both Nozzles" P"Use a metal brush to clean both nozzles thoroughly to prevent machine damage.<br>Click ""OK"" when you are ready to proceed or ""Cancel"" to stop." S2
-    
-    M568 P3 A2
-
+  var delta = -40
+  
+  M568 P0 R{var.ll + var.delta} S{var.ll + var.delta}
+  M568 P1 R{var.rr} S{var.rr}
+  M568 P2 R{var.ll + var.delta,var.rr} S{var.ll + var.delta,var.rr}
+  M568 P3 R{var.ll + var.delta,var.rr} S{var.ll + var.delta,var.rr}
+  
+  M568 P0 A2
+  M568 P1 A2
+  
+  M291 S2 R"Please Remove the Build Sheet" P"To avoid damaging your machine, remove the build sheet from the build plate.<br>Click ""OK"" when you are ready to proceed or ""Cancel"" to stop." S2
+  
+  if !move.axes[0].homed || !move.axes[1].homed || !move.axes[2].homed || !move.axes[3].homed
     M98 P"0:/sys/homeall.g" S1
-    
-    G29 S2     ; disable Mesh Bed Leveling
-    M290 R0 S0
-    M208 Z-5 S1
-    M558 K0 P8 C"1.io4.in" H5 F100 T18000              ; define Z probe parameters
-    M98 P"0:/user/probeoffset.g"                       ; load global variables
-    T0
-    G1 U999 F18000
   
+  M116 P0 S10
+  M116 P1 S10
   
+  G90
+  G1 X-999 U999 Y-75 F18000
   
+  T3
+  M83                 ; relative extruder moves
+  G1 E-50 F{60}*{10}   ; retract filament
   
+  M98 P"0:/sys/nozzlewipe.g" C1
+  M400
+  while iterations < 2
+    M98 P"0:/sys/nozzlewipe.g" L1 C1
+    M400
   
+  G1 F18000 X-50 Y-150 Z125  ; Move tools to the cleaning position
+
+  M568 P3 A0
+
+  M291 S2 R"Please Clean Both Nozzles" P"Use a metal brush to clean both nozzles thoroughly to prevent machine damage.<br>Click ""OK"" when you are ready to proceed or ""Cancel"" to stop." S2
   
+  M568 P3 A2
+
+  M98 P"0:/sys/homeall.g" S1
   
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  ;=====Test with a probe======
-  M98 R1 P"0:/sys/attachedcheck.g" ; make sure probe is conected, pick if negative and leave relay active
+  G29 S2     ; disable Mesh Bed Leveling
+  M290 R0 S0
+  M208 Z-5 S1
   M558 K0 P8 C"1.io4.in" H5 F100 T18000              ; define Z probe parameters
+  M98 P"0:/user/probeoffset.g"                       ; load global variables
+  T0
+  G1 U999 F18000
+;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+;=====Test with a probe======
+M98 R1 P"0:/sys/attachedcheck.g" ; make sure probe is conected, pick if negative and leave relay active
+M558 K0 P8 C"1.io4.in" H5 F100 T18000              ; define Z probe parameters
+M98 P"0:/user/probeoffset.g"                       ; load global variables
+
+G90
+G1 F18000 Z15 X{-155 - sensors.probes[0].offsets[0]} Y{0 - sensors.probes[0].offsets[1]}
+
+G91
+G38.2 K0 Z-5 ; Probe Z
+G4 P260
+var pl1 = move.axes[2].machinePosition
+G1 Z2
+
+G38.2 K0 Z-5 ; Probe Z
+G4 P260
+var pl2 = move.axes[2].machinePosition
+G1 Z2
+
+G38.2 K0 Z-5 ; Probe Z
+G4 P260
+var pl3 = move.axes[2].machinePosition
+G1 Z5
+
+var pl = (var.pl1 + var.pl2 + var.pl3)/3
+
+G90
+G1 F18000 X{155 - sensors.probes[0].offsets[0]} Y{0 - sensors.probes[0].offsets[1]}
+
+G91
+G38.2 K0 Z-5 ; Probe Z
+G4 P260
+var pr1 = move.axes[2].machinePosition
+G1 Z2
+
+G38.2 K0 Z-5 ; Probe Z
+G4 P260
+var pr2 = move.axes[2].machinePosition
+G1 Z2
+
+G38.2 K0 Z-5 ; Probe Z
+G4 P260
+var pr3 = move.axes[2].machinePosition
+G1 Z10
+
+var pr = (var.pr1 + var.pr2 + var.pr3)/3
+
+
+M98 P"place.g"
+M98 P"0:/sys/nozzlewipe.g" T0
+
+;=====Test with a nozzle====
+M42 P4 S1                      ; Turn on relay
+
+G90
+G1 F18000 X-155 Y0 Z2
+M98 P"0:/sys/nozzleprobe.g" Z1
+var nl = move.axes[2].machinePosition
+G1 Z2
+
+G90
+
+G1 F18000 X155 Y0
+M98 P"0:/sys/nozzleprobe.g" Z1
+var nr = move.axes[2].machinePosition
+G1 Z5
+
+;====Calculate  Values====
+
+var dl = var.pl - var.nl
+var dr = var.pr - var.nr
+var dd = var.dl - var.dr
+
+echo "Mesh Left "^{var.dl}^" mm"
+echo "Mesh Right "^{var.dr}^" mm"
+
+
+echo "Mesh Competition Measured "^{var.dd}^" mm"
+
+
+; Update global auto compensation variable
+if exists(global.xcomp_auto)
+  set global.xcomp_auto = var.dd
+else
+  global xcomp_auto = var.dd
+
+; Write updated value to xcomp_auto.g
+echo >"0:/user/xcomp_auto.g" "if exists(global.xcomp_auto)"
+echo >>"0:/user/xcomp_auto.g" "  set global.xcomp_auto = "^{var.dd}
+echo >>"0:/user/xcomp_auto.g" "else"
+echo >>"0:/user/xcomp_auto.g" "  global xcomp_auto = "^{var.dd}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+if !exists(param.S)
+  M568 P0 S0 R0
+  M568 P1 S0 R0
+  M568 P2 S0 R0
+  M568 P3 S0 R0
+  
+  M208 Z0 S1
+  M558 K0 P8 C"1.io4.in" H5 F300 T18000
   M98 P"0:/user/probeoffset.g"                       ; load global variables
   
   G90
-  G1 F18000 Z15 X{-155 - sensors.probes[0].offsets[0]} Y{0 - sensors.probes[0].offsets[1]}
-  
-  G91
-  G38.2 K0 Z-5 ; Probe Z
-  G4 P260
-  var pl1 = move.axes[2].machinePosition
-  G1 Z2
-  
-  G38.2 K0 Z-5 ; Probe Z
-  G4 P260
-  var pl2 = move.axes[2].machinePosition
-  G1 Z2
-  
-  G38.2 K0 Z-5 ; Probe Z
-  G4 P260
-  var pl3 = move.axes[2].machinePosition
-  G1 Z5
-  
-  var pl = (var.pl1 + var.pl2 + var.pl3)/3
-  
-  G90
-  G1 F18000 X{155 - sensors.probes[0].offsets[0]} Y{0 - sensors.probes[0].offsets[1]}
-  
-  G91
-  G38.2 K0 Z-5 ; Probe Z
-  G4 P260
-  var pr1 = move.axes[2].machinePosition
-  G1 Z2
-  
-  G38.2 K0 Z-5 ; Probe Z
-  G4 P260
-  var pr2 = move.axes[2].machinePosition
-  G1 Z2
-  
-  G38.2 K0 Z-5 ; Probe Z
-  G4 P260
-  var pr3 = move.axes[2].machinePosition
-  G1 Z10
-  
-  var pr = (var.pr1 + var.pr2 + var.pr3)/3
-  
-  
-  M98 P"place.g"
-  M98 P"0:/sys/nozzlewipe.g" T0
-  
-  ;=====Test with a nozzle====
-  M42 P4 S1                      ; Turn on relay
-  
-  G90
-  G1 F18000 X-155 Y0 Z2
-  M98 P"0:/sys/nozzleprobe.g" Z1
-  var nl = move.axes[2].machinePosition
-  G1 Z2
-  
-  G90
-  
-  G1 F18000 X155 Y0
-  M98 P"0:/sys/nozzleprobe.g" Z1
-  var nr = move.axes[2].machinePosition
-  G1 Z5
-  
-  ;====Calculate  Values====
-  
-  var dl = var.pl - var.nl
-  var dr = var.pr - var.nr
-  var dd = var.dl - var.dr
-  
-  echo "Mesh Left "^{var.dl}^" mm"
-  echo "Mesh Right "^{var.dr}^" mm"
-  
-  
-  echo "Mesh Competition Measured "^{var.dd}^" mm"
-  
-  
-  ; Update global auto compensation variable
-  if exists(global.xcomp_auto)
-    set global.xcomp_auto = var.dd
-  else
-    global xcomp_auto = var.dd
-  
-  ; Write updated value to xcomp_auto.g
-  echo >"0:/user/xcomp_auto.g" "if exists(global.xcomp_auto)"
-  echo >>"0:/user/xcomp_auto.g" "  set global.xcomp_auto = "^{var.dd}
-  echo >>"0:/user/xcomp_auto.g" "else"
-  echo >>"0:/user/xcomp_auto.g" "  global xcomp_auto = "^{var.dd}
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  if !exists(param.S)
-    M568 P0 S0 R0
-    M568 P1 S0 R0
-    M568 P2 S0 R0
-    M568 P3 S0 R0
-    
-    M208 Z0 S1
-    M558 K0 P8 C"1.io4.in" H5 F300 T18000
-    M98 P"0:/user/probeoffset.g"                       ; load global variables
-    
-    G90
-    G1 X-999 U999 Y150 Z100 F18000
-
-else
-  M291 S2 R"Use Auto Calibration macro" P"Using separate calibration macros may cause issues.<br>Please use the Auto Calibration macro"
+  G1 X-999 U999 Y150 Z100 F18000
