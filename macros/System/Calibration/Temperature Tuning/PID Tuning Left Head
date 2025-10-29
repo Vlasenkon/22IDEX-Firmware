@@ -14,14 +14,14 @@ M568 P3 S0 R0
 
 
 
-if heat.heaters[1].current > 100
+if heat.heaters[0].current > 100
     M291 R"Wait for Heater to Cool Down" P"All heater temperatures were set to 0°C." S1 T10
-    while heat.heaters[1].current > 100
+    while heat.heaters[0].current > 100
         G4 S5
 
 
 M98 P"0:/sys/led/dimmwhite.g"
-M98 P"0:/sys/led/red.g"
+M98 P"0:/sys/led/pause.g"
 
 ; Validate chamber air temperature before tuning
 var ambient = heat.heaters[3].current
@@ -30,25 +30,25 @@ if var.ambient < 10 || var.ambient > 100
     M291 R"Chamber Temperature Out of Range" P{"Chamber air temperature "^var.ambient^"°C is outside 10-100°C. Adjust the chamber and rerun PID tuning."} S1
     abort "Error: Chamber air temperature is not within range to start."
 
-M303 T1 S{var.tt} A{var.ambient} F1 Q1
+M303 T0 S{var.tt} A{var.ambient} F1 Q1
 if result != 0
     M98 P"0:/sys/led/fault.g"
     M291 R"PID Tune Failed" P"PID tuning did not complete. Review heater status and retry." S1
     abort "Error: PID tuning has failed."
     M99
 
-while heat.heaters[1].state = "tuning"
+while heat.heaters[0].state = "tuning"
         G4 S10
 
 M98 P"0:/sys/led/end.g"
 
-var rr = heat.heaters[1].model.heatingRate
-var kk1 = heat.heaters[1].model.coolingRate
-var kk2 = heat.heaters[1].model.fanCoolingRate
-var dd = heat.heaters[1].model.deadTime
-var ee = heat.heaters[1].model.coolingExp
-var vv = heat.heaters[1].model.standardVoltage
+var rr = heat.heaters[0].model.heatingRate
+var kk1 = heat.heaters[0].model.coolingRate
+var kk2 = heat.heaters[0].model.fanCoolingRate
+var dd = heat.heaters[0].model.deadTime
+var ee = heat.heaters[0].model.coolingExp
+var vv = heat.heaters[0].model.standardVoltage
 
-echo >"0:/user/PIDRightHead.g" "M307 H1 R"^{var.rr}^" K"^{var.kk1}^":"^{var.kk2}^" D"^{var.dd}^" E"^{var.ee}^" S1.00 B0 V"^{var.vv}
+echo >"0:/user/PIDLeftHead.g" "M307 H0 R"^{var.rr}^" K"^{var.kk1}^":"^{var.kk2}^" D"^{var.dd}^" E"^{var.ee}^" S1.00 B0 V"^{var.vv}
 
-M291 R"PID Tune Complete" P"Right-head PID values have been saved." S1
+M291 R"PID Tune Complete" P"Left-head PID values have been saved." S1
