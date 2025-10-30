@@ -37,7 +37,8 @@ else
     set var.distanceGlobal = "tool1ExtrudeDistance"
 
 var suffix = var.isRetraction ? "retract" : "extrude"
-var targetFile = "0:/user/tool" ^ (var.toolIndex == 0 ? "0" : "1") ^ var.suffix
+var toolNumber = var.toolIndex == 0 ? "0" : "1"
+var targetFile = "0:/user/tool" ^ var.toolNumber ^ var.suffix ^ ".g"
 var summary = var.toolLabel ^ " " ^ (var.isRetraction ? "retraction" : "extrusion")
 
 echo >{var.targetFile} "; "^{var.summary}^" custom value"
