@@ -50,9 +50,7 @@ M98 P"0:/user/tool1extrude.g"
 
 if move.axes[2].babystep != 0
 	echo "Warning: Adjustment of "^move.axes[2].babystep^" mm was detected, please save Z - Offset"
-	M291 R"Save Z-Offset?" P{"Adjustment of "^move.axes[2].babystep^" mm was detected. Would you like to save it?"} S4 K{"Save Current Z-Offset", "Skip"} F0
-	if input == 0
-		M98 P"0:/macros/Save Current Z - Offset"
+	M291 S1 R"Save Z-Offset" P{"Adjustment of "^move.axes[2].babystep^" mm was detected.<br><br>It is recommended to save this Z-Offset adjustment."} T0
 
 M98 P"0:/user/filamentbackup.g"                          ; load filament runout tool swap variable
 
@@ -61,4 +59,4 @@ if exists(param.A)
 		echo "Warning: HEPA filter fan RPM difference detected - fan may be worn out"
 		echo >>"0:/sys/eventlog.txt" "Warning: HEPA filter fan RPM difference detected - fan may be worn out"
 		M98 P"0:/sys/led/fault.g"
-		M291 R"HEPA Filter Fan Warning" P"RPM difference detected on HEPA filter fan. The fan may be worn out and may require replacement." S1
+		M291 R"HEPA Filter Fan Warning" P"RPM difference detected on HEPA filter fan. The fan may be worn out and may require replacement." S1 T0

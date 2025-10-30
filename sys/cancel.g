@@ -30,12 +30,12 @@ echo >"0:/sys/resetzbabystep.g" "; do nothing"
 
 M204 T5000                 ; set the accelerations
 
-; Ask user if they want to keep temperatures (auto-closes after 30s, defaults to Keep Temperature)
-M291 R"Keep Temperature?" P"Do you want to keep the bed and chamber temperature?" S4 K{"Keep Temperature", "Set to Zero"} F0 T30
-
-; Restore temperatures if user chose to keep them (or timeout occurred)
-if input == 0
-  M140 S{var.bedTemp} R{var.bedTemp}    ; Restore bed temperature
-  M141 S{var.chamberTemp} R{var.chamberTemp}               ; Restore chamber temperature
-else
-  M84 XYU
+;=; Ask user if they want to keep temperatures (auto-closes after 30s, defaults to Keep Temperature)
+;=M291 R"Keep Temperature?" P"Do you want to keep the bed and chamber temperature?" S4 K{"Keep Temperature", "Set to Zero"} F0 T30
+;=
+;=; Restore temperatures if user chose to keep them (or timeout occurred)
+;=if input == 0
+;=  M140 S{var.bedTemp} R{var.bedTemp}    ; Restore bed temperature
+;=  M141 S{var.chamberTemp} R{var.chamberTemp}               ; Restore chamber temperature
+;=else
+;=  M84 XYU
