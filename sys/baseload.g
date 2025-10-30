@@ -50,7 +50,7 @@ M83 ; Extruder to relative mode
 
 
 
-M291 R"Feed the filament, material will be extruded" P"Insert filament into extruder and press ""Start Extrusion"" to begin, or ""Cancel"" to abort." S4 K{"Start Extrusion"} J2 F0
+M291 R"Feed the filament, material will be extruded" P"Insert filament into extruder and press ""Start Extrusion"" to begin, or ""Cancel"" to abort." S4 K{"▶ Start Extrusion"} J2 F0
 if result = -1
   ; User cancelled - reset temperatures and abort
   M568 P0 A0
@@ -85,7 +85,7 @@ else
 
 M400
 
-M291 R"Filament Loading Check" P"Is new filament visible coming out of the nozzle?" S4 K{"Yes - Filament Visible","No - Extrude More"} J2 F0
+M291 R"Filament Loading Check" P"Is new filament visible coming out of the nozzle?" S4 K{"✓ Yes - Filament Visible","↻ No - Extrude More"} J2 F0
 while result != -1 && input == 1
   if heat.heaters[0].state == "fault" || heat.heaters[1].state == "fault" || heat.heaters[2].state == "fault" || heat.heaters[3].state == "fault"
     M568 P0 A0
@@ -97,7 +97,7 @@ while result != -1 && input == 1
     abort "Error: Heater fault detected"
   G1 E50 F{var.ss} ; Extrude
   M400
-  M291 R"Filament Loading Check" P"Is new filament visible coming out of the nozzle?" S4 K{"Yes - Filament Visible","No - Extrude More"} J2 F0
+  M291 R"Filament Loading Check" P"Is new filament visible coming out of the nozzle?" S4 K{"✓ Yes - Filament Visible","↻ No - Extrude More"} J2 F0
 
 if result = -1
   ; User cancelled - reset temperatures and abort

@@ -17,13 +17,13 @@ else
   T R1
 
 if tools[state.currentTool].active[0] == 0
-  M291 S5 J1 F250 L0 H450 R"Set Left Tool Temperature" P"Please set the temperature for the filament previously loaded in the Left Tool."
+  M291 S5 J1 F250 L0 H450 R"Set Left Tool Temperature" P"Please set the temperature for the filament previously loaded in the Left Tool (°C, range: 0-450)."
   M568 P0 R{input} S{input}
-  M291 S5 J1 F250 L0 H450 R"Set Right Tool Temperature" P"Please set the temperature for the filament previously loaded in the Right Tool."
+  M291 S5 J1 F250 L0 H450 R"Set Right Tool Temperature" P"Please set the temperature for the filament previously loaded in the Right Tool (°C, range: 0-450)."
   M568 P1 R{input} S{input}
-  M291 S5 J1 F110 L0 H200 R"Set Bed Temperature" P"Please set the temperature for the Bed."
+  M291 S5 J1 F110 L0 H200 R"Set Bed Temperature" P"Please set the temperature for the Bed (°C, range: 0-200)."
   M568 P2 R{input} S{input}
-  M291 S5 J1 F60 L0 H200 R"Set Chamber Temperature" P"Please set the temperature for the Chamber."
+  M291 S5 J1 F60 L0 H200 R"Set Chamber Temperature" P"Please set the temperature for the Chamber (°C, range: 0-200)."
   M568 P3 R{input} S{input}
 
 M106 P7 S{global.hepafan}

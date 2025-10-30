@@ -3,7 +3,7 @@ G60 S0
 var changeRequested = exists(param.A)
 
 if !var.changeRequested
-  M291 R"Filament runout was detected" P"Change filament now?" S4 K{"Change Filament", "Don't Change"} F0
+  M291 R"Filament runout was detected" P"Change filament now?" S4 K{"✓ Change Filament Now", "✗ Don't Change"} F0
   if result = -1 || input == 1
     T R0
     M99
@@ -19,7 +19,7 @@ if state.currentTool == -1
   abort
 
 if state.currentTool == 2 || state.currentTool == 3
-  M291 R"Select Tool" P"Which tool should be serviced?" S4 K{"Left Tool (T0)", "Right Tool (T1)", "Cancel"} F0
+  M291 R"Select Tool" P"Which tool should be serviced?" S4 K{"← Left Tool (T0)", "→ Right Tool (T1)", "✗ Cancel"} F0
   if result = -1 || input == 2
     abort "Operation cancelled"
   if input == 0
@@ -56,7 +56,7 @@ if #var.heaters > 0
     set var.targetTemp = heat.heaters[var.primaryHeater].current
 
 if var.targetTemp < 120
-  M291 S5 R"Filament Change" P{"Enter nozzle temperature for T" ^ var.tool} L0 H450 J1
+  M291 S5 R"Filament Change Temperature" P{"Enter nozzle temperature for T" ^ var.tool ^ " (in °C, range: 0-450)"} L0 H450 J1
   if result = -1
     abort "Operation cancelled"
   set var.targetTemp = input
@@ -67,7 +67,7 @@ M568 P{var.tool} S{var.workingTemps} R{var.workingTemps} A2
 ; Execute the standard retract/load helpers with change-mode behaviour
 M98 P"0:/sys/baseunload.g" C1
 
-M291 R"Load New Filament" P"Insert the new filament, then choose Load." S4 K{"Load", "Cancel"} F0
+M291 R"Load New Filament" P"Insert the new filament, then choose Load." S4 K{"▶ Load Filament", "✗ Cancel"} F0
 if result != -1 && input = 0
   M98 P"0:/sys/baseload.g" C1
 else

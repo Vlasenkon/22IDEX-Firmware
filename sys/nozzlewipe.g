@@ -72,21 +72,21 @@ if !exists(global.printerStatus) || global.printerStatus != "prt_starting"
 if exists(param.E)
   M83                                                             ; Relative extruder moves
   if state.currentTool == 0 && heat.heaters[state.currentTool].current < 160
-    M291 S5 J1 F250 L150 H450 R"Set Left Tool Temperature" P"Please set the temperature for the filament previously loaded in the Left Tool."
+    M291 S5 J1 F250 L150 H450 R"Set Left Tool Temperature" P"Please set the temperature for the filament previously loaded in the Left Tool (°C, range: 150-450)."
     M568 P0 R{input} S{input}
     M568 P0 A2
     M116 P0 S10
   elif state.currentTool == 1 && heat.heaters[state.currentTool].current < 160
-    M291 S5 J1 F250 L150 H450 R"Set Right Tool Temperature" P"Please set the temperature for the filament previously loaded in the Right Tool."
+    M291 S5 J1 F250 L150 H450 R"Set Right Tool Temperature" P"Please set the temperature for the filament previously loaded in the Right Tool (°C, range: 150-450)."
     M568 P1 R{input} S{input}
     M568 P1 A2
     M116 P1 S10
   elif state.currentTool != 0 && state.currentTool != 1
     if heat.heaters[0].current < 160 || heat.heaters[1].current < 160
-      M291 S5 J1 F250 L150 H450 R"Set Left Tool Temperature" P"Please set the temperature for the filament previously loaded in the Left Tool."
+      M291 S5 J1 F250 L150 H450 R"Set Left Tool Temperature" P"Please set the temperature for the filament previously loaded in the Left Tool (°C, range: 150-450)."
       M568 P2 R{input} S{input}
       M568 P3 R{input} S{input}
-      M291 S5 J1 F250 L150 H450 R"Set Right Tool Temperature" P"Please set the temperature for the filament previously loaded in the Right Tool."
+      M291 S5 J1 F250 L150 H450 R"Set Right Tool Temperature" P"Please set the temperature for the filament previously loaded in the Right Tool (°C, range: 150-450)."
       M568 P2 R{input} S{input}
       M568 P3 R{input} S{input}
       M568 P0 A2

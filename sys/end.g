@@ -50,7 +50,7 @@ M98 P"0:/user/tool1extrude.g"
 
 if move.axes[2].babystep != 0
 	echo "Warning: Adjustment of "^move.axes[2].babystep^" mm was detected, please save Z - Offset"
-	M291 R"Save Z-Offset?" P{"Adjustment of "^move.axes[2].babystep^" mm was detected. Would you like to save it?"} S4 K{"Save Current Z-Offset", "Skip"} F0
+	M291 R"Save Z-Offset?" P{"Adjustment of "^move.axes[2].babystep^" mm was detected. Would you like to save it?"} S4 K{"💾 Save Current Z-Offset", "⏭ Skip (Don't Save)"} F0
 	if input == 0
 		M98 P"0:/macros/Save Current Z - Offset"
 
