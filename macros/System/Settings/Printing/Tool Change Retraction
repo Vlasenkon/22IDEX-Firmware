@@ -1,13 +1,13 @@
 ; Adjust tool change retraction and extrusion distances/feedrates
 
-M291 R"Tool Change Settings" P"Select tool to adjust" S3 K{"Tool 0","Tool 1"} F0
+M291 R"Tool Change Settings" P"Select tool to adjust" S4 K{"Tool 0","Tool 1"}
 if result = -1
   abort "Operation cancelled"
 
 var toolIndex = input
 var toolLabel = var.toolIndex == 0 ? "Tool 0" : "Tool 1"
 
-M291 R"Tool Change Settings" P"Select parameter to adjust" S3 K{"Retraction","Extrusion"} F0
+M291 R"Tool Change Settings" P"Select parameter to adjust" S4 K{"Retraction","Extrusion"}
 if result = -1
   abort "Operation cancelled"
 
@@ -16,7 +16,7 @@ var distance = 0.0
 var distanceGlobal = ""
 
 if var.isRetraction
-  M291 R{var.toolLabel^" Retraction"} P"Enter retraction distance (mm, positive)" S5 L0 H50 J1 F0
+  M291 R{var.toolLabel^" Retraction"} P"Enter retraction distance (mm, positive)" S5 L0 H50 J1
   if result = -1
     abort "Operation cancelled"
   set var.distance = -abs(input)
@@ -26,7 +26,7 @@ if var.isRetraction
   else
     set var.distanceGlobal = "tool1RetractDistance"
 else
-  M291 R{var.toolLabel^" Extrusion"} P"Enter extrusion distance (mm, positive)" S5 L0 H50 J1 F0
+  M291 R{var.toolLabel^" Extrusion"} P"Enter extrusion distance (mm, positive)" S5 L0 H50 J1
   if result = -1
     abort "Operation cancelled"
   set var.distance = abs(input)
@@ -37,7 +37,7 @@ else
     set var.distanceGlobal = "tool1ExtrudeDistance"
 
 var suffix = var.isRetraction ? "retract" : "extrude"
-var targetFile = "0:/user/tool" ^ (var.toolIndex == 0 ? "0" : "1") ^ suffix
+var targetFile = "0:/user/tool" ^ (var.toolIndex == 0 ? "0" : "1") ^ var.suffix
 var summary = var.toolLabel ^ " " ^ (var.isRetraction ? "retraction" : "extrusion")
 
 echo >{var.targetFile} "; "^{var.summary}^" custom value"

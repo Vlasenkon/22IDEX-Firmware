@@ -1,4 +1,4 @@
-M291 P"Select an option:" R"EventLogging Toggle" S4 K{"Enable", "Disable"}
+M291 P"Select an option:" R"EventLogging Toggle" S4 K{"Enable", "Disable"} F0
 
 if input = 1
   echo >"0:/user/eventlogging.g" "; EventLogging Disabled"

@@ -1,4 +1,10 @@
-M291 S4 R"Nozzle wiping during printing" P"Select Option" K{"On","Off"} F0
+var msg1 = "By enabling this option, the nozzle will be wiped during the print "
+var msg2 = "every 500 cubic millimeters of plastic extruded.<br><br>"
+var msg3 = "This will happen during layer changes.<br><br>"
+var msg4 = "This is helpful for very oozy materials like PEI-9085, or PPSU."
+var message = var.msg1 ^ var.msg2 ^ var.msg3 ^ var.msg4
+
+M291 S4 R"Nozzle wiping during printing" P{var.message} K{"Enable","Disable"} F0
 
 if input = 0
     echo >"0:/user/periodic_wiping.g" "if exists(global.periodic_wiping)"
