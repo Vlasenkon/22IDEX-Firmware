@@ -3,7 +3,8 @@
 ; General preferences
 G90                                                              ; absolute coordinates
 M83                                                              ; relative extruder moves
-M550 P"global.APname"                                                   ; set printer name
+M98 P"0:/user/APname.g"
+M550 P{global.APname}                                            ; set printer name
 
 M80 C"pson"                                                      ; define PS_ON pin
 
@@ -127,11 +128,11 @@ M106 P6 C"W LED" H-1 S0 B0
 ; Tools
 M563 P0 S"Left Head" D0 H0 F3                                    ; define tool
 G10 P0 X0 Y0 Z0 U0                                               ; set tool offsets
-M568 P0 R0 S0                                                     ; set initial tool active and standby temperatures
+M568 P0 R0 S0                                                    ; set initial tool active and standby temperatures
 
 M563 P1 S"Right Head" D1 H1 F1 X3                                ; define tool
 M98 P"0:/user/tooloffset.g"                                      ; Load tool offsets
-M568 P1 R0 S0                                                     ; set initial tool active and standby temperatures
+M568 P1 R0 S0                                                    ; set initial tool active and standby temperatures
 
 M563 P2 S"Duplicate Mode" D0:1 H0:1 X0:3 F1:3                    ; tool 2 uses both extruders and hot end heaters, maps X to both X and U, and uses both print cooling fans
 G10 P2 X97.5 Y0 U-97.5 S0 R0                                     ; set tool offsets and temperatures for tool 2
@@ -160,13 +161,13 @@ M98 P"0:/user/xcomp_auto.g"                                      ; load auto cal
 M98 P"0:/user/xcomp_manual.g"                                    ; load manual calibration value
 M98 P"0:/user/xcomp_mode.g"                                      ; load compensation mode
 M98 P"0:/user/hepafan.g"                                         ; load hepa fan speed
-M98 P"0:/user/tool0retract.g"                                   ; load tool 0 retract value
-M98 P"0:/user/tool1retract.g"                                   ; load tool 1 retract value
-M98 P"0:/user/tool0extrude.g"                                   ; load tool 0 extrude value
-M98 P"0:/user/tool1extrude.g"                                   ; load tool 1 extrude value
-M98 P"0:/user/xy_square_manual.g"                              ; load XY squaring manual value
-M98 P"0:/user/xy_square_auto.g"                                ; load XY squaring auto value
-M98 P"0:/user/xy_square_mode.g"                                ; load XY squaring mode
+M98 P"0:/user/tool0retract.g"                                    ; load tool 0 retract value
+M98 P"0:/user/tool1retract.g"                                    ; load tool 1 retract value
+M98 P"0:/user/tool0extrude.g"                                    ; load tool 0 extrude value
+M98 P"0:/user/tool1extrude.g"                                    ; load tool 1 extrude value
+M98 P"0:/user/xy_square_manual.g"                                ; load XY squaring manual value
+M98 P"0:/user/xy_square_auto.g"                                  ; load XY squaring auto value
+M98 P"0:/user/xy_square_mode.g"                                  ; load XY squaring mode
 
 echo >"0:/sys/resetzbabystep.g" "                                ; do nothing"
 
@@ -191,4 +192,3 @@ M98 P"0:/sys/led/startup.g"                                      ; startup LED
 ; test internet connection
 echo >"0:/sys/runonce.g" "G4 S5"
 echo >>"0:/sys/runonce.g" "M98 P""0:/sys/networktest.g"""
-echo >>"0:/sys/runonce.g" "echo 2"
