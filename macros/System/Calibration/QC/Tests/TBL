@@ -1,6 +1,6 @@
 M84 Z
 
-M291 R"True Bed Leveling Test" P"Tilt the bed manually to test the True Bed Leveling." S4 K{"Test","Skip","Cancel"}
+M291 R"True Bed Leveling Test" P"Tilt the bed manually to test the True Bed Leveling." S4 K{"Test","Skip","Cancel"} F0
 if input == 1
     M99
 elif input == 2

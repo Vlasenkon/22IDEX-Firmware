@@ -1,4 +1,4 @@
-M291 R"Bed Heater Test" P"Do you want to start Bed Heating Test?" S4 K{"Test","Skip","Cancel"}
+M291 R"Bed Heater Test" P"Do you want to start Bed Heating Test?" S4 K{"Test","Skip","Cancel"} F0
 if input == 0
 
   M98 P"0:/sys/led/resetstatus.g"
@@ -53,7 +53,7 @@ if input == 0
   ; ///// Bed Heater Test End /////
 
 
-M291 R"Chamber Heater and Fans Test" P"Do you want to start Chamber Heating and Fans Test?" S4 K{"Test","Skip","Cancel"}
+M291 R"Chamber Heater and Fans Test" P"Do you want to start Chamber Heating and Fans Test?" S4 K{"Test","Skip","Cancel"} F0
 if input == 0
 
   M98 P"0:/sys/led/resetstatus.g"
@@ -115,14 +115,14 @@ if input == 0
   M106 P4 H4 S1 B1 T0                                                                         ; Turn ON Chamber Main Fan
   M106 P7 H3 S1 B0 T300                                                                       ; Turn OFF Hepa
 
-  M291 R"Main Chamber Fan Test" P"Is the Main Chamber Fan spinning?" S4 K{"Yes","No"} J0
+  M291 R"Main Chamber Fan Test" P"Is the Main Chamber Fan spinning?" S4 K{"Yes","No"} J0 F0
   if input == 1
     abort "Error: Main Chamber Fan didn`t work."
 
   M106 P7 H3 S1 B0 T0                                                                         ; Turn ON Hepa
   M106 P4 H4 S1 B1 T300                                                                       ; Turn OFF Chamber Main Fan
 
-  M291 R"Hepa Fan Test" P"Is Hepa Fan spinning?" S4 K{"Yes","No"} J0
+  M291 R"Hepa Fan Test" P"Is Hepa Fan spinning?" S4 K{"Yes","No"} J0 F0
   if input == 1
     abort "Error: Hepa Fan Fan didn`t work."
 

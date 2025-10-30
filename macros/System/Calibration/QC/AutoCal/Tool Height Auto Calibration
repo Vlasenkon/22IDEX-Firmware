@@ -69,7 +69,7 @@ echo "Left head pos = "^{var.lll}^" mm"
 
 if {abs(var.probe_heigh - var.lll)} < 8 || {abs(var.probe_heigh - var.lll) + abs(global.rtzoffset)} < 8
   M98 P"0:/sys/led/pause.g"
-  M291 S4 K{"Calibrate","Skip Calibration","Cancel Calibration"} R{"The nozzle is too low"} P"To avoid damaging your machine, callibrate the nozzle.<br>Please select an option to proceed"
+  M291 S4 K{"Calibrate","Skip Calibration","Cancel Calibration"} R{"The nozzle is too low"} P"To avoid damaging your machine, callibrate the nozzle.<br>Please select an option to proceed" F0
   if input = 0
     M291 S2 R"Calibration Process" P"You will be asked to: Loosen heat break and raise it.<br>Click ""OK"" when ready to start."
     G90
@@ -200,7 +200,7 @@ else
 
   else ; ===If delta is more than allowed value===
     M98 P"0:/sys/led/pause.g"
-    M291 S4 K{"Calibrate","Skip Calibration","Cancel Calibration"} R{"Nozzles are deviated by "^var.ddd^" mm"} P"Please select an option to proceed"
+    M291 S4 K{"Calibrate","Skip Calibration","Cancel Calibration"} R{"Nozzles are deviated by "^var.ddd^" mm"} P"Please select an option to proceed" F0
 
     if input == 0 ; User chose "Calibrate"
       M291 S2 R"Calibration Process" P"You will be asked to: Loosen heat break and lower it. The build plate will push the nozzle up to match the other nozzle's level.<br>Click ""OK"" when ready to start."

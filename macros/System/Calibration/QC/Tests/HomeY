@@ -1,4 +1,4 @@
-M291 R"Home Y - Correction Test" P"Do you want to start the Home Y Test?" S4 K{"Test","Skip","Cancel"}
+M291 R"Home Y - Correction Test" P"Do you want to start the Home Y Test?" S4 K{"Test","Skip","Cancel"} F0
 if input == 1
     M99
 elif input == 2

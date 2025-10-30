@@ -1,4 +1,4 @@
-M291 S4 R"Bed Position After Job End" P"Select an option:" K{"Set custom Z position", "Lower bed to Z420", "Do not move"} H1
+M291 S4 R"Bed Position After Job End" P"Select an option:" K{"Set custom Z position", "Lower bed to Z420", "Do not move"} H1 F1
 
 if input = 0
     ; Set custom Z position

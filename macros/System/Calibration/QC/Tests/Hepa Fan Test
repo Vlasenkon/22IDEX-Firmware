@@ -1,4 +1,4 @@
-M291 R"Hepa Fan Test" P"Do you want to start the Hepa Fan Test?" S4 K{"Test","Skip","Cancel"}
+M291 R"Hepa Fan Test" P"Do you want to start the Hepa Fan Test?" S4 K{"Test","Skip","Cancel"} F0
 if input == 1
     M99
 elif input == 2
@@ -17,7 +17,7 @@ elif input == 0
         G4 S{var.pauseTime}
 
     if fans[7].rpm != 0
-        M291 R"Error" P"The fan speed does not match the set value. Please check the fan.<br> Do you want to stop test?" S4 K{"Stop","Continue Test"}
+        M291 R"Error" P"The fan speed does not match the set value. Please check the fan.<br> Do you want to stop test?" S4 K{"Stop","Continue Test"} F0
         if input == 0
             M106 P7 S0
             M106 P7 H3 T50 X{global.hepafan}
@@ -30,7 +30,7 @@ elif input == 0
     M291 P{"Please wait "^ {var.pauseTime} ^" seconds for the rpm to reach the set point."} S1
     G4 S{var.pauseTime}
     if fans[7].rpm < 3300 || fans[7].rpm > 3700
-        M291 R"Error" P"The fan speed does not match the set value. Please check the fan.<br> Do you want to stop test?" S4 K{"Stop","Continue Test"}
+        M291 R"Error" P"The fan speed does not match the set value. Please check the fan.<br> Do you want to stop test?" S4 K{"Stop","Continue Test"} F0
         if input == 0
             M106 P7 S0
             M106 P7 H3 T50 X{global.hepafan}
@@ -44,7 +44,7 @@ elif input == 0
     M291 P{"Please wait "^ {var.pauseTime} ^" seconds for the rpm to reach the set point."} S1
     G4 S{var.pauseTime}
     if fans[7].rpm < 6400 || fans[7].rpm > 6700
-        M291 R"Error" P"The fan speed does not match the set value. Please check the fan.<br> Do you want to stop test?" S4 K{"Stop","Continue Test"}
+        M291 R"Error" P"The fan speed does not match the set value. Please check the fan.<br> Do you want to stop test?" S4 K{"Stop","Continue Test"} F0
         if input == 0
             M106 P7 S0
             M106 P7 H3 T50 X{global.hepafan}
@@ -58,7 +58,7 @@ elif input == 0
     M291 P{"Please wait "^ {var.pauseTime} ^" seconds for the rpm to reach the set point."} S1
     G4 S{var.pauseTime}
     if fans[7].rpm < 9700 || fans[7].rpm > 9900
-        M291 R"Error" P"The fan speed does not match the set value. Please check the fan.<br> Do you want to stop test?" S4 K{"Stop","Continue Test"}
+        M291 R"Error" P"The fan speed does not match the set value. Please check the fan.<br> Do you want to stop test?" S4 K{"Stop","Continue Test"} F0
         if input == 0
             M106 P7 S0
             M106 P7 H3 T50 X{global.hepafan}
@@ -72,7 +72,7 @@ elif input == 0
     M291 P{"Please wait "^ {var.pauseTime} ^" seconds for the rpm to reach the set point."} S1
     G4 S{var.pauseTime}
     if fans[7].rpm < 14000 || fans[7].rpm > 14700
-        M291 R"Error" P"The fan speed does not match the set value. Please check the fan.<br> Do you want to stop test?" S4 K{"Stop","Continue Test"}
+        M291 R"Error" P"The fan speed does not match the set value. Please check the fan.<br> Do you want to stop test?" S4 K{"Stop","Continue Test"} F0
         if input == 0
             M106 P7 S0
             M106 P7 H3 T50 X{global.hepafan}

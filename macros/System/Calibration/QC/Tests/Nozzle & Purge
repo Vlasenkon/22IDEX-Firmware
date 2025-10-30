@@ -43,7 +43,7 @@ M568 P3 S0 R0
 
 ; Purging Bucket Clearance Height Adjustment
 G1 X-190 U190 Y-73
-M291 R"Adjust Purgin Buckets" P"Click ""OK"" when ready to test clearance height." S4 K{"Test","Skip","Cancel"}
+M291 R"Adjust Purgin Buckets" P"Click ""OK"" when ready to test clearance height." S4 K{"Test","Skip","Cancel"} F0
 if input == 1
     M99
 elif input == 2

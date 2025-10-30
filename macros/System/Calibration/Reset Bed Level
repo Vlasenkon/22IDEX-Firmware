@@ -1,7 +1,7 @@
 M564 H0
 
 while true
-    M291 J1 R"Move Z Down?" P"Move the Build Plate down unit all 3 motors reach bottom and the bed is leveled, expect to hear grinding noise" S4 K{"Move Z Down","Already at the bottom",}
+    M291 J1 R"Move Z Down?" P"Move the Build Plate down unit all 3 motors reach bottom and the bed is leveled, expect to hear grinding noise" S4 K{"Move Z Down","Already at the bottom",} F0
     if input = 0
         M84 Z
         M913 Z60        ; Reduce Z motor current to 60% for downward movement
@@ -17,9 +17,9 @@ G91
 G1 Z-25 F18000
 G90
 
-M291 R"Did all 3 motors move up normally?" P" " S4 K{"Yes","No",}
+M291 R"Did all 3 motors move up normally?" P" " S4 K{"Yes","No",} F0
 if input = 0
-    M291 R"Should machine be homed?" P" " S4 K{"Yes","No",}
+    M291 R"Should machine be homed?" P" " S4 K{"Yes","No",} F0
     if input = 0
         G91
         G1 Z-100 F18000
@@ -42,9 +42,9 @@ else
     ;return Z motor current
     M906 Z{var.zcurrent}
     ;ask if moved. up with increased current, home all if YES
-    M291 R"Did all 3 motors move up normally?" P" " S4 K{"Yes","No",}
+    M291 R"Did all 3 motors move up normally?" P" " S4 K{"Yes","No",} F0
     if input = 0
-        M291 R"Should machine be homed?" P" " S4 K{"Yes","No",}
+        M291 R"Should machine be homed?" P" " S4 K{"Yes","No",} F0
         if input = 0
             G91
             G1 Z-100 F18000

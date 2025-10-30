@@ -1,4 +1,4 @@
-M291 R"Home Y" P" " S4 K{"Test","Skip","Cancel"}
+M291 R"Home Y" P" " S4 K{"Test","Skip","Cancel"} F0
 if input == 1
     M99
 elif input == 2
@@ -11,7 +11,7 @@ G28 X
 M291 R"Home U" P" " S3
 G28 U
 
-M291 R"Was Homing OK?" P" " S4 K{"Yes","No"}
+M291 R"Was Homing OK?" P" " S4 K{"Yes","No"} F0
 if input == 1
     abort "Error: Homing failed."
 

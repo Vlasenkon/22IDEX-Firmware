@@ -1,5 +1,5 @@
 ; ---- User confirmation ----
-M291 S4 K{"Start test","Start (No fault detection)","Cancel"} R"Chamber Heating Test" P"The printer will heat to high temps.<br>Remove low-melting materials.<br>Hold X or U endstop to abort."
+M291 S4 K{"Start test","Start (No fault detection)","Cancel"} R"Chamber Heating Test" P"The printer will heat to high temps.<br>Remove low-melting materials.<br>Hold X or U endstop to abort." F0
 
 ; Variable to track fault detection state
 var disableFaultDetection = false
@@ -190,7 +190,7 @@ var maxInitialChamberTemp = 45  ; Maximum initial chamber temp to run validation
 var runTempValidation = false   ; Flag to determine if validation should run
 
 ; ---- Chamber cooling wait prompt ----
-M291 S4 K{"OK","Don't wait"} R"Chamber Cooling" P"Machine will automatically wait for the chamber to cool down."
+M291 S4 K{"OK","Don't wait"} R"Chamber Cooling" P"Machine will automatically wait for the chamber to cool down." F0
 var waitForCooling = (input == 0)
 
 if var.waitForCooling
@@ -240,7 +240,7 @@ if var.waitForCooling && var.needsCooling
   ; ---- Cooling complete - show success (green LED) ----
   M98 P"0:/sys/led/end.g" ; GREEN success - cooling complete
   G4 S3  ; Hold green LED for 3 seconds so user sees it
-  M291 S4 K{"Continue","Cancel"} R"Cooling Complete" P"The printer has cooled down successfully.<br>Ready to start chamber heating test.<br><br>Click Continue to proceed."
+  M291 S4 K{"Continue","Cancel"} R"Cooling Complete" P"The printer has cooled down successfully.<br>Ready to start chamber heating test.<br><br>Click Continue to proceed." F0
   
   if input != 0
     abort "Test cancelled by user after cooling."
@@ -267,7 +267,7 @@ G0 Z150 X-200 U200 Y0              ; Move Z to 150mm, X to -200, U to 200, Y to 
 echo "Axes positioned: Z=150mm, X=-200mm, U=200mm, Y=0mm"
 
 ; ---- Test duration prompt (for all scenarios) ----
-M291 S4 K{"OK","Set custom time"} R"Test Duration" P"Machine will test the chamber heating for two hours, what temperature it will reach."
+M291 S4 K{"OK","Set custom time"} R"Test Duration" P"Machine will test the chamber heating for two hours, what temperature it will reach." F0
 set var.useCustomTime = (input == 1)
 
 if var.useCustomTime

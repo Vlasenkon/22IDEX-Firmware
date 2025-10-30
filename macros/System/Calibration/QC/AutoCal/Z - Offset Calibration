@@ -51,7 +51,7 @@ var dd = var.zp - var.zn
 
 if abs(var.dd) < 8 || {abs(var.dd) + abs(global.rtzoffset)} < 8
   M98 P"0:/sys/led/pause.g"
-  M291 S4 K{"Calibrate","Skip Calibration","Cancel Calibration"} R{"The nozzle is too low"} P"To avoid damaging your machine, callibrate the nozzle.<br>Please select an option to proceed"
+  M291 S4 K{"Calibrate","Skip Calibration","Cancel Calibration"} R{"The nozzle is too low"} P"To avoid damaging your machine, callibrate the nozzle.<br>Please select an option to proceed" F0
   if input = 0
     M291 S2 R"Calibration Process" P"You will be asked to: Loosen heat break and raise it.<br>Click ""OK"" when ready to start."
     G90

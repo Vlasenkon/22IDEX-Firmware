@@ -1,6 +1,6 @@
 M98 P"0:/sys/led/resetstatus.g"
 
-M291 R"Voltage Test" P"Do you want to start the voltage test?" S4 K{"Test","Skip","Cancel"}
+M291 R"Voltage Test" P"Do you want to start the voltage test?" S4 K{"Test","Skip","Cancel"} F0
 if input == 1
     M99
 elif input == 2

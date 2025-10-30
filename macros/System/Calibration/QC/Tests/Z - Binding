@@ -1,4 +1,4 @@
-M291 R"Z-Binding Test" P"Choose an option:" K{"Start","Skip","Cancel"} S4
+M291 R"Z-Binding Test" P"Choose an option:" K{"Start","Skip","Cancel"} S4 F0
 if input == 1
     M99
 elif input == 2
@@ -24,7 +24,7 @@ while var.iter < 5
 M913 Z100 ; Reset Z-axis current
 G1 Z25 F18000
 
-M291 R"Was the motion smooth?" P"Choose an option:" K{"Yes","No"} S4
+M291 R"Was the motion smooth?" P"Choose an option:" K{"Yes","No"} S4 F0
 
 G91
 if input == 0

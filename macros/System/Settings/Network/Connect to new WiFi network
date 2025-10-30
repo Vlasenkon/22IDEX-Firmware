@@ -62,7 +62,7 @@ else
 	G4 S2
 	M552 I1 S2
 
-	M291 S4 K{"OK","Cancel"} R{"Success, your IP address is: """^var.ip^""""} P{"To access DWC, in your browser enter """^var.ip^""". Press ""OK"" to switch mode now or restart the machine"}
+	M291 S4 K{"OK","Cancel"} R{"Success, your IP address is: """^var.ip^""""} P{"To access DWC, in your browser enter """^var.ip^""". Press ""OK"" to switch mode now or restart the machine"} F0
 	
 	echo >"0:/IP_address.txt" "User was connected via WiFi Client Mode"
 	echo >>"0:/IP_address.txt" "Last Connected IP is: "^var.ip

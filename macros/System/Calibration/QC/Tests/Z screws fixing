@@ -1,5 +1,5 @@
 ; Fixing the motor screws
-M291 R"Fixing the motor screws" P"Please lower the bed down to the extreme point and tighten the z screws of the motors" S4 K{"Test","Skip","Cancel"}
+M291 R"Fixing the motor screws" P"Please lower the bed down to the extreme point and tighten the z screws of the motors" S4 K{"Test","Skip","Cancel"} F0
 if input == 1
     M99
 if input == 2

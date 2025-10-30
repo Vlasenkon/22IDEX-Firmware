@@ -7,7 +7,7 @@ M568 P3 R0 S0
 
 ; ========================== T0 CONNECTION ==========================
 
-M291 R"T0 Connection Test" P"Do you want to start T0 Connection Test?" S4 K{"Test","Skip","Cancel"}
+M291 R"T0 Connection Test" P"Do you want to start T0 Connection Test?" S4 K{"Test","Skip","Cancel"} F0
 if input == 0
   
   ; ///// T0 Fans Test /////
@@ -22,7 +22,7 @@ if input == 0
 
   M106 P3 S0
   M106 P2 H1 S1 B0 T0
-  M291 R"T0 Hotend Fan Test" P"Is the T0 Hotend Fan spinning?" S4 K{"Ok","Cancel"} J0
+  M291 R"T0 Hotend Fan Test" P"Is the T0 Hotend Fan spinning?" S4 K{"Ok","Cancel"} J0 F0
 
   if input == 1
     M106 P3 S0
@@ -54,7 +54,7 @@ if input == 0
         break
     M98 P"0:/sys/led/resetstatus.g"
 
-  M291 R"T0 Heater Test will start" P"Make sure is is heating UP my hand" S4 K{"Test","Skip","Cancel"}
+  M291 R"T0 Heater Test will start" P"Make sure is is heating UP my hand" S4 K{"Test","Skip","Cancel"} F0
   if input == 2
       abort "Test cancelled by user"
 
@@ -84,7 +84,7 @@ if input == 0
   ; ///// T0 Heater Test End /////
 
   ; ///// T0 Extruder Motor Direction Test /////
-  M291 R"T0 Extruder Motor Direction Test" P"Do you want to start T0 Extruder Motor Direction Test?" S4 K{"Test", "Skip", "Cancel"}
+  M291 R"T0 Extruder Motor Direction Test" P"Do you want to start T0 Extruder Motor Direction Test?" S4 K{"Test", "Skip", "Cancel"} F0
   if input == 0
 
     while true
@@ -113,7 +113,7 @@ if input == 0
 
 ; ========================== T1 CONNECTION ==========================
 
-M291 R"T1 Connection Test" P"Do you want to start T0 Connection Test?" S4 K{"Test","Skip","Cancel"}
+M291 R"T1 Connection Test" P"Do you want to start T0 Connection Test?" S4 K{"Test","Skip","Cancel"} F0
 if input == 0
 
   ; ///// T1 Fans Test /////
@@ -129,7 +129,7 @@ if input == 0
 
   M106 P1 S0
   M106 P0 H1 S1 B0 T0
-  M291 R"T1 Hotend Fan Test" P"Is the T1 Hotend Fan spinning?" S4 K{"Ok","Cancel"} J0
+  M291 R"T1 Hotend Fan Test" P"Is the T1 Hotend Fan spinning?" S4 K{"Ok","Cancel"} J0 F0
 
   if input == 1
     M106 P1 S0
@@ -161,7 +161,7 @@ if input == 0
         break
     M98 P"0:/sys/led/resetstatus.g"
 
-  M291 R"T1 Heater Test will start" P"Make sure is is heating UP my hand" S4 K{"Test","Skip","Cancel"}
+  M291 R"T1 Heater Test will start" P"Make sure is is heating UP my hand" S4 K{"Test","Skip","Cancel"} F0
   if input == 2
       abort "Test cancelled by user"
 
@@ -192,7 +192,7 @@ if input == 0
     ; ///// T1 Heater Test End /////
 
     ; ///// T1 Extruder Motor Direction Test /////
-  M291 R"T1 Extruder Motor Direction Test" P"Do you want to start T1 Extruder Motor Direction Test?" S4 K{"Test", "Skip", "Cancel"}
+  M291 R"T1 Extruder Motor Direction Test" P"Do you want to start T1 Extruder Motor Direction Test?" S4 K{"Test", "Skip", "Cancel"} F0
   if input == 0
 
     while true

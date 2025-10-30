@@ -2,7 +2,7 @@
 var startMsg = "Start simplified chamber sensor calibration?<br><br>Remove low-melting materials first."
 set var.startMsg = var.startMsg ^ "<br>Hold X or U endstop to abort at any time."
 set var.startMsg = var.startMsg ^ "<br><br>Immediate calibration skips heating/soaking phases."
-M291 S4 K{"Start test","Start (No fault detection)","Immediate calibration","Cancel"} R"Chamber Temperature Calibration" P{var.startMsg}
+M291 S4 K{"Start test","Start (No fault detection)","Immediate calibration","Cancel"} R"Chamber Temperature Calibration" P{var.startMsg} F0
 
 ; Track fault detection state
 var disableFaultDetection = false
@@ -20,7 +20,7 @@ else
   abort "Calibration cancelled by user."
 
 ; ---- Calibration method selection ----
-M291 S4 K{"Automatic (T0+T1 avg)","Manual (IR/Probe)","Cancel"} R"Calibration Method" P"Select calibration method:<br><br>Automatic: Uses tool temperatures<br>Manual: You measure with IR/probe"
+M291 S4 K{"Automatic (T0+T1 avg)","Manual (IR/Probe)","Cancel"} R"Calibration Method" P"Select calibration method:<br><br>Automatic: Uses tool temperatures<br>Manual: You measure with IR/probe" F0
 
 var useManualCalibration = false
 
@@ -35,7 +35,7 @@ else
 if !var.immediateCalibration
   var heatMsg = "Select heating duration:<br><br>30 minutes is recommended for most cases."
   set var.heatMsg = var.heatMsg ^ "<br>Longer heating ensures better thermal stability."
-  M291 S4 K{"30 minutes (Default)","Custom duration","Cancel"} R"Heating Duration" P{var.heatMsg}
+  M291 S4 K{"30 minutes (Default)","Custom duration","Cancel"} R"Heating Duration" P{var.heatMsg} F0
   
   ; heatingMinutes already initialized to 30 at top of file
   
@@ -57,7 +57,7 @@ else
 
 ; ---- Safety preparations ----
 if !var.immediateCalibration
-  M291 S4 K{"Continue","Cancel"} R"Remove Plastics" P"Remove low-temperature filaments from chamber.<br><br>This prevents damage during heating."
+  M291 S4 K{"Continue","Cancel"} R"Remove Plastics" P"Remove low-temperature filaments from chamber.<br><br>This prevents damage during heating." F0
   
   if input != 0
     ; Reset temperatures and abort

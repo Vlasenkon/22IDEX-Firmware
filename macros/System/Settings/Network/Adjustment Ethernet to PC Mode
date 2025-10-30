@@ -2,7 +2,7 @@ var ip = "192.168.1.50"
 var gateway = "255.255.255.0"
 var subnet = "192.168.1.1"
 
-M291 R"Change Settings" P"Do you want to change settings Ethernet to PC Mode?" S4 K{"Change parameter", "Cancel"}
+M291 R"Change Settings" P"Do you want to change settings Ethernet to PC Mode?" S4 K{"Change parameter", "Cancel"} F0
 if input == 1
 	abort "Macros canceled by user"
 

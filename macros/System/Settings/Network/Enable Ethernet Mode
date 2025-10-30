@@ -1,5 +1,5 @@
 
-M291 S4 K{"OK, Ethernet is connected","Cancel"} R"Connect via Ethernet" P"Please connect the Ethernet cable to the device. Once connected, press ""OK"" to continue."
+M291 S4 K{"OK, Ethernet is connected","Cancel"} R"Connect via Ethernet" P"Please connect the Ethernet cable to the device. Once connected, press ""OK"" to continue." F0
 
 if input = 0
 	M292 ;Continue
@@ -7,7 +7,7 @@ else
 	M99
 
 
-M291 S4 K{"Test Connection","Skip Test and Change Mode"} R"Test Network Connection" P"Machine will test the connection and restart into AP WiFi mode.<br>Skipped and connect by using ""22.local"" address in your browser for ITAR"
+M291 S4 K{"Test Connection","Skip Test and Change Mode"} R"Test Network Connection" P"Machine will test the connection and restart into AP WiFi mode.<br>Skipped and connect by using ""22.local"" address in your browser for ITAR" F0
 if input = 0
 	M292 ;Continue
 else
@@ -62,7 +62,7 @@ else
 	M552 I1 S2	
 			
 	
-	M291 S4 K{"Cancel","OK"} R{"The IP address is: """^var.ip^""""} P{"To access DWC, in your browser enter """^var.ip^""" Press ""OK"" to switch Network mode now or restart the machine"}
+	M291 S4 K{"Cancel","OK"} R{"The IP address is: """^var.ip^""""} P{"To access DWC, in your browser enter """^var.ip^""" Press ""OK"" to switch Network mode now or restart the machine"} F1
 	
 	if input = 1
 		M552 I1 S-1

@@ -1,5 +1,5 @@
 ; Select tool
-M291 S4 K{"Left Tool - T0", "Right Tool - T1"} R"Choose the head where you want to change filament" P" "
+M291 S4 K{"Left Tool - T0", "Right Tool - T1"} R"Choose the head where you want to change filament" P" " F0
 if input == 0
   M568 P0 A2
   T0

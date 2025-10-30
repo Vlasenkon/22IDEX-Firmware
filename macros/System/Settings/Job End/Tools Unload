@@ -1,4 +1,4 @@
-M291 S4 K{"Always Retract", "Skip Retraction", "Retract Once"} R"Retract Filament from Tool After Print" P"Filament will be retracted from the nozzle after print. This allows easy filament removal. Retraction only from active tool."
+M291 S4 K{"Always Retract", "Skip Retraction", "Retract Once"} R"Retract Filament from Tool After Print" P"Filament will be retracted from the nozzle after print. This allows easy filament removal. Retraction only from active tool." F1
 
 if input == 0
     echo >"0:/user/retractfinishbehavior.g" "; Filament Retraction After Print Mode - Always Retract Extended"

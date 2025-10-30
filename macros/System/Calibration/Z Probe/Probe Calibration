@@ -20,7 +20,7 @@ else
 ; Part 1 "Height Adjustment"
 
 ; Ask if the user wants to calibrate the pickup height.
-M291 R"Pickup Height Calibration" P"Would you like to calibrate the probe pickup height?" S4 K{"Yes, Calibrate","No, Skip","Cancel"}
+M291 R"Pickup Height Calibration" P"Would you like to calibrate the probe pickup height?" S4 K{"Yes, Calibrate","No, Skip","Cancel"} F0
 
 if input == 0
     ; Lower the servo to start the calibration.
@@ -45,7 +45,7 @@ if input == 0
     G1 F18000 Y{move.axes[1].max-30} X{global.probePickX} U{move.axes[3].max-10}
 
     while true
-        M291 R"Adjust Probe Angle" P"Rotate the probe until it is horizontal relative to the tool. Select an option:" S4 K{"Turn CCW","Turn CW","Test","Done","Cancel"}
+        M291 R"Adjust Probe Angle" P"Rotate the probe until it is horizontal relative to the tool. Select an option:" S4 K{"Turn CCW","Turn CW","Test","Done","Cancel"} F3
         if input == 0
             M98 P"0:/macros/System/Calibration/Z Probe/Adjust pickup angle CCW"
         elif input == 1
@@ -101,7 +101,7 @@ G1 F18000 Y{move.axes[1].max-30} X{global.probePickX} U{move.axes[3].max-10} F18
 
 ; Part 2 "Calibration"
 while true
-    M291 R"Probe Angle Calibration" P"Adjust the angle if needed." S4 K{"Adjust CCW","Adjust CW","Test","Done","Cancel"}
+    M291 R"Probe Angle Calibration" P"Adjust the angle if needed." S4 K{"Adjust CCW","Adjust CW","Test","Done","Cancel"} F3
     if input == 0
         M98 P"0:/macros/System/Calibration/Z Probe/Adjust pickup angle CCW"
     elif input == 1
@@ -149,7 +149,7 @@ echo >>"0:/user/pickupposition.g" "  global probePickX = "^{global.probePickX}
 
 
 
-M291 S4 R"Do you want to save Y position" P" " K{"Yes, Save Y","No, do not Save Y"}
+M291 S4 R"Do you want to save Y position" P" " K{"Yes, Save Y","No, do not Save Y"} F0
 
 if input == 0
     if exists(global.probePickY)
@@ -198,7 +198,7 @@ M98 P"pick.g"
 G4 S1
 M98 P"place.g"
 
-M291 R"Probe Placement" P"Was the probe picked and placed correctly?" S4 K{"Yes","No"}
+M291 R"Probe Placement" P"Was the probe picked and placed correctly?" S4 K{"Yes","No"} F0
 if input == 0
     M291 R"Success" P"Probe calibration successful." S2
 else

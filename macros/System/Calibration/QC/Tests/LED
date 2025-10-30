@@ -1,4 +1,4 @@
-M291 R"LEDs Test" P"Do you want to start LEDs Test?" S4 K{"Test","Skip","Cancel"}
+M291 R"LEDs Test" P"Do you want to start LEDs Test?" S4 K{"Test","Skip","Cancel"} F0
 if input == 1
     M99
 elif input == 2
@@ -8,7 +8,7 @@ elif input == 0
 
 
     M106 P6 S1
-    M291 R"White LED Test" P"Click ""OK"" to confirm that White LED is on." S4 K{"OK","Skip","Cancel"}
+    M291 R"White LED Test" P"Click ""OK"" to confirm that White LED is on." S4 K{"OK","Skip","Cancel"} F0
     if input == 1
         M99
     elif input == 2

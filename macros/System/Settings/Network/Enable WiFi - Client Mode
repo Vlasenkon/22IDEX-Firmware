@@ -1,5 +1,5 @@
 if !exists(param.R)
-    M291 R"Change WiFi to Client Mode?" P" " S4 K{"Change & Reconnect Now","Change and Reconnect Later","Cancel"}
+    M291 R"Change WiFi to Client Mode?" P" " S4 K{"Change & Reconnect Now","Change and Reconnect Later","Cancel"} F0
 
     if input = 0
         echo >"0:/user/networkmode.g" "M552 I1 S1 ; Enable WiFi Client Mode"

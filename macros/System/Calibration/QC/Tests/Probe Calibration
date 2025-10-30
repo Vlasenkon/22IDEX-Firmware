@@ -1,4 +1,4 @@
-M291 R"Z - Probe Probe Calibration" P"Do you want to start the Z-Probe Calibration?" S4 K{"Test","Skip","Cancel"}
+M291 R"Z - Probe Probe Calibration" P"Do you want to start the Z-Probe Calibration?" S4 K{"Test","Skip","Cancel"} F0
 if input == 1
     M99
 elif input == 2
@@ -21,7 +21,7 @@ G1 X-999 U999 Y-150 F18000
 M98 P"0:/macros/System/Calibration/QC/Rotate Z - Probe to Default 0 Position"
 
 while true
-    M291 R"Make Sure Z - Probe is Horizontal" P"Press ""Done"" when Z - Probe is Horizontal" S4 K{"Done","Test","Cancel"}
+    M291 R"Make Sure Z - Probe is Horizontal" P"Press ""Done"" when Z - Probe is Horizontal" S4 K{"Done","Test","Cancel"} F0
         if input == 0
             break
         elif input == 1
@@ -47,7 +47,7 @@ while iterations < 3
 
 ; S1 Set Angle Rugh
 while true
-    M291 R"Probe Calibration" P"Move the servo all the way down." S4 K{"Adjust CCW","Adjust CW","Test","Done","Cancel"}
+    M291 R"Probe Calibration" P"Move the servo all the way down." S4 K{"Adjust CCW","Adjust CW","Test","Done","Cancel"} F3
     if input == 0
         M98 P"0:/macros/System/Calibration/Z Probe/Adjust pickup angle CCW"
     elif input == 1
@@ -98,7 +98,7 @@ if move.axes[2].homed
 G1 F18000 Y{move.axes[1].max-30} X{global.probePickX} U{move.axes[3].max-10} F18000
 
 while true
-    M291 R"Probe Calibration" P"Move the servo all the way down." S4 K{"Adjust CCW","Adjust CW","Test","Done","Cancel"}
+    M291 R"Probe Calibration" P"Move the servo all the way down." S4 K{"Adjust CCW","Adjust CW","Test","Done","Cancel"} F3
     if input == 0
         M98 P"0:/macros/System/Calibration/Z Probe/Adjust pickup angle CCW"
     elif input == 1
@@ -137,13 +137,13 @@ G4 S1
 M98 P"place.g"
 
 
-M291 R"Was the probe picked and placed correctly?" P" " S4 K{"Yes","No"}
+M291 R"Was the probe picked and placed correctly?" P" " S4 K{"Yes","No"} F0
 if input == 1
     G1 F18000 Y{move.axes[1].max-30} X{global.probePickX} U{move.axes[3].max-10} F18000
     M98 P"0:/macros/System/Calibration/Z Probe/Rotate holder to a set degree"
 
     while true
-        M291 R"Probe Calibration" P"Move the servo all the way down." S4 K{"Adjust CCW","Adjust CW","Test","Done","Cancel"}
+        M291 R"Probe Calibration" P"Move the servo all the way down." S4 K{"Adjust CCW","Adjust CW","Test","Done","Cancel"} F3
         if input == 0
             M98 P"0:/macros/System/Calibration/Z Probe/Adjust pickup angle CCW"
         elif input == 1
