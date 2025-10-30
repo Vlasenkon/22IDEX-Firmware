@@ -1,4 +1,9 @@
-M291 S4 P"Chamber Temperature Wait" R"Select Option" K{"Wait","Don't Wait"} F0
+var msg1 = "By enabling wait, the machine will wait for the chamber "
+var msg2 = "to reach set temperature, then wait an additional 5 minutes "
+var msg3 = "for heat soak before starting the print."
+var message = var.msg1 ^ var.msg2 ^ var.msg3
+
+M291 S4 P{var.message} R"Chamber Temperature Wait" K{"Wait","Don't Wait"} F0
 
 if input = 0
     echo >"0:/user/chamberwait.g" "M116 H2 C0 S5 ; Wait for Chamber Temp"
