@@ -1,6 +1,6 @@
 var timerFile = "0:/user/heaterfault_timer.g"
 
-M291 S4 K{"Disable", "Immediate (0 s)", "Delay 30 s", "Delay 60 s", "Delay 120 s", "Custom"} R"Action after Detection Heater Fault" P"Choose how long to wait before the printer shuts down after a heater fault."
+M291 S4 K{"Disable", "Immediate (0 s)", "Delay 30 s", "Delay 60 s", "Delay 120 s", "Custom Duration"} R"Action after Detection Heater Fault" P"Choose how long to wait before the printer shuts down after a heater fault." F2
 var choice = input
 var delay = -1
 var promptCanceled = false
@@ -42,4 +42,3 @@ else
             echo "Printer auto-shutdown after heater fault is enabled with no delay"
         else
             echo "Printer auto-shutdown after heater fault is enabled with a "^var.delay^"-second timer"
-

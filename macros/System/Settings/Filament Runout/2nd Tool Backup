@@ -1,15 +1,29 @@
-; togglefilamentbackup.g
-; Toggles the filament runout tool swap feature
+; 2nd Tool Backup for Filament Runout
+; This feature is currently under development
 
-if !exists(global.filamentbackup)
-  global filamentbackup = false
+var msg1 = "UNDER DEVELOPMENT<br><br>"
+var msg2 = "If Tool 0 runs out, switches to Tool 1.<br><br>"
+var msg3 = "REQUIRES:<br>"
+var msg4 = "- Same filament in both tools<br>"
+var msg5 = "- Auto calibration done"
+var message = var.msg1 ^ var.msg2 ^ var.msg3 ^ var.msg4 ^ var.msg5
 
-if global.filamentbackup == true
-  set global.filamentbackup = false
-  echo "Filament runout tool swap feature disabled."
+M291 S4 R"2nd Tool Backup" P{var.message} K{"Enable","Disable"} F0
+
+if input = 0
+  ; Enable the feature
+  if !exists(global.filamentbackup)
+    global filamentbackup = true
+  else
+    set global.filamentbackup = true
+  echo "Filament runout 2nd tool backup feature enabled."
 else
-  set global.filamentbackup = true
-  echo "Filament runout tool swap feature enabled."
+  ; Disable the feature
+  if !exists(global.filamentbackup)
+    global filamentbackup = false
+  else
+    set global.filamentbackup = false
+  echo "Filament runout 2nd tool backup feature disabled."
 
 ; Save the updated value to filamentbackup.g for persistence
 echo >"0:/user/filamentbackup.g" "if exists(global.filamentbackup)"

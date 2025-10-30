@@ -1,4 +1,4 @@
-M291 P"Select Option" R"Printer after print is finished" S4 K{"Sleep", "Stay idle"}
+M291 P"Select Option" R"Printer after print is finished" S4 K{"Sleep", "Stay idle"} F1
 
 if input = 0
   M291 S4 K{"Ok", "Change"} P"After the print is finished, the printer will lower the bed to the selected height (default: all the way down)." R"Select Option"
