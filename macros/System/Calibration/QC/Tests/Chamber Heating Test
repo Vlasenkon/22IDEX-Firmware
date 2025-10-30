@@ -240,7 +240,7 @@ if var.waitForCooling && var.needsCooling
   ; ---- Cooling complete - show success (green LED) ----
   M98 P"0:/sys/led/end.g" ; GREEN success - cooling complete
   G4 S3  ; Hold green LED for 3 seconds so user sees it
-  M291 S4 K{"Continue","Cancel"} R"Cooling Complete" P"The printer has cooled down successfully.<br>Ready to start chamber heating test.<br><br>Click Continue to proceed."
+  M291 S4 K{"Continue","Cancel"} R"Cooling Complete" P"The printer has cooled down successfully.<br>Ready to start chamber heating test.<br>Click Continue to proceed."
   
   if input != 0
     abort "Test cancelled by user after cooling."
@@ -504,10 +504,10 @@ echo "Total test duration: " ^ (var.totalTestDuration / 60.0) ^ " minutes"
 echo "Results saved to: Settings → Testing → Chamber_Heater_Test.csv"
 
 ; Create completion message parts to stay under 256 character limit
-set var.completionMsg = "Test completed successfully!<br><br>"
+set var.completionMsg = "Test completed successfully!<br>"
 set var.completionMsg = var.completionMsg ^ "Heat-up time: " ^ (var.heatUpDuration / 60.0) ^ " min<br>"
 set var.completionMsg = var.completionMsg ^ "Heat soak: " ^ (var.heatSoakDuration / 60.0) ^ " min<br>"
-set var.completionMsg = var.completionMsg ^ "Total time: " ^ (var.totalTestDuration / 60.0) ^ " min<br><br>"
+set var.completionMsg = var.completionMsg ^ "Total time: " ^ (var.totalTestDuration / 60.0) ^ " min<br>"
 set var.completionMsg = var.completionMsg ^ "Results: Settings → Testing → Chamber_Heater_Test.csv"
 
 M291 S2 R"Chamber Heating Test Complete" P{var.completionMsg} T0

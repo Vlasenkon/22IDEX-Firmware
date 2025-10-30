@@ -1,4 +1,3 @@
-
 M291 S4 K{"OK, Ethernet is connected","Cancel"} R"Connect via Ethernet" P"Please connect the Ethernet cable to the device. Once connected, press ""OK"" to continue."
 
 if input = 0
@@ -23,7 +22,11 @@ else
 	M99
 
 
-M291 S2 R"Restart Notification" P"Machine will restart now.<br>If LEDs are GREEN, the connection was established. If RED, it failed.<br>Machine will restart into AP Mode.<br>Reconnect to the ""22 IDEX"" WiFi network after you see the green or red LED."
+var restartMsg1 = "Machine will restart now."
+var restartMsg2 = "If LEDs are GREEN, the connection was established. If RED, it failed."
+var restartMsg3 = "Machine will restart into AP Mode."
+var restartMsg4 = "Reconnect to the """ ^ global.APname ^ """ WiFi network after you see the green or red LED."
+M291 S2 R"Restart Notification" P{restartMsg1 ^ "<br>" ^ restartMsg2 ^ "<br>" ^ restartMsg3 ^ "<br>" ^ restartMsg4}
 
 
 M98 P"0:/sys/led/resetstatus.g"

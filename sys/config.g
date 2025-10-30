@@ -3,7 +3,7 @@
 ; General preferences
 G90                                                              ; absolute coordinates
 M83                                                              ; relative extruder moves
-M550 P"22IDEX"                                                   ; set printer name
+M550 P"global.APname"                                                   ; set printer name
 
 M80 C"pson"                                                      ; define PS_ON pin
 

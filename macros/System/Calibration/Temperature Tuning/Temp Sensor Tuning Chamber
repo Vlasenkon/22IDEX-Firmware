@@ -1,7 +1,7 @@
 ; ---- User confirmation for fault detection ----
-var startMsg = "Start simplified chamber sensor calibration?<br><br>Remove low-melting materials first."
+var startMsg = "Start simplified chamber sensor calibration?<br>Remove low-melting materials first."
 set var.startMsg = var.startMsg ^ "<br>Hold X or U endstop to abort at any time."
-set var.startMsg = var.startMsg ^ "<br><br>Immediate calibration skips heating/soaking phases."
+set var.startMsg = var.startMsg ^ "<br>Immediate calibration skips heating/soaking phases."
 M291 S4 K{"Start test","Start (No fault detection)","Immediate calibration","Cancel"} R"Chamber Temperature Calibration" P{var.startMsg}
 
 ; Track fault detection state
@@ -20,7 +20,7 @@ else
   abort "Calibration cancelled by user."
 
 ; ---- Calibration method selection ----
-M291 S4 K{"Automatic (T0+T1 avg)","Manual (IR/Probe)","Cancel"} R"Calibration Method" P"Select calibration method:<br><br>Automatic: Uses tool temperatures<br>Manual: You measure with IR/probe"
+M291 S4 K{"Automatic (T0+T1 avg)","Manual (IR/Probe)","Cancel"} R"Calibration Method" P"Select calibration method:<br>Automatic: Uses tool temperatures<br>Manual: You measure with IR/probe"
 
 var useManualCalibration = false
 
@@ -33,7 +33,7 @@ else
 
 ; ---- Heating duration selection ----
 if !var.immediateCalibration
-  var heatMsg = "Select heating duration:<br><br>30 minutes is recommended for most cases."
+  var heatMsg = "Select heating duration:<br>30 minutes is recommended for most cases."
   set var.heatMsg = var.heatMsg ^ "<br>Longer heating ensures better thermal stability."
   M291 S4 K{"30 minutes (Default)","Custom duration","Cancel"} R"Heating Duration" P{var.heatMsg}
   
@@ -43,7 +43,7 @@ if !var.immediateCalibration
     ; Using default 30 minutes (already set)
   elif input == 1
     ; Ask for custom heating duration
-    var customMsg = "Enter heating duration (5-120 minutes):<br><br>Recommended: 30-60 minutes"
+    var customMsg = "Enter heating duration (5-120 minutes):<br>Recommended: 30-60 minutes"
     set var.customMsg = var.customMsg ^ "<br>Minimum: 5 minutes for safety"
     M291 J1 L5 H120 F30 P{var.customMsg} R"Custom Heating Duration" S5
     if result == -1
@@ -57,7 +57,7 @@ else
 
 ; ---- Safety preparations ----
 if !var.immediateCalibration
-  M291 S4 K{"Continue","Cancel"} R"Remove Plastics" P"Remove low-temperature filaments from chamber.<br><br>This prevents damage during heating."
+  M291 S4 K{"Continue","Cancel"} R"Remove Plastics" P"Remove low-temperature filaments from chamber.<br>This prevents damage during heating."
   
   if input != 0
     ; Reset temperatures and abort
@@ -304,7 +304,7 @@ if var.bestError > var.maxAcceptableError
   ; Build failure message in parts to stay under 256 char limit
   var failMsg = "CALIBRATION FAILED - Results:<br>Best C coefficient: " ^ var.cSign ^ var.cFormatted ^ "e-8<br>"
   set var.failMsg = var.failMsg ^ "Final error: " ^ var.bestError ^ "°C (>" ^ var.maxAcceptableError ^ "°C)<br>"
-  set var.failMsg = var.failMsg ^ "Iterations: " ^ var.iterations ^ "<br><br>Error too large - using default sensor settings"
+  set var.failMsg = var.failMsg ^ "Iterations: " ^ var.iterations ^ "<br>Error too large - using default sensor settings"
   M291 R"Calibration Failed" P{var.failMsg} S2 T0
 else
   ; Save calibrated result
@@ -320,7 +320,7 @@ else
   ; Build success message in parts to stay under 256 char limit
   var successMsg = "CALIBRATION SUCCESS - Results:<br>Best C coefficient: " ^ var.cSign ^ var.cFormatted ^ "e-8<br>"
   set var.successMsg = var.successMsg ^ "Final error: " ^ var.bestError ^ "°C (≤" ^ var.maxAcceptableError ^ "°C)<br>"
-  set var.successMsg = var.successMsg ^ "Iterations: " ^ var.iterations ^ "<br><br>Configuration saved and applied"
+  set var.successMsg = var.successMsg ^ "Iterations: " ^ var.iterations ^ "<br>Configuration saved and applied"
   M291 R"Calibration Successful" P{var.successMsg} S2 T0
 
 ; Restore white LED

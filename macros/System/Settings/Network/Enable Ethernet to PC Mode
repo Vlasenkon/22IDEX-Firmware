@@ -1,0 +1,125 @@
+; Step 1: Detect current network mode before making changes
+var previousMode = "AP"                     ; Default to AP if no connection exists
+var previousIP = "192.168.0.1"              ; Default AP IP
+
+if network.interfaces[0].actualIP != "0.0.0.0"
+  set var.previousIP = network.interfaces[0].actualIP
+  if network.interfaces[0].actualIP == "192.168.1.50"
+    set var.previousMode = "ETPC"           ; Ethernet to PC mode
+  else
+    set var.previousMode = "ETH"            ; Regular Ethernet mode
+elif network.interfaces[1].actualIP != "0.0.0.0"
+  set var.previousIP = network.interfaces[1].actualIP
+  if network.interfaces[1].actualIP == "192.168.0.1"
+    set var.previousMode = "AP"             ; WiFi Access Point mode
+  else
+    set var.previousMode = "CLIENT"         ; WiFi Client mode
+
+; Step 2: Get user configuration
+var ip = "192.168.1.50"
+var subnet = "255.255.255.0"
+var gateway = "192.168.1.1"
+
+M291 R"Change Settings" P"Do you want to change settings Ethernet to PC Mode?" S4 K{"Change parameter", "Cancel"} F0
+if input == 1
+	abort "Scripts canceled by user"
+
+M291 S7 F{var.ip} R"Network Setup" P"Enter Static IP Address or use default" J1
+set var.ip = input
+
+M291 S7 F{var.subnet} R"Network Setup" P"Enter Subnet Mask or use default" J1
+set var.subnet = input
+
+M291 S7 F{var.gateway} R"Network Setup" P"Enter Gateway or use default" J1
+set var.gateway = input
+
+; Step 3: Validate inputs
+if var.ip == "" || var.subnet == "" || var.gateway == ""
+	M291 S1 R"Error" P{"Invalid settings. IP: " ^ var.ip ^ "<br>Subnet: " ^ var.subnet ^ "<br>Gateway: " ^ var.gateway} T0
+	abort "Invalid network settings"
+
+; Step 4: Ask user if they want to apply now or test first
+M291 R"Confirm" P{"Apply these settings?<br>IP: " ^ var.ip ^ "<br>Subnet: " ^ var.subnet ^ "<br>Gateway: " ^ var.gateway} S4 K{"Apply Now","Test Connection"} F0
+
+; If user chose "Apply Now" (input == 0) - save and exit
+if input == 0
+	echo >"0:/user/networkmode.g" "M552 P"^{var.ip}^" I0 S1                    ; Set static IP address and enable Ethernet interface"
+	echo >>"0:/user/networkmode.g" "M553 P"^{var.subnet}^"                   ; Set subnet mask"
+	echo >>"0:/user/networkmode.g" "M554 P"^{var.gateway}^"                     ; Set gateway"
+	M291 S1 R"Configuration Saved" P"Settings saved to networkmode.g. Restart printer to apply changes." T0
+	M99                                     ; Exit macro
+
+; User chose "Test Connection" - show instructions first
+var instructMsg1 = "Before testing, ensure your computer is configured with:"
+var instructMsg2 = "IP: " ^ var.ip ^ " (or in same subnet)"
+var instructMsg3 = "Subnet: " ^ var.subnet
+var instructMsg4 = "Gateway: " ^ var.gateway
+M291 R"Setup Required" P{var.instructMsg1 ^ "<br>" ^ var.instructMsg2 ^ "<br>" ^ var.instructMsg3 ^ "<br>" ^ var.instructMsg4} S3
+
+var instructMsg5 = "Make sure Ethernet cable is connected between printer and computer."
+var instructMsg6 = "GREEN LED = Success, connection established. Use IP " ^ var.ip ^ " to connect."
+M291 R"Setup Required" P{var.instructMsg5 ^ "<br>" ^ var.instructMsg6} S3
+
+var instructMsg7 = "RED LED = Failed. Printer will return to " ^ var.previousMode ^ " mode at " ^ var.previousIP
+M291 R"Setup Required" P{instructMsg7 ^ "<br>Press OK to begin connection test."} S3
+
+; Turn off both interfaces first
+M552 I1 S-1                                 ; Turn off WiFi completely
+G4 S1
+M552 I0 S0                                  ; Turn off Ethernet
+G4 S2
+
+; Apply test configuration
+M553 P{var.subnet}                          ; Set subnet mask
+M554 P{var.gateway}                         ; Set gateway
+M552 P{var.ip} I0 S1                        ; Set IP and enable Ethernet
+
+; Wait for connection
+while network.interfaces[0].actualIP != var.ip && iterations < 20
+	G4 S1                                   ; Wait 1 second per iteration (max 20 seconds)
+
+; Check if connection was successful
+if network.interfaces[0].actualIP == var.ip
+	; Success - connection established
+	M98 P"0:/sys/led/start_cold.g"          ; Blue LED for Ethernet to PC
+	G4 S1
+	M291 S1 R"Connection Successful" P{"Ethernet to PC Mode established successfully.<br>IP: " ^ var.ip ^ "<br>Settings have been saved. Connection will remain active."} T0
+	
+	; Save configuration to networkmode.g
+	echo >"0:/user/networkmode.g" "M552 P"^{var.ip}^" I0 S1                    ; Set static IP address and enable Ethernet interface"
+	echo >>"0:/user/networkmode.g" "M553 P"^{var.subnet}^"                   ; Set subnet mask"
+	echo >>"0:/user/networkmode.g" "M554 P"^{var.gateway}^"                     ; Set gateway"
+	
+	; Stay in this mode - do not restore previous mode
+	M99                                     ; Exit macro
+
+; Failed - restore previous network mode
+M98 P"0:/sys/led/fault.g"                   ; Red LED for failed connection
+
+; Turn off both interfaces first (universal)
+M552 I1 S-1                                 ; Turn off WiFi completely
+G4 S1
+M552 I0 S0                                  ; Turn off Ethernet
+G4 S2
+
+; Restore previous mode - only mode-specific enable commands
+if var.previousMode == "ETH"
+	M552 I0 S1                              ; Enable Ethernet
+elif var.previousMode == "CLIENT"
+	M552 I1 S0                              ; Set WiFi to idle
+	G4 S1
+	M552 I1 S1                              ; Enable as client
+elif var.previousMode == "AP"
+	M552 I1 S0                              ; Set WiFi to idle
+	G4 S1
+	M552 I1 S2                              ; Enable as access point
+elif var.previousMode == "ETPC"
+	M552 P192.168.1.50 I0 S1
+	M553 P255.255.255.0
+	M554 P192.168.1.1
+else
+	M552 I1 S0                              ; Set WiFi to idle
+	G4 S1
+	M552 I1 S2                              ; Enable as access point (default)
+
+M291 S1 R"Connection Failed" P{"Ethernet to PC connection failed. Restored previous mode: " ^ var.previousIP} T0

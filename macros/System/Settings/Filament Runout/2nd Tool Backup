@@ -1,8 +1,8 @@
 ; 2nd Tool Backup for Filament Runout
 ; This feature is currently under development
 
-var msg1 = "UNDER DEVELOPMENT<br><br>"
-var msg2 = "If Tool 0 runs out, switches to Tool 1.<br><br>"
+var msg1 = "UNDER DEVELOPMENT<br>"
+var msg2 = "If Tool 0 runs out, switches to Tool 1.<br>"
 var msg3 = "REQUIRES:<br>"
 var msg4 = "- Same filament in both tools<br>"
 var msg5 = "- Auto calibration done"

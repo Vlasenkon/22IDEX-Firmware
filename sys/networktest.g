@@ -1,186 +1,250 @@
-echo "_"
-echo "_"
-echo "Started WiFi Test"
-echo "_"
-echo "_"
+; ===================================================================
+; NETWORK CONNECTION TEST AND CONFIGURATION
+; ===================================================================
+; This script tests network connectivity and automatically configures
+; the appropriate network mode (Ethernet, WiFi Client, Ethernet to PC,
+; or Access Point fallback). It runs during system startup.
+; ===================================================================
 
-; Wait for any network to apear
+; Wait for any network to appear
 while network.interfaces[0].actualIP == "0.0.0.0" && network.interfaces[1].actualIP == "0.0.0.0" && iterations < 15
-  G4 S1                                     ; Wait
-  echo "L0: "^{iterations}
+  G4 S1                                     ; Wait 1 second per iteration (max 15 seconds)
 
-; Check if network connection was established before the test started
+; ===================================================================
+; PRE-EXISTING CONNECTION CHECK
+; ===================================================================
+; Check if a network connection was already established before this
+; test started (e.g., from a previous boot's saved configuration)
+; ===================================================================
 if network.interfaces[0].actualIP != "0.0.0.0" || network.interfaces[1].actualIP != "0.0.0.0"
-  abort "Network Connection was established before the test started"
+  ; Determine which interface is connected and what mode
+  if network.interfaces[0].actualIP != "0.0.0.0"
+    echo "Ethernet Mode (Pre-existing) - IP: " ^ {network.interfaces[0].actualIP}
+    echo >"0:/IP_address.txt" "Network Mode: Ethernet (Pre-existing)"
+    echo >>"0:/IP_address.txt" "IP Address: "^{network.interfaces[0].actualIP}
+    M99                                      ; Exit the script - network already connected
+  elif network.interfaces[1].actualIP == "192.168.0.1"
+    echo "WiFi Access Point Mode (Pre-existing) - IP: " ^ {network.interfaces[1].actualIP}
+    echo >"0:/IP_address.txt" "Network Mode: WiFi Access Point (Pre-existing)"
+    echo >>"0:/IP_address.txt" "IP Address: "^{network.interfaces[1].actualIP}
+    M99                                     ; Exit the script - network already connected
+  elif network.interfaces[1].actualIP != "0.0.0.0"
+    echo "WiFi Client Mode (Pre-existing) - IP: " ^ {network.interfaces[1].actualIP}
+    echo >"0:/IP_address.txt" "Network Mode: WiFi Client (Pre-existing)"
+    echo >>"0:/IP_address.txt" "IP Address: "^{network.interfaces[1].actualIP}
+    M99                                    ; Exit the script - network already connected
 
+; ===================================================================
+; INITIALIZATION - DETERMINE WHICH INTERFACE TO TEST FIRST
+; ===================================================================
 ; Initialize variable to store the network module state
+; 0 = Ethernet (interface 0), 1 = WiFi (interface 1)
+; ===================================================================
 var module = 0
 
-; Detect what Network mode is selected
+; Detect what Network mode is selected based on active interface
 if network.interfaces[0].state == "active"; || network.interfaces[0].state = "enabled" || network.interfaces[0].actualIP != "connected"
-  set var.module = 0
-  echo "Detected Module 0"
-  M552 I1 S-1
+  set var.module = 0                        ; Ethernet is active - test it first
+  M552 I1 S-1                               ; Disable WiFi
   G4 S1
-  M552 I0 S1
+  M552 I0 S1                                ; Enable Ethernet
 elif network.interfaces[1].state == "active"; || network.interfaces[1].state = "enabled" || network.interfaces[1].actualIP != "connected"
-  set var.module = 1
-  echo "Detected Module 1"
-  M552 I0 S0
+  set var.module = 1                        ; WiFi is active - test it first
+  M552 I0 S0                                ; Disable Ethernet
   G4 S1
-  M552 I1 S1
+  M552 I1 S1                                ; Enable WiFi
 else                                        ; If none are active, default to Ethernet first and disable WiFi
   set var.module = 0
-  echo "Module was not detected and switched to 0"
-  M98 P"0:/sys/led/pause.g"                 ; Turn on yellow LEDs to indicate mode switch
   M552 I1 S-1                               ; Disable WiFi
   G4 S1                                     ; Wait
   M552 I0 S0                                ; Disable Ethernet
   G4 S1                                     ; Wait
-  M552 I0 S1                                ; Set WiFi to Idle
+  M552 I0 S1                                ; Enable Ethernet
 
 
-
+; ===================================================================
+; TEST 1 - PRIMARY NETWORK MODE TEST
+; ===================================================================
+; Test the selected network mode (either Ethernet or WiFi based on
+; what was active). Wait up to 20 seconds for connection.
+; ===================================================================
 ; Test 1 the selected network mode initially
-echo "Test 1 with Module = "^{var.module}
-while network.interfaces[{var.module}].actualIP == "0.0.0.0" && iterations < 20
-  G4 S1                                     ; Wait
-  echo "T1: "^{iterations}
+while network.interfaces[{var.module}].actualIP == "0.0.0.0" && iterations < 15
+  G4 S1                                     ; Wait 1 second per iteration (max 15 seconds)
 
-echo "IF 1 with Mode = "^{var.module}
 if network.interfaces[{var.module}].actualIP != "0.0.0.0"
-  M98 P"0:/sys/led/mint.g"
-  echo >"0:/IP_address.txt" "User was connected via WiFi"
-  echo >>"0:/IP_address.txt" "Last Connected IP is: "^{network.interfaces[{var.module}].actualIP}
+  ; Determine connection mode and display result
+  if var.module == 0
+    echo "Ethernet Mode - IP: " ^ {network.interfaces[{var.module}].actualIP}
+    echo >"0:/IP_address.txt" "Network Mode: Ethernet"
+    echo >>"0:/IP_address.txt" "IP Address: "^{network.interfaces[{var.module}].actualIP}
+    M98 P"0:/sys/led/pause.g"               ; Yellow LED for Ethernet
+  elif var.module == 1 && network.interfaces[{var.module}].actualIP == "192.168.0.1"
+    echo "WiFi Access Point Mode - IP: " ^ {network.interfaces[{var.module}].actualIP}
+    echo >"0:/IP_address.txt" "Network Mode: WiFi Access Point"
+    echo >>"0:/IP_address.txt" "IP Address: "^{network.interfaces[{var.module}].actualIP}
+    M98 P"0:/sys/led/fault.g"               ; Red LED for Access Point (includes statusoff and dimmwhite)
+  elif var.module == 1
+    echo "WiFi Client Mode - IP: " ^ {network.interfaces[{var.module}].actualIP}
+    echo >"0:/IP_address.txt" "Network Mode: WiFi Client"
+    echo >>"0:/IP_address.txt" "IP Address: "^{network.interfaces[{var.module}].actualIP}
+    M98 P"0:/sys/led/end.g"                 ; Green LED for WiFi Client
+  
   G4 S1
-  M98 P"0:/sys/led/resetstatus.g"
-  echo >"0:/user/networkmode.g" "M552 I0 S1"
-  M99                                       ; Exit the script
-  abort "IF 1 Passed with Module: "^{var.module}                                     ; Abort if the network connection is successful
+  ; Display non-blocking notification reminding user to save configuration
+  M291 S1 R"Network Connected" P"Ethernet Mode established. To make changes persistent after restart, please save the configuration." T0
+  M99                                       ; Exit the script successfully
 
+; ===================================================================
+; ETHERNET TO PC MODE TEST
+; ===================================================================
+; If Ethernet failed in Test 1, try direct PC connection mode with
+; static IP 192.168.1.50. This is for direct connection to a computer.
+; ===================================================================
 if var.module == 0 && network.interfaces[{var.module}].actualIP == "0.0.0.0"
-  ; Ethernet to PC Test
-  echo "Test Ethernet to PC Mode"
-  M552 I0 S0
-  M553 P255.255.255.0
-  M554 P192.68.1.1
-  M552 P192.168.1.50
-  M552 I0 S1
+  ; Ethernet to PC Test - Configure static IP for direct PC connection
+  M552 I0 S0                                ; Disable Ethernet
+  M552 P192.168.1.50 I0 S1                  ; Set static IP address
+  M553 P255.255.255.0                       ; Set subnet mask
+  M554 P192.168.1.1                         ; Set gateway
 
   while network.interfaces[{var.module}].actualIP != "192.168.1.50" && iterations < 20
-    G4 S1                                     ; Wait
-    echo "Test Ethernet to PC: "^{iterations}
+    G4 S1                                     ; Wait 1 second per iteration (max 20 seconds)
 
-  echo "IF 1 with Ethernet to PC Mode "
   if network.interfaces[{var.module}].actualIP == "192.168.1.50"
-    M98 P"0:/sys/led/violet.g"
-    echo >"0:/user/networkmode.g" "M552 I0 S1"
-    echo >>"0:/user/networkmode.g" "M98 P""0:/user/ip_ethernettopc.g"""
-
-    echo >"0:/IP_address.txt" "User was connected via Ethernet to PC"
-    echo >>"0:/IP_address.txt" "Last Connected IP is: "^{network.interfaces[{var.module}].actualIP}
+    echo "Ethernet to PC Mode - IP: " ^ {network.interfaces[{var.module}].actualIP}
+    
+    echo >"0:/IP_address.txt" "Network Mode: Ethernet to PC"
+    echo >>"0:/IP_address.txt" "IP Address: "^{network.interfaces[{var.module}].actualIP}
+    
+    M98 P"0:/sys/led/start_cold.g"          ; Blue LED for Ethernet to PC
     G4 S1
-    M98 P"0:/sys/led/resetstatus.g"
-    M99                                       ; Exit the script
-    abort "IF 1 Passed with Ethernet to PC Mode: "^{var.module}
+    ; Display non-blocking notification for Ethernet to PC mode
+    M291 S1 R"Network Connected" P"Ethernet to PC Mode established. To make changes persistent after restart, please save the configuration." T0
+    M99                                       ; Exit the script successfully
 
   else
-    M552 I0 S0
-    M552 P0.0.0.0
-    M553 P0.0.0.0
-    M554 P0.0.0.0
+    ; Ethernet to PC failed - reset network settings to defaults
+    M552 P0.0.0.0 I0 S0                     ; Reset IP
+    M553 P0.0.0.0                           ; Reset subnet mask
+    M554 P0.0.0.0                           ; Reset gateway
     
 
-
+; ===================================================================
+; REVERSE MODULE TEST - PREPARE FOR TEST 2
+; ===================================================================
+; If Test 1 failed, switch to the other network interface and test it
+; ===================================================================
 ; Reverse var.module to test the other network mode
 if var.module = 1
-  set var.module = 0
-  M552 I1 S-1
+  set var.module = 0                        ; Switch from WiFi to Ethernet
+  M552 I1 S-1                               ; Disable WiFi
   G1 S1
-  M552 I0 S1
+  M552 I0 S1                                ; Enable Ethernet
 if var.module = 0
-  set var.module = 1
-  M552 I0 S0
+  set var.module = 1                        ; Switch from Ethernet to WiFi
+  M552 I0 S0                                ; Disable Ethernet
   G1 S1
-  M552 I1 S1
-
-echo "Module was reversed to "^{var.module}
+  M552 I1 S1                                ; Enable WiFi
 
 
+; ===================================================================
+; TEST 2 - SECONDARY NETWORK MODE TEST
+; ===================================================================
+; Test the other network interface (the one not tested in Test 1).
+; This is the fallback if the primary interface failed.
+; ===================================================================
 ; Test 2 the other network mode
-echo "Test 2 with var.module = "^{var.module}
 while network.interfaces[{var.module}].actualIP == "0.0.0.0" && iterations < 20
-  G4 S1                                     ; Wait
-  echo "T2: "^{iterations}
+  G4 S1                                     ; Wait 1 second per iteration (max 20 seconds)
 
-echo "IF 2 with var.module = "^{var.module}
 if network.interfaces[{var.module}].actualIP != "0.0.0.0"
-  M98 P"0:/sys/led/orange.g"                 ; Turn on orange LEDs to indicate mode switch
-
-  echo >"0:/IP_address.txt" "User was connected via Ethernet"
-  echo >>"0:/IP_address.txt" "Last Connected IP is: "^{network.interfaces[{var.module}].actualIP}
+  ; Determine connection mode and display result
+  if var.module == 0
+    echo "Ethernet Mode - IP: " ^ {network.interfaces[{var.module}].actualIP}
+    echo >"0:/IP_address.txt" "Network Mode: Ethernet"
+    echo >>"0:/IP_address.txt" "IP Address: "^{network.interfaces[{var.module}].actualIP}
+    M98 P"0:/sys/led/pause.g"               ; Yellow LED for Ethernet
+  elif var.module == 1 && network.interfaces[{var.module}].actualIP == "192.168.0.1"
+    echo "WiFi Access Point Mode - IP: " ^ {network.interfaces[{var.module}].actualIP}
+    echo >"0:/IP_address.txt" "Network Mode: WiFi Access Point"
+    echo >>"0:/IP_address.txt" "IP Address: "^{network.interfaces[{var.module}].actualIP}
+    M98 P"0:/sys/led/fault.g"               ; Red LED for Access Point (includes statusoff and dimmwhite)
+  elif var.module == 1
+    echo "WiFi Client Mode - IP: " ^ {network.interfaces[{var.module}].actualIP}
+    echo >"0:/IP_address.txt" "Network Mode: WiFi Client"
+    echo >>"0:/IP_address.txt" "IP Address: "^{network.interfaces[{var.module}].actualIP}
+    M98 P"0:/sys/led/end.g"                 ; Green LED for WiFi Client
   
-  echo >"0:/user/networkmode.g" "M552 I1 S1"
-  M98 P"0:/sys/led/resetstatus.g"
-  M99                                       ; Exit the script
-  abort "IF 2 Passed with Module: "^{var.module}                                     ; Abort if the network connection is successful
+  ; Display non-blocking notification for WiFi connection
+  M291 S1 R"Network Connected" P"WiFi Mode established. To make changes persistent after restart, please save the configuration." T0
+  M99                                       ; Exit the script successfully
 
-; If no connection was successful, set LED status and configure AP mode
-M98 P"0:/sys/led/statusoff.g"               ; Turn off status LEDs
-M98 P"0:/sys/led/dimmwhite.g"               ; Set LEDs to dim white
-M98 P"0:/sys/led/red.g"                     ; Turn on red LEDs
+; ===================================================================
+; FALLBACK - ACCESS POINT MODE
+; ===================================================================
+; If all connection attempts failed, create a WiFi Access Point so
+; the user can connect directly to the printer to configure network.
+; SSID: Uses global.APname, Password: "1234567890", IP: 192.168.0.1
+; ===================================================================
+; If no connection was successful, configure AP mode
+M98 P"0:/sys/led/fault.g"                   ; Red LED for fallback mode (includes statusoff and dimmwhite)
 
 M552 I0 S0                                  ; Disable Ethernet
-if result != 0
-  echo "M552: Ethernet disable failed"
-else
-  echo "M552: Ethernet Disabled"
 G4 S1                                       ; Wait
 
-M552 I1 S-1                                 ; Turn off WiFi
-if result != 0
-  echo "M552: WiFi disable failed"
-else
-  echo "M552: WiFi Disabled"
+M552 I1 S-1                                 ; Turn off WiFi completely
 G4 S1                                       ; Wait
 
-M552 I1 S0                                  ; Set WiFi to Idle
+M552 I1 S0                                  ; Set WiFi to Idle state
+G4 S5                                       ; Wait for WiFi to stabilize
+
+
+M589 S{global.APname} P"1234567890" I192.168.0.1  ; Configure WiFi Access Point
 if result != 0
-  echo "M552: WiFi Idle failed"
-else
-  echo "M552: WiFi Idle"
-G4 S5                                       ; Wait
-
-
-M589 S"22 IDEX" P"1234567890" I192.168.0.1  ; Configure WiFi Access Point
-if result == 0
-  echo "M589: AP Mode was configured, first try"
-else
+  ; Retry AP configuration up to 5 times if it fails
   while iterations < 5
-    M589 S"22 IDEX" P"1234567890" I192.168.0.1  ; Configure WiFi Access Point
+    M589 S{global.APname} P"1234567890" I192.168.0.1
     if result == 0
-      echo "M589: AP Mode was configured, try: "^{iterations}
-      break
-    G4 S3                                       ; Wait
-G4 S5                                       ; Wait
+      break                                 ; Success - exit retry loop
+    G4 S3                                   ; Wait 3 seconds before retry
+G4 S5                                       ; Wait for configuration to settle
 
 
-M552 I1 S-1                                 ; Turn off WiFi
-if result != 0
-  echo "M552: WiFi disable failed"
-else
-  echo "M552: WiFi Disabled"
+M552 I1 S-1                                 ; Turn off WiFi again
 G4 S1                                       ; Wait
 
 
 M552 I1 S2                                  ; Turn on WiFi in Access Point mode
-if result != 0
-  echo "M552: WiFi AP Mode failed to start"
+G4 S5                                       ; Wait for AP to start
+
+; ===================================================================
+; VERIFY ACCESS POINT MODE SUCCESS
+; ===================================================================
+; Check if Access Point mode successfully established an IP address.
+; If it fails after 15 attempts, turn off LEDs completely.
+; ===================================================================
+; Verify Access Point mode is established
+while network.interfaces[1].actualIP == "0.0.0.0" && iterations < 15
+  G4 S1                                     ; Wait 1 second per iteration (max 15 seconds)
+
+if network.interfaces[1].actualIP != "0.0.0.0"
+  ; Access Point successfully established
+  echo "WiFi Access Point Mode (Fallback) - IP: " ^ {network.interfaces[1].actualIP} ^ " | SSID: " ^ {global.APname} ^ " | Password: 1234567890"
+
+  echo >"0:/IP_address.txt" "Network Mode: WiFi Access Point (Fallback)"
+  echo >>"0:/IP_address.txt" "IP Address: "^{network.interfaces[1].actualIP}
+
+  ; Non-Blocking notification informing user of AP mode
+  M291 S1 R"Connection was not established" P"WiFi module was automatically switched to Access Point Mode"
 else
-  echo "M552: WiFi AP Mode started"
-G4 S5                                       ; Wait
-
-echo >"0:/IP_address.txt" "WiFi was switched to AP Mode. IP: "^{network.interfaces[1].actualIP}
-
-M291 S2 R"Connection was not established" P"WiFi module was automatically switched to Access Point Mode"
-; Display message indicating that WiFi has been switched to Access Point mode due to failed connection attempts
+  ; ===================================================================
+  ; CRITICAL FAILURE - ALL NETWORK MODES FAILED
+  ; ===================================================================
+  ; Access Point mode failed - turn off LEDs completely to indicate critical failure
+  M98 P"0:/sys/led/statusoff.g"             ; Turn off all LEDs
+  M98 P"0:/sys/led/dimmwhite.g"             ; Set LEDs to dim white
+  echo "CRITICAL: Access Point mode failed to establish connection"
+  echo >"0:/IP_address.txt" "Network Mode: FAILED - No connection established"
+  ; Non-Blocking error notification
+  M291 S1 R"Network Connection Failed" P"Access Point mode could not be established. Please check network configuration."

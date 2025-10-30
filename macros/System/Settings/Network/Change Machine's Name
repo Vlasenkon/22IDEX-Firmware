@@ -1,0 +1,48 @@
+var msg1 = "Set a custom name to connect to your printer instead of using its IP address."
+var msg2 = "Default: 22idex.local"
+var msg3 = "Custom example: myprinter.local"
+var msg4 = "This is useful when you have multiple machines on your network."
+M291 S4 R"Change Machine's Name" P{msg1 ^ "<br>" ^ msg2 ^ "<br>" ^ msg3 ^ "<br>" ^ msg4} K{"Keep Default (22 IDEX)", "Set Custom Name"} F0
+
+if input == 0
+    echo >"0:/user/APname.g" "if exists(global.APname)"
+    echo >>"0:/user/APname.g" "  set global.APname = ""22 IDEX"""
+    echo >>"0:/user/APname.g" "else"
+    echo >>"0:/user/APname.g" "  global APname = ""22 IDEX"""
+elif input == 1
+    M291 S7 F"22 IDEX" R"Access Point network name" P"Enter the network name." H20 
+    echo >"0:/user/APname.g" "if exists(global.APname)"
+    echo >>"0:/user/APname.g" "  set global.APname = """^input^""""
+    echo >>"0:/user/APname.g" "else"
+    echo >>"0:/user/APname.g" "  global APname = """^input^""""
+
+echo "Device name changed to: " ^ global.APname
+
+; Ask if user wants to reconfigure Access Point now
+var apMsg1 = "Device name changed successfully."
+var apMsg2 = "Connect using: " ^ global.APname ^ ".local"
+var apMsg3 = "Do you want to apply this name to the Access Point network now?"
+M291 S4 R"Reconfigure Access Point?" P{apMsg1 ^ "<br>" ^ apMsg2 ^ "<br>" ^ apMsg3} K{"Yes, Apply Now", "No, Skip"} F1
+
+; If user chose to skip, exit early
+if input == 1
+    echo "Access Point reconfiguration skipped. Restart machine to apply changes."
+    M99
+
+; User chose to reconfigure AP now
+echo "Reconfiguring Access Point with new name..."
+
+
+; Try to configure Access Point with new name (up to 2 attempts)
+while result != 0 && iterations <= 3
+    M552 I1 S-1                                 ; Turn off WiFi completely
+    G4 S1                                       ; Wait
+    M552 I1 S0                                  ; Set WiFi to idle
+    G4 S2                                       ; Wait for WiFi to stabilize
+
+    M589 S{global.APname} P"1234567890" I192.168.0.1
+
+; Check final result
+if result == 0
+    M112
+    M999

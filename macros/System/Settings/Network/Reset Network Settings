@@ -18,11 +18,14 @@ G4S2
 M589 S"*"
 G4S2
 
-M589 S"22 IDEX" P"1234567890" I192.168.0.1
-if result != 0
-	while iterations < 5
-		G1 S2
-		M589 S"22 IDEX" P"1234567890" I192.168.0.1
+; Try to configure Access Point (up to 5 attempts)
+while result != 0 && iterations <= 5
+	M552 I1 S-1                         ; Turn off WiFi completely
+	G4 S1                               ; Wait
+	M552 I1 S0                          ; Set WiFi to idle
+	G4 S2                               ; Wait for WiFi to stabilize
+	
+	M589 S{global.APname} P"1234567890" I192.168.0.1
 
 M98 P"0:/macros/System/Settings/Network/Enable WiFi - Access Point Mode" R1
 G4 S1
