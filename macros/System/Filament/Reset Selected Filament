@@ -1,5 +1,7 @@
 M291 S4 K{"T0 - Left Tool","T1 - Right Tool","Both","Cancel"} R"Select the Tool to Reset Selected Filament" P"Choose the Left Tool (T0), Right Tool (T1) or Both. Select ""Cancel"" to exit."
+
 G60 S0
+
 if input == 0
     T0 P0
     M702 P0
@@ -13,4 +15,5 @@ elif input == 2
     M702 P0
 elif input == 3
     abort "Macro canceled by user"
+
 T R0 P0
