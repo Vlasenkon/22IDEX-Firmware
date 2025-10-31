@@ -1,3 +1,6 @@
+; Step 0: Initialize logging
+var logFile = "0:/macros/System/Settings/Network/connect_wifi_log.txt"
+echo >{var.logFile} {"==== Connect to new WiFi network started ==== " ^ state.upTime}
 
 ; Step 1: Detect current network mode before making changes
 var previousMode = "AP"                     ; Default to AP if no connection exists
@@ -16,130 +19,274 @@ elif network.interfaces[1].actualIP != "0.0.0.0"
   else
     set var.previousMode = "CLIENT"         ; WiFi Client mode
 
-; Step 2: Ask for SSID and Password
-M291  J1 R"Enter WiFi Network Name (SSID)" P"Case sensetive. Make sure to connect to a 2.4GHz network. The WiFi module will not connect to 5.0GHz networks." S7
+echo >>{var.logFile} {"Detected previous mode: " ^ var.previousMode ^ ", IP: " ^ var.previousIP}
+
+
+
+
+
+
+; Step 2: Ask for SSID and password
+M291 J1 R"Enter WiFi Network Name (SSID)" P"Case sensetive. Make sure to connect to a 2.4GHz network. The WiFi module will not connect to 5.0GHz networks." S7
 var nn = {input}
-M291  J1 R"Enter WiFi Network Name Password" P"Case sensetive. Make sure to connect to a 2.4GHz network. The WiFi module will not connect to 5.0GHz networks." S7
+M291 J1 R"Enter WiFi Network Name Password" P"Case sensetive. Make sure to connect to a 2.4GHz network. The WiFi module will not connect to 5.0GHz networks." S7
 var pp = {input}
 
-; save it as a file
+echo >>{var.logFile} {"User entered SSID: " ^ var.nn}
+echo >>{var.logFile} "Password captured (length hidden)"
+
+; Save credentials for reuse
 echo >"0:/user/WiFiPass.g" "M587 S"""^{var.nn}^""" P"""^{var.pp}^""""
+echo >>{var.logFile} "Saved WiFi credentials to 0:/user/WiFiPass.g"
 
 M98 P"0:/sys/led/resetstatus.g"
+echo >>{var.logFile} "Reset LED status"
 
 M98 P"0:/user/APname.g"
-; Step 3: Try to connect to the network
-M291 S3 R"Restart Notification" P{"Machine will restart now. If LEDs are GREEN, the connection was established. If RED, it failed.<br>Reconnect to the "^global.APname^" WiFi network after you see the green or red LED."}
+echo >>{var.logFile} "Loaded current AP name"
 
-; Erase values from WiFi Module
+; Step 3: Try to connect to the network
+var testMsg1 = "🟡 YELLOW - Testing<br>🟢 GREEN - Success<br>🔴 RED - Failed<br><br>"
+var testMsg2 = "You will lose connection momentarily.<br>"
+var testMsg3 = "After lights change, reconnect to " ^ global.APname ^ " network."
+var testMsg = var.testMsg1 ^ var.testMsg2 ^ var.testMsg3
+M291 S3 R"Testing WiFi Connection" P{var.testMsg}
+echo >>{var.logFile} "Displayed restart notification"
+
+M98 P"0:/sys/led/pause.g"
+echo >>{var.logFile} "Set LEDs to yellow (pause) - starting network test"
+
+; Clear interfaces before attempting new connection
 M552 I1 S-1
+echo >>{var.logFile} "Sent M552 I1 S-1 (disable WiFi)"
+G4 S2
 M552 I0 S0
+echo >>{var.logFile} "Sent M552 I0 S0 (disable Ethernet)"
 G4 S3
+echo >>{var.logFile} "Waited 3s after disabling interfaces"
 
 M552 I1 S0
+echo >>{var.logFile} "Set WiFi to idle"
 G4 S3
+echo >>{var.logFile} "Waited 3s after idle"
 
 M588 S"*"
+echo >>{var.logFile} "Cleared stored WiFi networks"
 G4 S1
+echo >>{var.logFile} "Waited 1s after M588"
 
 M589 S{global.APname} P"1234567890" I192.168.0.1
+echo >>{var.logFile} "Configured AP credentials"
 G4 S1
+echo >>{var.logFile} "Waited 1s after M589"
 
-; write New values to WiFi module
+; Write new values to WiFi module
 M98 P"0:/user/WiFiPass.g"
+echo >>{var.logFile} "Executed WiFiPass.g to add new network"
 G4 S1
+echo >>{var.logFile} "Waited 1s after adding network"
 
 M552 I1 S-1
-G4 S1
+echo >>{var.logFile} "Disabled WiFi before reconnect"
+G4 S2
+echo >>{var.logFile} "Waited 1s after disabling WiFi"
 
 M552 I1 S1
+echo >>{var.logFile} "Enabled WiFi in client mode"
 G4 S1
+echo >>{var.logFile} "Waited 1s after enabling WiFi"
 
+echo >>{var.logFile} "Waiting for WiFi connection (up to 30 seconds)..."
 while network.interfaces[1].actualIP = "0.0.0.0" || network.interfaces[1].actualIP = "192.168.0.1" && iterations < 30
   G4 S1
 
-; Step 4: Evaluate connection result and restore previous mode if failed
-M98 P"0:/sys/led/dimmwhite.g"
+var finalIP = network.interfaces[1].actualIP
+echo >>{var.logFile} {"WiFi connection attempt finished with IP: " ^ var.finalIP}
 
-if network.interfaces[1].actualIP = "0.0.0.0" || network.interfaces[1].actualIP = "192.168.0.1"
-	M98 P"0:/sys/led/fault.g"               ; Red LED for failed connection
-	
-	; Connection failed - restore previous network mode
-	; Turn off both interfaces first (universal)
-	M552 I1 S-1                             ; Turn off WiFi completely
-	G4 S1
-	M552 I0 S0                              ; Turn off Ethernet
-	G4 S2
-	
-	; Restore previous mode - only mode-specific enable commands
-	if var.previousMode == "ETH"
-		M552 I0 S1                          ; Enable Ethernet
-	elif var.previousMode == "CLIENT"
-		M552 I1 S0                          ; Set WiFi to idle
-		G4 S1
-		M552 I1 S1                          ; Enable as client
-	elif var.previousMode == "AP"
-		M552 I1 S0                          ; Set WiFi to idle
-		G4 S1
-		M552 I1 S2                          ; Enable as access point
-	elif var.previousMode == "ETPC"
-		M552 P192.168.1.50 I0 S1
-		M553 P255.255.255.0
-		M554 P192.168.1.1
-	else
-		M552 I1 S0                          ; Set WiFi to idle
-		G4 S1
-		M552 I1 S2                          ; Enable as access point (default)
-	
-	M291 S2 R"Connection was not established" P{"WiFi connection failed. Restored previous mode: "^var.previousIP}
+
+
+
+
+
+; Step 4: Evaluate connection result and restore previous mode if needed
+var currentIP = network.interfaces[1].actualIP
+echo >>{var.logFile} {"Evaluating connection with IP: " ^ var.currentIP}
+
+if var.currentIP == "0.0.0.0" || var.currentIP == "192.168.0.1"
+  M98 P"0:/sys/led/fault.g"               ; Red LED for failed connection
+  echo >>{var.logFile} "Connection failed - red LED triggered"
+
+  ; Turn off both interfaces first (universal)
+  M552 I1 S-1                             ; Turn off WiFi completely
+  echo >>{var.logFile} "Failure restore - disabled WiFi"
+  G4 S2
+  M552 I0 S0                              ; Turn off Ethernet
+  echo >>{var.logFile} "Failure restore - disabled Ethernet"
+  G4 S2
+
+  ; Restore previous mode - only mode-specific enable commands
+  if var.previousMode == "ETH"
+    M552 I0 S1                            ; Enable Ethernet
+    echo >>{var.logFile} "Failure restore - enabled Ethernet"
+  elif var.previousMode == "CLIENT"
+    M552 I1 S0                            ; Set WiFi to idle
+    echo >>{var.logFile} "Failure restore - WiFi idle (client)"
+    G4 S1
+    M552 I1 S1                            ; Enable as client
+    echo >>{var.logFile} "Failure restore - WiFi client"
+  elif var.previousMode == "AP"
+    M552 I1 S2                            ; Enable as access point
+    echo >>{var.logFile} "Failure restore - WiFi AP"
+    G4 S5
+    echo >>{var.logFile} {"Failure restore - AP IP after wait: " ^ network.interfaces[1].actualIP}
+  elif var.previousMode == "ETPC"
+    M552 P192.168.1.50 I0 S1
+    M553 P255.255.255.0
+    M554 P192.168.1.1
+    echo >>{var.logFile} "Failure restore - Ethernet to PC"
+  else
+    M552 I1 S2                            ; Enable as access point (default)
+    echo >>{var.logFile} "Failure restore - default AP"
+    G4 S5
+    echo >>{var.logFile} {"Failure restore - default AP IP after wait: " ^ network.interfaces[1].actualIP}
+
+  M291 S2 R"Connection was not established" P{"WiFi connection failed. Restored previous mode: "^var.previousIP}
+  echo >>{var.logFile} "Displayed failure notification"
 
 else
-	M98 P"0:/sys/led/end.g"                 ; Green LED for success
+  ; Show green lights immediately after successful connection
+  M98 P"0:/sys/led/end.g"
+  echo >>{var.logFile} "Connection succeeded - green LED triggered"
+  
+  var ip = network.interfaces[1].actualIP
+  echo >>{var.logFile} {"Connection succeeded at IP: " ^ var.ip}
 
-	var ip = network.interfaces[1].actualIP
-	echo >"0:/IP_address.txt" "User was connected via WiFi Client Mode"
-	echo >>"0:/IP_address.txt" "Last Connected IP is: "^var.ip
+  echo >"0:/IP_address.txt" "User was connected via WiFi Client Mode"
+  echo >>"0:/IP_address.txt" "Last Connected IP is: "^var.ip
+  echo >>{var.logFile} {"Stored IP address: " ^ var.ip}
 
-	echo >"0:/user/networkmode.g" "M552 I1 S1 ; Enable WiFi Client Mode"	
+  ; Connection successful - automatically restore previous mode after logging
+  echo >>{var.logFile} {"Preparing to restore previous mode: " ^ var.previousMode}
 
+  ; Turn off both interfaces first (universal)
+  M552 I1 S-1                             ; Turn off WiFi completely
+  echo >>{var.logFile} "Success restore - disabled WiFi"
+  G4 S2
+  M552 I0 S0                              ; Turn off Ethernet
+  G4 S1
+  echo >>{var.logFile} "Success restore - disabled Ethernet"
+  G4 S2
 
-	; Connection successful - give user choice to switch now or cancel
-	M291 S4 K{"Switch Mode Now","Cancel"} R{"Success, your IP address is: """^var.ip^""""} P{"To access DWC, in your browser enter """^var.ip^""""} F0
-	
-	if input = 0
-		; User chose to switch to WiFi Client mode now
-		; Turn off both interfaces first (universal)
-		M552 I1 S-1                         ; Turn off WiFi completely
-		G4 S1
-		M552 I0 S0                          ; Turn off Ethernet
-		G4 S1
-		M98 P"0:/user/networkmode.g"        ; Enable WiFi Client mode
-	else
-		; User cancelled - restore previous mode
-		; Turn off both interfaces first (universal)
-		M552 I1 S-1                         ; Turn off WiFi completely
-		G4 S1
-		M552 I0 S0                          ; Turn off Ethernet
-		G4 S2
-		
-		; Restore previous mode - only mode-specific enable commands
-		if var.previousMode == "ETH"
-			M552 I0 S1                      ; Enable Ethernet
-		elif var.previousMode == "CLIENT"
-			M552 I1 S0                      ; Set WiFi to idle
-			G4 S1
-			M552 I1 S1                      ; Enable as client
-		elif var.previousMode == "AP"
-			M552 I1 S0                      ; Set WiFi to idle
-			G4 S1
-			M552 I1 S2                      ; Enable as access point
-		elif var.previousMode == "ETPC"
-			M552 P192.168.1.50 I0 S1
-			M553 P255.255.255.0
-			M554 P192.168.1.1
-		else
-			M552 I1 S0                      ; Set WiFi to idle
-			G4 S1
-			M552 I1 S2                      ; Enable as access point (default)
+  ; Restore previous mode - only mode-specific enable commands
+  if var.previousMode == "ETH"
+    M552 I0 S1                            ; Enable Ethernet
+    echo >>{var.logFile} "Success restore - enabled Ethernet"
+  elif var.previousMode == "CLIENT"
+    M552 I1 S0                            ; Set WiFi to idle
+    echo >>{var.logFile} "Success restore - WiFi idle (client)"
+    G4 S1
+    M552 I1 S1                            ; Enable as client
+    echo >>{var.logFile} "Success restore - WiFi client"
+  elif var.previousMode == "AP"
+    M552 I1 S2                            ; Enable as access point
+    echo >>{var.logFile} "Success restore - WiFi AP"
+    G4 S5
+    echo >>{var.logFile} {"Success restore - AP IP after wait: " ^ network.interfaces[1].actualIP}
+  elif var.previousMode == "ETPC"
+    M552 P192.168.1.50 I0 S1
+    M553 P255.255.255.0
+    M554 P192.168.1.1
+    echo >>{var.logFile} "Success restore - Ethernet to PC"
+  else
+    M552 I1 S2                            ; Enable as access point (default)
+    echo >>{var.logFile} "Success restore - default AP"
+    G4 S5
+    echo >>{var.logFile} {"Success restore - default AP IP after wait: " ^ network.interfaces[1].actualIP}
+
+  ; Ask user if they want to switch to WiFi mode now
+  var localName = global.APname
+  set var.localName = var.localName ^ ".local"
+  var successTitle = "WiFi test successful - Connected to " ^ var.ip
+  var successMsg1 = "To access DWC, enter in browser:<br>"
+  var successMsg2 = "- " ^ var.ip ^ "<br>- " ^ var.localName ^ "<br><br>"
+  var successMsg3 = "Note: Computer must be on same subnet."
+  var successMsg = var.successMsg1 ^ var.successMsg2 ^ var.successMsg3
+  M291 S4 K{"Switch to Client mode now","Stay in " ^ var.previousMode ^ " mode"} R{var.successTitle} P{var.successMsg}
+  echo >>{var.logFile} {"Displayed success confirmation with mode switch prompt"}
+  
+  if input = 0
+    ; User chose to switch to WiFi mode now - perform final test
+    echo >>{var.logFile} "User confirmed switch to WiFi mode - performing final test"
+    
+    M98 P"0:/sys/led/pause.g"
+    echo >>{var.logFile} "Final test - set LEDs to yellow (pause) - waiting"
+    
+    M552 I1 S-1
+    echo >>{var.logFile} "Final test - disabled WiFi"
+    G4 S2
+    M552 I1 S1
+    echo >>{var.logFile} "Final test - enabled WiFi client mode"
+    G4 S1
+    
+    echo >>{var.logFile} "Final test - waiting for connection (up to 30 seconds)..."
+    while network.interfaces[1].actualIP = "0.0.0.0" || network.interfaces[1].actualIP = "192.168.0.1" && iterations < 30
+      G4 S1
+    
+    var finalTestIP = network.interfaces[1].actualIP
+    echo >>{var.logFile} {"Final test - connection result IP: " ^ var.finalTestIP}
+    
+    if var.finalTestIP == "0.0.0.0" || var.finalTestIP == "192.168.0.1"
+      ; Final test failed - show red lights and restore previous mode
+      M98 P"0:/sys/led/fault.g"
+      echo >>{var.logFile} "Final test failed - red LED triggered"
+      
+      M552 I1 S-1
+      echo >>{var.logFile} "Final test failed - disabled WiFi for restore"
+      G4 S2
+      
+      if var.previousMode == "AP"
+        M552 I1 S2
+        echo >>{var.logFile} "Final test failed - restored AP mode"
+      elif var.previousMode == "CLIENT"
+        M552 I1 S1
+        echo >>{var.logFile} "Final test failed - restored client mode"
+      elif var.previousMode == "ETH"
+        M552 I0 S1
+        echo >>{var.logFile} "Final test failed - restored Ethernet"
+      elif var.previousMode == "ETPC"
+        M552 P192.168.1.50 I0 S1
+        M553 P255.255.255.0
+        M554 P192.168.1.1
+        echo >>{var.logFile} "Final test failed - restored Ethernet to PC"
+      else
+        M552 I1 S2
+        echo >>{var.logFile} "Final test failed - restored default AP mode"
+      
+      G4 S5
+      echo >>{var.logFile} {"Final test failed - restored mode IP: " ^ network.interfaces[1].actualIP}
+      
+      M291 S2 R"Connection failed" P"Could not establish network connection. Network might be unstable. Please try another network, make sure antenna is connected, or move the device closer to the WiFi router."
+      echo >>{var.logFile} "Displayed final test failure message"
+    else
+      ; Final test succeeded - show green lights and save to networkmode.g
+      M98 P"0:/sys/led/end.g"
+      echo >>{var.logFile} "Final test succeeded - green LED triggered"
+      
+      echo >"0:/user/networkmode.g" "M552 I1 S1 ; Enable WiFi Client Mode"
+      echo >>{var.logFile} "Final test succeeded - permanently saved WiFi Client mode to networkmode.g"
+      
+      M291 S2 R"WiFi mode activated" P{"Successfully switched to WiFi Client mode. Your IP address is: "^var.finalTestIP}
+      echo >>{var.logFile} {"Final test succeeded - displayed confirmation with IP: " ^ var.finalTestIP}
+  else
+    ; User chose not to switch now - save WiFi Client mode to networkmode.g for next restart
+    echo >>{var.logFile} "User chose not to switch now - saving WiFi Client mode to networkmode.g"
+    
+    echo >"0:/user/networkmode.g" "M552 I1 S1 ; Enable WiFi Client Mode"
+    echo >>{var.logFile} "Saved WiFi Client mode to networkmode.g for next restart"
+    
+    M291 S2 R"Mode unchanged" P{"Staying in "^var.previousMode^" mode for now. WiFi Client mode will be activated on next restart."}
+    echo >>{var.logFile} "Displayed cancellation message"
 
 M98 P"0:/sys/led/resetstatus.g"
+echo >>{var.logFile} "Reset LEDs to normal"
+echo >>{var.logFile} "==== Connect to new WiFi network finished ===="
