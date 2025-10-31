@@ -104,12 +104,12 @@ if network.interfaces[{var.module}].actualIP != "0.0.0.0"
   if var.savePrompt
     M291 S4 K{"Save network configuration","Don't save"} R{"Network Connected - IP: " ^ var.connectedIP} P"Do you want to remember this network mode after restart?"
     if input = 0
-      ; User chose to save - write to networkmode.g
+      ; User chose to save - call appropriate macro with R1 parameter
       if var.module == 0
-        echo >"0:/user/networkmode.g" "M552 I0 S1 ; Enable Ethernet Mode"
+        M98 P"0:/macros/System/Settings/Network/Enable Ethernet Mode" R1
         echo "Saved Ethernet mode to networkmode.g"
       elif var.module == 1
-        echo >"0:/user/networkmode.g" "M552 I1 S1 ; Enable WiFi Client Mode"
+        M98 P"0:/macros/System/Settings/Network/Enable WiFi - Client Mode" R1
         echo "Saved WiFi Client mode to networkmode.g"
     else
       echo "User chose not to save network configuration"
@@ -146,10 +146,8 @@ if var.module == 0 && network.interfaces[{var.module}].actualIP == "0.0.0.0"
     ; Prompt user to save Ethernet to PC configuration
     M291 S4 K{"Save network configuration","Don't save"} R{"Network Connected - IP: " ^ var.etpcIP} P"Do you want to remember this network mode after restart?"
     if input = 0
-      ; User chose to save - write to networkmode.g
-      echo >"0:/user/networkmode.g" "M552 P192.168.1.50 I0 S1"
-      echo >>"0:/user/networkmode.g" "M553 P255.255.255.0"
-      echo >>"0:/user/networkmode.g" "M554 P192.168.1.1"
+      ; User chose to save - call macro with R1 parameter
+      M98 P"0:/macros/System/Settings/Network/Enable Ethernet to PC Mode" R1
       echo "Saved Ethernet to PC mode to networkmode.g"
     else
       echo "User chose not to save network configuration"
@@ -222,12 +220,12 @@ if network.interfaces[{var.module}].actualIP != "0.0.0.0"
   if var.savePrompt2
     M291 S4 K{"Save network configuration","Don't save"} R{"Network Connected - IP: " ^ var.connectedIP2} P"Do you want to remember this network mode after restart?"
     if input = 0
-      ; User chose to save - write to networkmode.g
+      ; User chose to save - call appropriate macro with R1 parameter
       if var.module == 0
-        echo >"0:/user/networkmode.g" "M552 I0 S1 ; Enable Ethernet Mode"
+        M98 P"0:/macros/System/Settings/Network/Enable Ethernet Mode" R1
         echo "Saved Ethernet mode to networkmode.g"
       elif var.module == 1
-        echo >"0:/user/networkmode.g" "M552 I1 S1 ; Enable WiFi Client Mode"
+        M98 P"0:/macros/System/Settings/Network/Enable WiFi - Client Mode" R1
         echo "Saved WiFi Client mode to networkmode.g"
     else
       echo "User chose not to save network configuration"
