@@ -1,10 +1,7 @@
 if exists(param.R)
-    echo >"0:/IP_address.txt" "User was connected via WiFi Access Point mode"
-    echo >>"0:/IP_address.txt" "Last Connected IP is: "^{network.interfaces[1].actualIP}
     echo >"0:/user/networkmode.g" "M552 I1 S2 ; Enable WiFi Access Point mode"
     M99
     abort
-
 
 
 M291 R"Change WiFi to AP Mode?" P{"Machine will share " ^ global.APname ^ " WiFi Network"} S4 K{"Change & Reconnect Now","Change and Reconnect Later","Cancel"}

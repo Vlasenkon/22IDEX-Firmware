@@ -1,3 +1,9 @@
+if exists(param.R)
+    echo >"0:/user/networkmode.g" "M552 I0 S1 ; Enable Ethernet mode"
+    M99
+    abort
+
+
 M291 S4 K{"OK, Ethernet is connected","Cancel"} R"Connect via Ethernet" P"Please connect the Ethernet cable to the device. Once connected, press ""OK"" to continue."
 
 if input = 0
