@@ -76,7 +76,10 @@ G4 S1
 ;=echo >>{var.logFile} "Waited 1s after M588"
 
 M589 S{global.APname} P"1234567890" I192.168.0.1
-;=echo >>{var.logFile} "Configured AP credentials"
+if result == 0
+  ;=echo >>{var.logFile} "M589 AP configuration succeeded"
+else
+  ;=echo >>{var.logFile} "M589 AP configuration failed, result: " ^ result
 G4 S1
 ;=echo >>{var.logFile} "Waited 1s after M589"
 
@@ -92,13 +95,18 @@ G4 S2
 ;=echo >>{var.logFile} "Waited 1s after disabling WiFi"
 
 M552 I1 S1
-;=echo >>{var.logFile} "Enabled WiFi in client mode"
+if result == 0
+  ;=echo >>{var.logFile} "M552 I1 S1 (enable WiFi client) succeeded"
+else
+  ;=echo >>{var.logFile} "M552 I1 S1 (enable WiFi client) failed, result: " ^ result
 G4 S1
 ;=echo >>{var.logFile} "Waited 1s after enabling WiFi"
 
 ;=echo >>{var.logFile} "Waiting for WiFi connection (up to 30 seconds)..."
 while network.interfaces[1].actualIP = "0.0.0.0" || network.interfaces[1].actualIP = "192.168.0.1" && iterations < 30
   G4 S1
+  M552 I1
+  ;=echo >>{var.logFile} "iteration " ^ iterations ^ ", WiFi status: " ^ result
 
 var finalIP = network.interfaces[1].actualIP
 ;=echo >>{var.logFile} {"WiFi connection attempt finished with IP: " ^ var.finalIP}
@@ -127,16 +135,28 @@ if var.currentIP == "0.0.0.0" || var.currentIP == "192.168.0.1"
   ; Restore previous mode - only mode-specific enable commands
   if var.previousMode == "ETH"
     M552 I0 S1                            ; Enable Ethernet
-    ;=echo >>{var.logFile} "Failure restore - enabled Ethernet"
+    if result == 0
+      ;=echo >>{var.logFile} "Failure restore - Ethernet enabled successfully"
+    else
+      ;=echo >>{var.logFile} "Failure restore - Ethernet enable failed, result: " ^ result
   elif var.previousMode == "CLIENT"
     M552 I1 S0                            ; Set WiFi to idle
     ;=echo >>{var.logFile} "Failure restore - WiFi idle (client)"
-    G4 S1
+    G4 S2
     M552 I1 S1                            ; Enable as client
-    ;=echo >>{var.logFile} "Failure restore - WiFi client"
+    if result == 0
+      ;=echo >>{var.logFile} "Failure restore - WiFi client succeeded"
+    else
+      ;=echo >>{var.logFile} "Failure restore - WiFi client failed, result: " ^ result
   elif var.previousMode == "AP"
+    M552 I1 S0                            ; Set WiFi to idle
+    ;=echo >>{var.logFile} "Failure restore - WiFi idle (AP)"
+    G4 S5
     M552 I1 S2                            ; Enable as access point
-    ;=echo >>{var.logFile} "Failure restore - WiFi AP"
+    if result == 0
+      ;=echo >>{var.logFile} "Failure restore - WiFi AP succeeded"
+    else
+      ;=echo >>{var.logFile} "Failure restore - WiFi AP failed, result: " ^ result
     G4 S5
     ;=echo >>{var.logFile} {"Failure restore - AP IP after wait: " ^ network.interfaces[1].actualIP}
   elif var.previousMode == "ETPC"
@@ -145,8 +165,14 @@ if var.currentIP == "0.0.0.0" || var.currentIP == "192.168.0.1"
     M554 P192.168.1.1
     ;=echo >>{var.logFile} "Failure restore - Ethernet to PC"
   else
+    M552 I1 S0                            ; Set WiFi to idle
+    ;=echo >>{var.logFile} "Failure restore - WiFi idle (default AP)"
+    G4 S5
     M552 I1 S2                            ; Enable as access point (default)
-    ;=echo >>{var.logFile} "Failure restore - default AP"
+    if result == 0
+      ;=echo >>{var.logFile} "Failure restore - default AP succeeded"
+    else
+      ;=echo >>{var.logFile} "Failure restore - default AP failed, result: " ^ result
     G4 S5
     ;=echo >>{var.logFile} {"Failure restore - default AP IP after wait: " ^ network.interfaces[1].actualIP}
 
@@ -180,16 +206,28 @@ else
   ; Restore previous mode - only mode-specific enable commands
   if var.previousMode == "ETH"
     M552 I0 S1                            ; Enable Ethernet
-    ;=echo >>{var.logFile} "Success restore - enabled Ethernet"
+    if result == 0
+      ;=echo >>{var.logFile} "Success restore - Ethernet enabled successfully"
+    else
+      ;=echo >>{var.logFile} "Success restore - Ethernet enable failed, result: " ^ result
   elif var.previousMode == "CLIENT"
     M552 I1 S0                            ; Set WiFi to idle
     ;=echo >>{var.logFile} "Success restore - WiFi idle (client)"
-    G4 S1
+    G4 S2
     M552 I1 S1                            ; Enable as client
-    ;=echo >>{var.logFile} "Success restore - WiFi client"
+    if result == 0
+      ;=echo >>{var.logFile} "Success restore - WiFi client succeeded"
+    else
+      ;=echo >>{var.logFile} "Success restore - WiFi client failed, result: " ^ result
   elif var.previousMode == "AP"
+    M552 I1 S0                            ; Set WiFi to idle
+    ;=echo >>{var.logFile} "Success restore - WiFi idle (AP)"
+    G4 S5
     M552 I1 S2                            ; Enable as access point
-    ;=echo >>{var.logFile} "Success restore - WiFi AP"
+    if result == 0
+      ;=echo >>{var.logFile} "Success restore - WiFi AP succeeded"
+    else
+      ;=echo >>{var.logFile} "Success restore - WiFi AP failed, result: " ^ result
     G4 S5
     ;=echo >>{var.logFile} {"Success restore - AP IP after wait: " ^ network.interfaces[1].actualIP}
   elif var.previousMode == "ETPC"
@@ -198,8 +236,14 @@ else
     M554 P192.168.1.1
     ;=echo >>{var.logFile} "Success restore - Ethernet to PC"
   else
+    M552 I1 S0                            ; Set WiFi to idle
+    ;=echo >>{var.logFile} "Success restore - WiFi idle (default AP)"
+    G4 S5
     M552 I1 S2                            ; Enable as access point (default)
-    ;=echo >>{var.logFile} "Success restore - default AP"
+    if result == 0
+      ;=echo >>{var.logFile} "Success restore - default AP succeeded"
+    else
+      ;=echo >>{var.logFile} "Success restore - default AP failed, result: " ^ result
     G4 S5
     ;=echo >>{var.logFile} {"Success restore - default AP IP after wait: " ^ network.interfaces[1].actualIP}
 
@@ -225,12 +269,17 @@ else
     ;=echo >>{var.logFile} "Final test - disabled WiFi"
     G4 S2
     M552 I1 S1
-    ;=echo >>{var.logFile} "Final test - enabled WiFi client mode"
+    if result == 0
+      ;=echo >>{var.logFile} "Final test - WiFi client enabled successfully"
+    else
+      ;=echo >>{var.logFile} "Final test - WiFi client enable failed, result: " ^ result
     G4 S1
     
     ;=echo >>{var.logFile} "Final test - waiting for connection (up to 30 seconds)..."
     while network.interfaces[1].actualIP = "0.0.0.0" || network.interfaces[1].actualIP = "192.168.0.1" && iterations < 30
       G4 S1
+      M552 I1
+      ;=echo >>{var.logFile} "Final test iteration " ^ iterations ^ ", WiFi status: " ^ result
     
     var finalTestIP = network.interfaces[1].actualIP
     ;=echo >>{var.logFile} {"Final test - connection result IP: " ^ var.finalTestIP}
@@ -245,22 +294,43 @@ else
       G4 S2
       
       if var.previousMode == "AP"
+        M552 I1 S0
+        ;=echo >>{var.logFile} "Final test failed - WiFi idle (AP restore)"
+        G4 S5
         M552 I1 S2
-        ;=echo >>{var.logFile} "Final test failed - restored AP mode"
+        if result == 0
+          ;=echo >>{var.logFile} "AP Mode restore succeeded"
+        else
+          ;=echo >>{var.logFile} "AP Mode restore failed, result: " ^ result
       elif var.previousMode == "CLIENT"
+        M552 I1 S0
+        ;=echo >>{var.logFile} "Final test failed - WiFi idle (client restore)"
+        G4 S2
         M552 I1 S1
-        ;=echo >>{var.logFile} "Final test failed - restored client mode"
+        if result == 0
+          ;=echo >>{var.logFile} "Final test failed - client mode restored successfully"
+        else
+          ;=echo >>{var.logFile} "Final test failed - client mode restore failed, result: " ^ result
       elif var.previousMode == "ETH"
         M552 I0 S1
-        ;=echo >>{var.logFile} "Final test failed - restored Ethernet"
+        if result == 0
+          ;=echo >>{var.logFile} "Final test failed - Ethernet restored successfully"
+        else
+          ;=echo >>{var.logFile} "Final test failed - Ethernet restore failed, result: " ^ result
       elif var.previousMode == "ETPC"
         M552 P192.168.1.50 I0 S1
         M553 P255.255.255.0
         M554 P192.168.1.1
         ;=echo >>{var.logFile} "Final test failed - restored Ethernet to PC"
       else
+        M552 I1 S0
+        ;=echo >>{var.logFile} "Final test failed - WiFi idle (default AP restore)"
+        G4 S5
         M552 I1 S2
-        ;=echo >>{var.logFile} "Final test failed - restored default AP mode"
+        if result == 0
+          ;=echo >>{var.logFile} "Final test failed - default AP restored successfully"
+        else
+          ;=echo >>{var.logFile} "Final test failed - default AP restore failed, result: " ^ result
       
       G4 S5
       ;=echo >>{var.logFile} {"Final test failed - restored mode IP: " ^ network.interfaces[1].actualIP}
