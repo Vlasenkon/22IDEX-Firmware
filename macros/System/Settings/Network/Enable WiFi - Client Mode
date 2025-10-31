@@ -14,9 +14,6 @@ if input = 0
     G4 S1
     M98 P"0:/user/networkmode.g"
 elif input = 1
-    echo >"0:/IP_address.txt" "User was connected via WiFi Client Mode"
-    echo >>"0:/IP_address.txt" "Last Connected IP is: "^{network.interfaces[1].actualIP}
-
     echo >"0:/user/networkmode.g" "M552 I1 S1 ; Enable WiFi Client Mode"
 elif input = 2
     abort
