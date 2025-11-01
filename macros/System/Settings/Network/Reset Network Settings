@@ -1,4 +1,13 @@
-M291 S4 K{"Yes, Erase","No, Cancel"} R"Network Reset Confirmation" P"This will delete all known networks and stored parameters and reset the network to access point mode. Are you sure you want to proceed?"
+; Warning message about what this action will do
+var warnMsg1 = "⚠️ This will DELETE all network settings:<br><br>"
+var warnMsg2 = "• ALL WiFi networks<br>"
+var warnMsg3 = "• ALL Ethernet configurations<br>"
+var warnMsg4 = "• ALL network parameters<br><br>"
+var warnMsg5 = "Machine will reset to Access Point Mode.<br>"
+var warnMsg6 = "You will lose connection.<br><br>"
+var warnMsg7 = "Proceed with factory reset?"
+
+M291 S4 K{"Yes, Erase Everything","No, Cancel"} R"⚠️ Network Factory Reset" P{var.warnMsg1 ^ var.warnMsg2 ^ var.warnMsg3 ^ var.warnMsg4 ^ var.warnMsg5 ^ var.warnMsg6 ^ var.warnMsg7} F1
 
 
 if input = 0
@@ -9,28 +18,41 @@ else
 
 
 ; Erase values from WiFi Module
-M552 I1 S0
-M552 I0 S0
-G4S4
+M552 I0 S0                                  ; Disable Ethernet
+G4 S1                                       ; Wait
 
-M588 S"*"
-G4S2
-M589 S"*"
-G4S2
+M552 I1 S-1                                 ; Turn off WiFi completely
+G4 S1                                       ; Wait
 
-; Try to configure Access Point (up to 5 attempts)
-while result != 0 && iterations <= 5
-	M552 I1 S-1                         ; Turn off WiFi completely
-	G4 S1                               ; Wait
-	M552 I1 S0                          ; Set WiFi to idle
-	G4 S2                               ; Wait for WiFi to stabilize
-	
-	M589 S{global.APname} P"1234567890" I192.168.0.1
+M552 I1 S0                                  ; Set WiFi to Idle state
+G4 S5                                       ; Wait for WiFi to stabilize
+
+M588 S"*"                                   ; Forget all WiFi networks
+G4 S1
+
+M589 S"*"                                   ; Clear Access Point configuration
+G4 S1
+
+M589 S{global.APname} P"1234567890" I192.168.0.1  ; Configure WiFi Access Point
+if result != 0
+  ; Retry AP configuration up to 5 times if it fails
+  while iterations < 5
+    M589 S{global.APname} P"1234567890" I192.168.0.1
+    if result == 0
+      break                                 ; Success - exit retry loop
+    G4 S3                                   ; Wait 3 seconds before retry
+G4 S5                                       ; Wait for configuration to settle
+
+M552 I1 S-1                                 ; Turn off WiFi again
+G4 S1                                       ; Wait
+
+M552 I1 S2                                  ; Turn on WiFi in Access Point mode
+G4 S5                                       ; Wait for AP to start
 
 M98 P"0:/macros/System/Settings/Network/Enable WiFi - Access Point Mode" R1
-G4 S1
+G4 S5
 
 M98 P"0:/user/networkmode.g"
-G4 S1
+G4 S5
 
 M98 P"0:/sys/networktest.g"
