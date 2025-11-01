@@ -54,12 +54,12 @@ if var.ip == "" || var.subnet == "" || var.gateway == ""
 ; Step 4: Show instructions and begin test
 var instructMsg1 = "Configure your computer's Ethernet settings:<br>"
 var instructMsg2 = "IP: 192.168.1.51 | Subnet: 255.255.255.0<br>"
-var instructMsg3 = "Gateway: Leave empty or set to " ^ var.ip ^ "<br><br>"
+var instructMsg3 = "Gateway: Leave empty or set to " ^ var.ip ^ "<br>"
 var instructMsg4 = "<a href=https://wiki.visionminer.com/home/22IDEX/V3/PCEthernet target=_blank>Click here for full instructions</a>"
 M291 R"Setup Required" P{var.instructMsg1 ^ var.instructMsg2 ^ var.instructMsg3 ^ var.instructMsg4} S3
 
-var testMsg1 = "You will lose connection momentarily.<br><br>"
-var testMsg2 = "Make sure Ethernet cable is connected between printer and computer.<br><br>"
+var testMsg1 = "You will lose connection momentarily.<br>"
+var testMsg2 = "Make sure Ethernet cable is connected between printer and computer.<br>"
 var testMsg3 = "🟡 YELLOW - Testing<br>🟢 GREEN - Success<br>🔴 RED - Failed"
 M291 R"Testing Connection" P{var.testMsg1 ^ var.testMsg2 ^ var.testMsg3} S4 K{"Ethernet cable is connected","Cancel"} F0
 

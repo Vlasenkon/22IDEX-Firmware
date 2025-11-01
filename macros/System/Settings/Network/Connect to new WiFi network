@@ -46,7 +46,7 @@ M98 P"0:/user/APname.g"
 ;=echo >>{var.logFile} "Loaded current AP name"
 
 ; Step 3: Try to connect to the network
-var testMsg1 = "🟡 YELLOW - Testing<br>🟢 GREEN - Success<br>🔴 RED - Failed<br><br>"
+var testMsg1 = "🟡 YELLOW - Testing<br>🟢 GREEN - Success<br>🔴 RED - Failed<br>"
 var testMsg2 = "You will lose connection momentarily.<br>"
 var testMsg3 = "After lights change, reconnect to " ^ global.APname ^ " network."
 var testMsg = var.testMsg1 ^ var.testMsg2 ^ var.testMsg3
@@ -252,7 +252,7 @@ else
   set var.localName = var.localName ^ ".local"
   var successTitle = "WiFi test successful - Connected to " ^ var.ip
   var successMsg1 = "To access DWC, enter in browser:<br>"
-  var successMsg2 = "- " ^ var.ip ^ "<br>- " ^ var.localName ^ "<br><br>"
+  var successMsg2 = "- " ^ var.ip ^ "<br>- " ^ var.localName ^ "<br>"
   var successMsg3 = "Note: Computer must be on same subnet."
   var successMsg = var.successMsg1 ^ var.successMsg2 ^ var.successMsg3
   M291 S4 K{"Switch to Client mode now","Stay in " ^ var.previousMode ^ " mode"} R{var.successTitle} P{var.successMsg}

@@ -1,10 +1,10 @@
 ; Warning message about what this action will do
-var warnMsg1 = "⚠️ This will DELETE all network settings:<br><br>"
+var warnMsg1 = "⚠️ This will DELETE all network settings:<br>"
 var warnMsg2 = "• ALL WiFi networks<br>"
 var warnMsg3 = "• ALL Ethernet configurations<br>"
-var warnMsg4 = "• ALL network parameters<br><br>"
+var warnMsg4 = "• ALL network parameters<br>"
 var warnMsg5 = "Machine will reset to Access Point Mode.<br>"
-var warnMsg6 = "You will lose connection.<br><br>"
+var warnMsg6 = "You will lose connection.<br>"
 var warnMsg7 = "Proceed with factory reset?"
 
 M291 S4 K{"Yes, Erase Everything","No, Cancel"} R"⚠️ Network Factory Reset" P{var.warnMsg1 ^ var.warnMsg2 ^ var.warnMsg3 ^ var.warnMsg4 ^ var.warnMsg5 ^ var.warnMsg6 ^ var.warnMsg7} F1

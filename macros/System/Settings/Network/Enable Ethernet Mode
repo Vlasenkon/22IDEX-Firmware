@@ -35,8 +35,8 @@ if input == 1
     M99
 
 ; User chose "Change & Test Now" (input == 0)
-var instructMsg1 = "You will lose connection momentarily.<br><br>"
-var instructMsg2 = "Make sure Ethernet cable is connected.<br><br>"
+var instructMsg1 = "You will lose connection momentarily.<br>"
+var instructMsg2 = "Make sure Ethernet cable is connected.<br>"
 var instructMsg3 = "🟡 YELLOW - Testing<br>🟢 GREEN - Success<br>🔴 RED - Failed"
 M291 R"Switching to Ethernet Mode" P{var.instructMsg1 ^ var.instructMsg2 ^ var.instructMsg3} S4 K{"Ethernet cable is connected","Cancel"} F0
 
@@ -70,8 +70,8 @@ if network.interfaces[0].actualIP != "0.0.0.0" && network.interfaces[0].actualIP
     ; Show success message - blocking prompt
     var ethIP = network.interfaces[0].actualIP
     var localName = global.APname ^ ".local"
-    var successMsg1 = "Ethernet Mode Activated<br><br>"
-    var successMsg2 = "Configuration saved. This mode will remain active after restart.<br><br>"
+    var successMsg1 = "Ethernet Mode Activated<br>"
+    var successMsg2 = "Configuration saved. This mode will remain active after restart.<br>"
     var successMsg3 = "You can connect via IP address or local domain:<br>IP: " ^ var.ethIP ^ "<br>" ^ var.localName
     M291 S2 R"Success" P{var.successMsg1 ^ var.successMsg2 ^ var.successMsg3}
     

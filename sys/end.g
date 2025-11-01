@@ -50,7 +50,7 @@ M98 P"0:/user/tool1extrude.g"
 
 if move.axes[2].babystep != 0
 	echo "Warning: Adjustment of "^move.axes[2].babystep^" mm was detected, please save Z - Offset"
-	M291 S1 R"Save Z-Offset" P{"Adjustment of "^move.axes[2].babystep^" mm was detected.<br><br>It is recommended to save this Z-Offset adjustment."} T0
+	M291 S1 R"Save Z-Offset" P{"Adjustment of "^move.axes[2].babystep^" mm was detected.<br>It is recommended to save this Z-Offset adjustment."} T0
 
 M98 P"0:/user/filamentbackup.g"                          ; load filament runout tool swap variable
 

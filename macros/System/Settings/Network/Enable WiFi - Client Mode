@@ -36,7 +36,7 @@ if input == 1
     abort
 
 ; User chose "Change & Reconnect Now" (input == 0)
-var instructMsg1 = "You will lose connection momentarily.<br><br>"
+var instructMsg1 = "You will lose connection momentarily.<br>"
 var instructMsg2 = "🟡 YELLOW - Testing<br>🟢 GREEN - Success<br>🔴 RED - Failed"
 M291 R"Switching to WiFi Client Mode" P{var.instructMsg1 ^ var.instructMsg2} S3
 
@@ -68,8 +68,8 @@ if network.interfaces[1].actualIP != "0.0.0.0" && network.interfaces[1].actualIP
     ; Show success message - blocking prompt
     var clientIP = network.interfaces[1].actualIP
     var localName = global.APname ^ ".local"
-    var successMsg1 = "WiFi Client Mode Activated<br><br>"
-    var successMsg2 = "Configuration saved. This mode will remain active after restart.<br><br>"
+    var successMsg1 = "WiFi Client Mode Activated<br>"
+    var successMsg2 = "Configuration saved. This mode will remain active after restart.<br>"
     var successMsg3 = "You can connect via IP address or local domain:<br>IP: " ^ var.clientIP ^ "<br>" ^ var.localName
     M291 S2 R"Success" P{var.successMsg1 ^ var.successMsg2 ^ var.successMsg3}
     
