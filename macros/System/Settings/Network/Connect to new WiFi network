@@ -67,8 +67,8 @@ G4 S3
 
 M552 I1 S0
 ;=echo >>{var.logFile} "Set WiFi to idle"
-G4 S3
-;=echo >>{var.logFile} "Waited 3s after idle"
+G4 S5
+;=echo >>{var.logFile} "Waited 5s after idle"
 
 M588 S"*"
 ;=echo >>{var.logFile} "Cleared stored WiFi networks"
