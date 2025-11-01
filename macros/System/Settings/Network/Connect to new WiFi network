@@ -142,7 +142,7 @@ if var.currentIP == "0.0.0.0" || var.currentIP == "192.168.0.1"
   elif var.previousMode == "CLIENT"
     M552 I1 S0                            ; Set WiFi to idle
     ;=echo >>{var.logFile} "Failure restore - WiFi idle (client)"
-    G4 S2
+    G4 S5
     M552 I1 S1                            ; Enable as client
     if result == 0
       ;=echo >>{var.logFile} "Failure restore - WiFi client succeeded"
@@ -213,7 +213,7 @@ else
   elif var.previousMode == "CLIENT"
     M552 I1 S0                            ; Set WiFi to idle
     ;=echo >>{var.logFile} "Success restore - WiFi idle (client)"
-    G4 S2
+    G4 S5
     M552 I1 S1                            ; Enable as client
     if result == 0
       ;=echo >>{var.logFile} "Success restore - WiFi client succeeded"
@@ -305,7 +305,7 @@ else
       elif var.previousMode == "CLIENT"
         M552 I1 S0
         ;=echo >>{var.logFile} "Final test failed - WiFi idle (client restore)"
-        G4 S2
+        G4 S5
         M552 I1 S1
         if result == 0
           ;=echo >>{var.logFile} "Final test failed - client mode restored successfully"
