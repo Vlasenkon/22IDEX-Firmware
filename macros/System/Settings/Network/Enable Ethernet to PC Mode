@@ -104,15 +104,19 @@ if var.previousMode == "ETH"
 	M552 I0 S1                              ; Enable Ethernet
 elif var.previousMode == "CLIENT"
 	M552 I1 S0                              ; Set WiFi to idle
-	G4 S1
+	G4 S5
 	M552 I1 S1                              ; Enable as client
 elif var.previousMode == "AP"
+	M552 I1 S0                              ; Set WiFi to idle
+	G4 S5
 	M552 I1 S2                              ; Enable as access point
 elif var.previousMode == "ETPC"
 	M552 P192.168.1.50 I0 S1
 	M553 P255.255.255.0
 	M554 P192.168.1.1
 else
+	M552 I1 S0                              ; Set WiFi to idle
+	G4 S5
 	M552 I1 S2                              ; Enable as access point (default)
 
 G4 S5
