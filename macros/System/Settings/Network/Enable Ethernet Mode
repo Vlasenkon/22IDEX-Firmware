@@ -4,76 +4,111 @@ if exists(param.R)
     abort
 
 
-M291 S4 K{"OK, Ethernet is connected","Cancel"} R"Connect via Ethernet" P"Please connect the Ethernet cable to the device. Once connected, press ""OK"" to continue."
+; Step 1: Detect current network mode before making changes
+var previousMode = "AP"                     ; Default to AP if no connection exists
+var previousIP = "192.168.0.1"              ; Default AP IP
 
-if input = 0
-	M292 ;Continue
+if network.interfaces[0].actualIP != "0.0.0.0"
+  set var.previousIP = network.interfaces[0].actualIP
+  if network.interfaces[0].actualIP == "192.168.1.50"
+    set var.previousMode = "ETPC"           ; Ethernet to PC mode
+  else
+    set var.previousMode = "ETH"            ; Regular Ethernet mode
+elif network.interfaces[1].actualIP != "0.0.0.0"
+  set var.previousIP = network.interfaces[1].actualIP
+  if network.interfaces[1].actualIP == "192.168.0.1"
+    set var.previousMode = "AP"             ; WiFi Access Point mode
+  else
+    set var.previousMode = "CLIENT"         ; WiFi Client mode
+
+M98 P"0:/user/APname.g"
+
+M291 R"Ethernet Mode" P"Connect to network via Ethernet cable with DHCP" S4 K{"Change & Test Now","Change after restart","Cancel"} F0
+
+if input == 2
+    abort "Script canceled by user"
+
+; If user chose "Change after restart" (input == 1) - just save and exit
+if input == 1
+    M98 P"0:/macros/System/Settings/Network/Enable Ethernet Mode" R1
+    M291 S1 R"Configuration Saved" P"Ethernet mode will be activated on next restart." T5
+    M99
+
+; User chose "Change & Test Now" (input == 0)
+var instructMsg1 = "You will lose connection momentarily.<br><br>"
+var instructMsg2 = "Make sure Ethernet cable is connected.<br><br>"
+var instructMsg3 = "🟡 YELLOW - Testing<br>🟢 GREEN - Success<br>🔴 RED - Failed"
+M291 R"Switching to Ethernet Mode" P{var.instructMsg1 ^ var.instructMsg2 ^ var.instructMsg3} S4 K{"Ethernet cable is connected","Cancel"} F0
+
+if input == 1
+    M99
+    abort
+
+M98 P"0:/sys/led/pause.g"                   ; Yellow LED - testing
+
+; Turn off both interfaces first
+M552 I1 S-1                                 ; Turn off WiFi completely
+M552 I0 S0                                  ; Turn off Ethernet
+G4 S2
+
+; Enable Ethernet with DHCP
+M552 I0 S1                                  ; Enable Ethernet mode
+G4 S5
+
+; Wait for Ethernet to get IP (not 0.0.0.0 or AP IP)
+while (network.interfaces[0].actualIP == "0.0.0.0" || network.interfaces[0].actualIP == "192.168.0.1") && iterations < 30
+    G4 S1                                   ; Wait 1 second per iteration (max 30 seconds)
+
+; Check if connection was successful
+if network.interfaces[0].actualIP != "0.0.0.0" && network.interfaces[0].actualIP != "192.168.0.1"
+    ; Success - Ethernet connected
+    M98 P"0:/sys/led/end.g"                 ; Green LED for success
+    
+    ; Save configuration to networkmode.g using macro
+    M98 P"0:/macros/System/Settings/Network/Enable Ethernet Mode" R1
+    
+    ; Show success message - blocking prompt
+    var ethIP = network.interfaces[0].actualIP
+    var localName = global.APname ^ ".local"
+    var successMsg1 = "Ethernet Mode Activated<br><br>"
+    var successMsg2 = "Configuration saved. This mode will remain active after restart.<br><br>"
+    var successMsg3 = "You can connect via IP address or local domain:<br>IP: " ^ var.ethIP ^ "<br>" ^ var.localName
+    M291 S2 R"Success" P{var.successMsg1 ^ var.successMsg2 ^ var.successMsg3}
+    
+    ; Reset LEDs to white
+    M98 P"0:/sys/led/resetstatus.g"
+    
+    ; Exit - stay in this mode
+    M99
+
+; Failed - restore previous network mode
+M98 P"0:/sys/led/fault.g"                   ; Red LED for failed connection
+
+; Turn off both interfaces first (universal)
+M552 I1 S-1                                 ; Turn off WiFi completely
+M552 I0 S0                                  ; Turn off Ethernet
+G4 S2
+
+; Restore previous mode - only mode-specific enable commands
+if var.previousMode == "ETH"
+    M552 I0 S1                              ; Enable Ethernet
+elif var.previousMode == "CLIENT"
+    M552 I1 S0                              ; Set WiFi to idle
+    G4 S5
+    M552 I1 S1                              ; Enable as client
+elif var.previousMode == "AP"
+    M552 I1 S0                              ; Set WiFi to idle
+    G4 S5
+    M552 I1 S2                              ; Enable as access point
+elif var.previousMode == "ETPC"
+    M552 P192.168.1.50 I0 S1
+    M553 P255.255.255.0
+    M554 P192.168.1.1
 else
-	M99
+    M552 I1 S0                              ; Set WiFi to idle
+    G4 S5
+    M552 I1 S2                              ; Enable as access point (default)
 
+M291 S2 R"Connection Failed" P{"Ethernet connection failed. Restored previous mode: " ^ var.previousIP}
 
-M291 S4 K{"Test Connection","Skip Test and Change Mode"} R"Test Network Connection" P"Machine will test the connection and restart into AP WiFi mode.<br>Skipped and connect by using ""22.local"" address in your browser for ITAR"
-if input = 0
-	M292 ;Continue
-else
-	echo >"0:/user/networkmode.g" "M552 I0 P0.0.0.0 S1 ; Enable Ethernet mode"
-
-	M552 I1 S-1
-	G4 S1
-	M552 I0 S0
-	G4 S1
-	M552 I0 P0.0.0.0 S1
-
-	echo "Ethernet mode Enabled"
-	M99
-
-
-var restartMsg1 = "Machine will restart now."
-var restartMsg2 = "If LEDs are GREEN, the connection was established. If RED, it failed."
-var restartMsg3 = "Machine will restart into AP Mode."
-var restartMsg4 = "Reconnect to the """ ^ global.APname ^ """ WiFi network after you see the green or red LED."
-M291 S2 R"Restart Notification" P{restartMsg1 ^ "<br>" ^ restartMsg2 ^ "<br>" ^ restartMsg3 ^ "<br>" ^ restartMsg4}
-
-
-M98 P"0:/sys/led/resetstatus.g"
-
-M552 I1 S-1
-G4 S1
-M552 I0 P0.0.0.0 S1
-G1 S1
-
-while network.interfaces[0].actualIP = "0.0.0.0" || network.interfaces[0].actualIP = "192.168.0.1" && iterations < 30
-  G4 S1
-
-
-if network.interfaces[0].actualIP = "0.0.0.0" || network.interfaces[0].actualIP = "192.168.0.1"
-	M98 P"0:/sys/led/dimmwhite.g"
-	M98 P"0:/sys/led/red.g"
-	M98 P"0:/macros/System/Settings/Network/Enable WiFi - Access Point Mode" R1
-	
-	M552 I1 S-1
-	G4 S1
-	M552 I1 S2
-	
-	M291 S2 R"Connection was not established" P"Please try again"
-
-else
-	M98 P"0:/sys/led/end.g"
-	echo >"0:/user/networkmode.g" "M552 I0 S1 ; Enable Ethernet mode"
-
-	var ip = network.interfaces[0].actualIP
-
-	M552 I0 S0
-	G4 S1
-	M552 I1 S2	
-			
-	
-	M291 S4 K{"Cancel","OK"} R{"The IP address is: """^var.ip^""""} P{"To access DWC, in your browser enter """^var.ip^""" Press ""OK"" to switch Network mode now or restart the machine"}
-	
-	if input = 1
-		M552 I1 S-1
-		G4 S1
-		M552 I0 P0.0.0.0 S1
-
-
-M98 P"0:/sys/led/resetstatus.g"
+M98 P"0:/sys/led/resetstatus.g"             ; Reset LEDs to normal
