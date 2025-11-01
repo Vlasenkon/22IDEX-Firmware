@@ -73,7 +73,7 @@ if network.interfaces[1].actualIP == "192.168.0.1"
     var localName = global.APname ^ ".local"
     var successMsg1 = "Access Point Mode Activated<br><br>"
     var successMsg2 = "Configuration saved. This mode will remain active after restart.<br><br>"
-    var successMsg3 = "You can connect via IP address or local domain:<br>IP: " ^ var.apIP ^ "<br>" ^ var.localName ^ ".local"
+    var successMsg3 = "You can connect via IP address or local domain:<br>IP: " ^ var.apIP ^ "<br>" ^ var.localName
     M291 S2 R"Success" P{var.successMsg1 ^ var.successMsg2 ^ var.successMsg3}
     
     ; Reset LEDs to white
