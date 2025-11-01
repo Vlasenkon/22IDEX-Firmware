@@ -4,16 +4,109 @@ if exists(param.R)
     abort
 
 
-M291 R"Change WiFi to Client Mode?" P" " S4 K{"Change & Reconnect Now","Change and Reconnect Later","Cancel"}
+; Step 1: Detect current network mode before making changes
+var previousMode = "AP"                     ; Default to AP if no connection exists
+var previousIP = "192.168.0.1"              ; Default AP IP
 
-if input = 0
-    echo >"0:/user/networkmode.g" "M552 I1 S1 ; Enable WiFi Client Mode"
-    M552 I0 S0
-    G4 S1
-    M552 I1 S-1
-    G4 S1
-    M98 P"0:/user/networkmode.g"
-elif input = 1
-    echo >"0:/user/networkmode.g" "M552 I1 S1 ; Enable WiFi Client Mode"
-elif input = 2
+if network.interfaces[0].actualIP != "0.0.0.0"
+  set var.previousIP = network.interfaces[0].actualIP
+  if network.interfaces[0].actualIP == "192.168.1.50"
+    set var.previousMode = "ETPC"           ; Ethernet to PC mode
+  else
+    set var.previousMode = "ETH"            ; Regular Ethernet mode
+elif network.interfaces[1].actualIP != "0.0.0.0"
+  set var.previousIP = network.interfaces[1].actualIP
+  if network.interfaces[1].actualIP == "192.168.0.1"
+    set var.previousMode = "AP"             ; WiFi Access Point mode
+  else
+    set var.previousMode = "CLIENT"         ; WiFi Client mode
+
+M98 P"0:/user/APname.g"
+
+M291 R"WiFi Client Mode" P"Connect to a previously configured WiFi network" S4 K{"Change & Reconnect Now","Change after restart","Cancel"} F0
+
+if input == 2
+    abort "Script canceled by user"
+
+; If user chose "Change after restart" (input == 1) - just save and exit
+if input == 1
+    M98 P"0:/macros/System/Settings/Network/Enable WiFi - Client Mode" R1
+    M291 S1 R"Configuration Saved" P"WiFi Client mode will be activated on next restart." T5
+    M99
     abort
+
+; User chose "Change & Reconnect Now" (input == 0)
+var instructMsg1 = "You will lose connection momentarily.<br><br>"
+var instructMsg2 = "🟡 YELLOW - Testing<br>🟢 GREEN - Success<br>🔴 RED - Failed"
+M291 R"Switching to WiFi Client Mode" P{var.instructMsg1 ^ var.instructMsg2} S3
+
+M98 P"0:/sys/led/pause.g"                   ; Yellow LED - testing
+
+; Turn off both interfaces first
+M552 I1 S-1                                 ; Turn off WiFi completely
+M552 I0 S0                                  ; Turn off Ethernet
+G4 S2
+
+; Configure and enable WiFi Client
+M552 I1 S0                                  ; Set WiFi to idle
+G4 S5
+M552 I1 S1                                  ; Enable WiFi Client mode
+G4 S5
+
+; Wait for WiFi Client to connect (check for non-AP, non-zero IP)
+while (network.interfaces[1].actualIP == "0.0.0.0" || network.interfaces[1].actualIP == "192.168.0.1") && iterations < 30
+    G4 S1                                   ; Wait 1 second per iteration (max 30 seconds)
+
+; Check if connection was successful
+if network.interfaces[1].actualIP != "0.0.0.0" && network.interfaces[1].actualIP != "192.168.0.1"
+    ; Success - WiFi Client connected
+    M98 P"0:/sys/led/end.g"                 ; Green LED for success
+    
+    ; Save configuration to networkmode.g using macro
+    M98 P"0:/macros/System/Settings/Network/Enable WiFi - Client Mode" R1
+    
+    ; Show success message - blocking prompt
+    var clientIP = network.interfaces[1].actualIP
+    var localName = global.APname ^ ".local"
+    var successMsg1 = "WiFi Client Mode Activated<br><br>"
+    var successMsg2 = "Configuration saved. This mode will remain active after restart.<br><br>"
+    var successMsg3 = "You can connect via IP address or local domain:<br>IP: " ^ var.clientIP ^ "<br>" ^ var.localName
+    M291 S2 R"Success" P{var.successMsg1 ^ var.successMsg2 ^ var.successMsg3}
+    
+    ; Reset LEDs to white
+    M98 P"0:/sys/led/resetstatus.g"
+    
+    ; Exit - stay in this mode
+    M99
+
+; Failed - restore previous network mode
+M98 P"0:/sys/led/fault.g"                   ; Red LED for failed connection
+
+; Turn off both interfaces first (universal)
+M552 I1 S-1                                 ; Turn off WiFi completely
+M552 I0 S0                                  ; Turn off Ethernet
+G4 S2
+
+; Restore previous mode - only mode-specific enable commands
+if var.previousMode == "ETH"
+    M552 I0 S1                              ; Enable Ethernet
+elif var.previousMode == "CLIENT"
+    M552 I1 S0                              ; Set WiFi to idle
+    G4 S5
+    M552 I1 S1                              ; Enable as client
+elif var.previousMode == "AP"
+    M552 I1 S0                              ; Set WiFi to idle
+    G4 S5
+    M552 I1 S2                              ; Enable as access point
+elif var.previousMode == "ETPC"
+    M552 P192.168.1.50 I0 S1
+    M553 P255.255.255.0
+    M554 P192.168.1.1
+else
+    M552 I1 S0                              ; Set WiFi to idle
+    G4 S5
+    M552 I1 S2                              ; Enable as access point (default)
+
+M291 S2 R"Connection Failed" P{"WiFi Client mode failed. Restored previous mode: " ^ var.previousIP}
+
+M98 P"0:/sys/led/resetstatus.g"             ; Reset LEDs to normal
