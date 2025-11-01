@@ -288,8 +288,8 @@ if network.interfaces[1].actualIP != "0.0.0.0"
   echo >"0:/IP_address.txt" "Network Mode: WiFi Access Point (Fallback)"
   echo >>"0:/IP_address.txt" "IP Address: "^{network.interfaces[1].actualIP}
 
-  ; Non-Blocking notification informing user of AP mode
-  M291 S1 R"Connection was not established" P"WiFi module was automatically switched to Access Point Mode" T0
+  ; Blocking notification informing user of AP mode
+  M291 S2 R"Connection was not established" P"WiFi module was automatically switched to Access Point Mode"
 else
   ; ===================================================================
   ; CRITICAL FAILURE - ALL NETWORK MODES FAILED
@@ -299,5 +299,12 @@ else
   M98 P"0:/sys/led/dimmwhite.g"             ; Set LEDs to dim white
   echo "CRITICAL: Access Point mode failed to establish connection"
   echo >"0:/IP_address.txt" "Network Mode: FAILED - No connection established"
-  ; Non-Blocking error notification
+  ; Blocking error notification
   M291 S1 R"Network Connection Failed" P"Access Point mode could not be established. Please check network configuration." T0
+  
+  M99
+  abort                                    ; Exit the script with failure
+
+
+; Reset LEDs back to white after user clicks OK
+M98 P"0:/sys/led/resetstatus.g"
