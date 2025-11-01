@@ -13,7 +13,7 @@ G4 P500              ; Wait for Probe value to stabilize
 if sensors.probes[0].value[0] > 200
   M42 P4 S0
   M98 P"0:/sys/led/fault.g"
-  M291 S0 R"Probe is not connected" P"Check if Probe is attached to the Printhead"
+  M291 S0 R"Probe is not connected" P"Check if Probe is attached to the Printhead" T0
   abort "Error: Probe is still not connected"
   
 

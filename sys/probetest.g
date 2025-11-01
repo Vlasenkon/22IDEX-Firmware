@@ -16,7 +16,7 @@ G4 P500              ; Wait for Probe value to stabilize
 if sensors.probes[0].value[0] < 500
   M42 P4 S0
   M98 P"0:/sys/led/fault.g"
-  M291 S0 R"GND Wire is Shorted on T0" P"Check Grounding Wire on LHS Tool Heat, it migh be shorted to Aluminum plate"
+  M291 S0 R"GND Wire is Shorted on T0" P"Check Grounding Wire on LHS Tool Heat, it migh be shorted to Aluminum plate" T0
   abort "Error: GND Wire is Shorted on T0"
 else
   M98 P"pick.g"
