@@ -58,9 +58,14 @@ var instructMsg3 = "Gateway: Leave empty or set to " ^ var.ip ^ "<br><br>"
 var instructMsg4 = "<a href=https://wiki.visionminer.com/home/22IDEX/V3/PCEthernet target=_blank>Click here for full instructions</a>"
 M291 R"Setup Required" P{var.instructMsg1 ^ var.instructMsg2 ^ var.instructMsg3 ^ var.instructMsg4} S3
 
-var testMsg1 = "🟡 YELLOW - Testing<br>🟢 GREEN - Success<br>🔴 RED - Failed<br><br>"
-var testMsg2 = "Make sure Ethernet cable is connected between printer and computer."
-M291 R"Testing Connection" P{var.testMsg1 ^ var.testMsg2} S3
+var testMsg1 = "You will lose connection momentarily.<br><br>"
+var testMsg2 = "Make sure Ethernet cable is connected between printer and computer.<br><br>"
+var testMsg3 = "🟡 YELLOW - Testing<br>🟢 GREEN - Success<br>🔴 RED - Failed"
+M291 R"Testing Connection" P{var.testMsg1 ^ var.testMsg2 ^ var.testMsg3} S4 K{"Ethernet cable is connected","Cancel"} F0
+
+if input == 1
+    M99
+    abort
 
 M98 P"0:/sys/led/pause.g"                   ; Yellow LED - testing
 
