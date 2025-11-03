@@ -25,64 +25,6 @@ if global.xy_square_mode == "manual"
   M99
 
 
-if !exists(param.S)
-
-  M291 S5 J1 F250 L150 H450 R"Set Left Tool Temperature" P"Please set the temperature for the filament previously loaded in the Left Tool."
-  var ll = input
-    
-  M291 S5 J1 F{var.ll} L150 H450 R"Set Right Tool Temperature" P"Please set the temperature for the filament previously loaded in the Right Tool."
-  var rr = input
-  
-  M568 P0 R{var.ll} S{var.ll}
-  M568 P1 R{var.rr} S{var.rr}
-  M568 P2 R{var.ll,var.rr} S{var.ll,var.rr}
-  M568 P3 R{var.ll,var.rr} S{var.ll,var.rr}
-  
-  M568 P0 A2
-  M568 P1 A2
-  
-  M291 S2 R"Please Remove the Build Sheet" P"To avoid damaging your machine, remove the build sheet from the build plate.<br>Click ""OK"" when you are ready to proceed or ""Cancel"" to stop." S2
-  
-  if !move.axes[0].homed || !move.axes[1].homed || !move.axes[2].homed || !move.axes[3].homed
-    M98 P"0:/sys/homeall.g" S1
-  
-  G90
-  G1 X-999 U999 Y-75 F18000
-  
-  M116 P0 S10
-  M116 P1 S10
-  
-  T3
-  M83                 ; relative extruder moves
-  G1 E-50 F{60}*{10}   ; retract filament
-  
-  M98 P"0:/sys/nozzlewipe.g" C1
-  M400
-  while iterations < 2
-    M98 P"0:/sys/nozzlewipe.g" L1 C1
-    M400
-  
-  G1 F18000 X-50 Y-150 Z125  ; Move tools to the cleaning position
-  M291 S2 R"Please Clean Both Nozzles" P"Use a metal brush to clean both nozzles thoroughly to prevent machine damage.<br>Click ""OK"" when you are ready to proceed or ""Cancel"" to stop." S2
-  
-  M84 Y
-
-  M98 P"0:/sys/homeall.g" S1
-  
-  G29 S2     ; disable Mesh Bed Leveling
-  M290 R0 S0
-  M208 Z-5 S1
-  M558 K0 P8 C"1.io4.in" H5 F100 T18000              ; define Z probe parameters
-  M98 P"0:/user/probeoffset.g"                       ; load global variables
-  T0
-  G1 U999 F18000
-  M42 P4 S1                                              ; Turn on relay
-
-
-
-
-
-
 M98 P"0:/sys/detachedcheck.g" ; Check if the probe is detached
 
 ;Start of Calculation
