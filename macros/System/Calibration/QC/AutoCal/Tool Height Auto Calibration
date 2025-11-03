@@ -7,6 +7,7 @@ if !exists(param.A)
 var x_test_pos = -105
 var mid_y_test_pos = -101
 var add_z_offset = -0.070
+var max_nozzle_height_error = 0.05  ; Maximum allowed nozzle height deviation in mm
 
 ; ===== Test diviation =====
 M561 ; clear any bed transform
@@ -130,7 +131,7 @@ else
   var ddd = {var.lll - var.rrr}
   echo "Right head pos = "^{var.rrr}^" mm"
 
-  if abs(var.ddd) < 0.05 ; ===If delta is less than allowed value===
+  if abs(var.ddd) < var.max_nozzle_height_error ; ===If delta is less than allowed value===
     echo "Good, deviation is "^{var.ddd}^" mm"
     ;=  if var.ddd < 0
     ;=    echo >>>"0:/sys/autocali_res.g" "Nozzle deviation = "^take(""^{var.ddd},6)^"<br>"
