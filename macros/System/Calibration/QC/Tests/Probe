@@ -19,9 +19,7 @@ elif input == 2
     abort "Test cancelled by user"
 
 M564 H0
-M291 R"Position Build Plate" P"Manually position the build plate close to the nozzle for probe testing." Z1 S4 K{"Plate Positioned","Cancel"}
-if input == 1
-    abort "Test cancelled by user"
+M291 R"Position Build Plate" P"Position the build plate approximately 5cm (2 inches) from the nozzle to allow comfortable Z-probe installation and removal." Z1 S3
 M564 H1
 
 if sensors.probes[0].value[0] != 1000
@@ -49,12 +47,15 @@ if sensors.probes[0].value[0] != 1000
     M98 P"0:/sys/led/fault.g"
     abort "Error: S1 Z-Probe value is not 1000 before test"
 
-M291 R"Testing Left Nozzle to Bed" P"Touch Left Nozzle to the Bed 10x and wait for light signal" S1 T60
+M291 R"Testing Right Nozzle to Bed" P"Touch Right Nozzle to the Bed 10x and wait for light signal" S1 T60
 set var.press_count = 10
-var start_time = state.upTime
+set var.start_time = state.upTime
 
 while var.press_count > 0
     M106 P6 S0 B0
+    M42 P2 S0
+    M42 P1 S0
+    G4 P50
     M42 P2 S1
     M42 P1 S1
     
@@ -95,12 +96,15 @@ if sensors.probes[0].value[0] != 1000
     M98 P"0:/sys/led/fault.g"
     abort "Error: S2 Z-Probe value is not 1000 before test"
 
-M291 R"Testing Right Nozzle to Bed" P"Touch Right Nozzle to the Bed 10x and wait for light signal" S1 T60
+M291 R"Testing Left Nozzle to Bed" P"Touch Left Nozzle to the Bed 10x and wait for light signal" S1 T60
 set var.press_count = 10
 set var.start_time = state.upTime
 
 while var.press_count > 0
     M106 P6 S0 B0
+    M42 P2 S0
+    M42 P1 S0
+    G4 P50
     M42 P2 S1
     M42 P1 S1
     
@@ -174,6 +178,9 @@ set var.start_time = state.upTime
 
 while var.press_count > 0
     M106 P6 S0 B0
+    M42 P2 S0
+    M42 P1 S0
+    G4 P50
     M42 P2 S1
     M42 P1 S1
     

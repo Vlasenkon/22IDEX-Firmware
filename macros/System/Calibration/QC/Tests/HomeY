@@ -1,4 +1,4 @@
-M291 R"Home Y - Correction Test" P"Do you want to start the Home Y Test?" S4 K{"Test","Skip","Cancel"}
+M291 R"Y-Axis Endstop Alignment Test" P"This test checks Y-axis gantry squareness by measuring endstop alignment. Three homing cycles will be performed." S4 K{"Test","Skip","Cancel"}
 if input == 1
     M99
 elif input == 2
@@ -37,10 +37,15 @@ var avgDis = (var.dis1 + var.dis2 + var.dis3) / 3
 
 if var.avgDis < 0.4
   M98 P"0:/sys/led/end.g"
-  echo "Average Adjustment: "^{var.avgDis}^" mm"
+  echo "Y-Axis Alignment Test PASSED - Average Adjustment: "^{var.avgDis}^" mm"
+  M98 P"0:/sys/led/resetstatus.g"
 else
   M98 P"0:/sys/led/fault.g"
-  abort "Error: Average Adjustment is: "^{var.avgDis}^" mm"
-
-
-M98 P"0:/sys/led/resetstatus.g"
+  var failMsg = "Y-Axis Alignment Test FAILED<br><br>"
+  set var.failMsg = var.failMsg ^ "Average misalignment: " ^ {var.avgDis} ^ " mm<br>"
+  set var.failMsg = var.failMsg ^ "Tolerance: 0.4 mm<br><br>"
+  set var.failMsg = var.failMsg ^ "The <b>" ^ {global.HomeYSide} ^ "</b> side Y-endstop needs adjustment.<br><br>"
+  set var.failMsg = var.failMsg ^ "Loosen the " ^ {global.HomeYSide} ^ " Y-endstop mounting and adjust its position to reduce misalignment."
+  M291 R"Y-Axis Alignment Failed" P{var.failMsg} S2
+  M98 P"0:/sys/led/resetstatus.g"
+  abort "Error: Y-Axis misalignment exceeds tolerance: " ^ {var.avgDis} ^ " mm"

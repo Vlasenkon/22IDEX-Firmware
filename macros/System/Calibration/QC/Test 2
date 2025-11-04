@@ -5,8 +5,14 @@ M291 R"Start Test 2" P"Do you want to start Test 2?" K{"Start Test","Cancel"} S4
 if input == 1
 	abort "Test cancelled by user."
 
-; Test Y - Homming Error
-;M98 P"0:/macros/System/Calibration/QC/Tests/HomeY"
+; Test Y-Axis Endstop Alignment
+M98 P"0:/macros/System/Calibration/QC/Tests/HomeY"
+
+; Tighten Nozzles & Adjust Purging Buckets
+M98 P"0:/macros/System/Calibration/QC/Tests/Nozzle & Purge"
+
+; True Bed Leveling Test & Z-Axis Lubrication
+M98 P"0:/macros/System/Calibration/QC/Tests/TBL & Lube"
 
 ; XY - Movement Test // Add Timer // Add prompt to listen to Noises and watch temp graph
 M98 P"0:/macros/System/Calibration/QC/Tests/XY - Movement"

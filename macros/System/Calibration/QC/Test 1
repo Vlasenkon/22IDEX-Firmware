@@ -44,9 +44,3 @@ M98 P"0:/macros/System/Calibration/QC/Tests/Probe"
 
 ; Calibrate Z - Probe // Servo rotation test // Z-Probe Pickup Angle // Height // Z-Probe Pickup Position
 M98 P"0:/macros/System/Calibration/Z Probe/Probe Calibration"
-
-; Tigten Nozles & Adjust Purging Backets
-M98 P"0:/macros/System/Calibration/QC/Tests/Nozzle & Purge"
-
-; True Bed Leveling Test
-M98 P"0:/macros/System/Calibration/QC/Tests/TBL & Lube"

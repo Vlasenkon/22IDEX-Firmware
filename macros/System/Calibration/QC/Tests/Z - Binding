@@ -4,12 +4,11 @@ if input == 1
 elif input == 2
     abort "Error: Z - Binding test cancelled by user."
 
-M564 H0 S0 Z
 G91
 
-M291 R"Adjust the Bed Position" P"Position the build plate at a safe distance from extreme positions to allow movement testing." S4 K{"Bed Positioned","Cancel"} Z1
-if input == 1
-    abort "Test cancelled by user"
+M564 H0
+M291 R"Position Build Plate" P"Move the build plate all the way down until you hear grinding sound, then raise it up to a safe position for testing." Z1 S3
+M564 H1
 
 M913 Z60 ; Reduce Z-axis current
 

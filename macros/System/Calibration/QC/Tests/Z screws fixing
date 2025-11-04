@@ -1,28 +1,18 @@
 ; Fixing the motor screws
-M291 R"Fixing the motor screws" P"Please lower the bed down to the extreme point and tighten the z screws of the motors" S4 K{"Test","Skip","Cancel"}
-if input == 1
-    M99
-if input == 2
-    abort "Test cancelled by user"
-elif input == 0
-    M564 H0 S0 Z
-    M84 Z
-
-M291 R"True Bed Leveling Test" P"Tilt the bed manually to test the True Bed Leveling." S4 K{"Test","Skip","Cancel"}
+M291 R"Z Motor Screw Tightening" P"Lower the build plate and tighten the Z motor mounting screws" S4 K{"Test","Skip","Cancel"}
 if input == 1
     M99
 elif input == 2
     abort "Test cancelled by user"
 
-M913 Z80 ; Reduce Z-axis current for safe manual movement
-M564 H0 S0 Z
-G91
+M913 Z60 ; Reduce Z-axis current for safe manual movement
+M84 Z ; Disable Z motors
+G91 ; Relative positioning
 
-M291 R"Fixing the motor screws" P"Lower the build plate and hold the Z motors from below while tightening the mounting screws." S4 K{"Screws Tightened","Cancel"} Z1
-if input == 1
-    abort "Test cancelled by user"
+M564 H0 ; Allow movement without homing
+M291 R"Position Build Plate" P"Lower the build plate and hold the Z motors from below while tightening the mounting screws." Z1 S3
+M564 H1 ; Re-enable movement restrictions
 
 M913 Z100 ; Reset Z-axis current to 100%
-M564 H1 S1
-G90
+G90 ; Absolute positioning
 M84
