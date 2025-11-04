@@ -27,14 +27,14 @@ M98 P"0:/macros/System/Calibration/QC/Tests/Fans & Heaters"
 ; XYZ - Motor Direction & Connection Test
 M98 P"0:/macros/System/Calibration/QC/Tests/Motor Direction"
 
+; Z screws fixing
+M98 P"0:/macros/System/Calibration/QC/Tests/Z screws fixing"
+
 ; Z - Binding Test
 M98 P"0:/macros/System/Calibration/QC/Tests/Z - Binding"
 
 ; Endstop Test
 M98 P"0:/macros/System/Calibration/QC/Tests/Endstops Test x10"
-
-; Z screws fixing
-M98 P"0:/macros/System/Calibration/QC/Tests/Z screws fixing"
 
 ; Homing Test
 M98 P"0:/macros/System/Calibration/QC/Tests/Homing"
@@ -43,7 +43,7 @@ M98 P"0:/macros/System/Calibration/QC/Tests/Homing"
 M98 P"0:/macros/System/Calibration/QC/Tests/Probe"
 
 ; Calibrate Z - Probe // Servo rotation test // Z-Probe Pickup Angle // Height // Z-Probe Pickup Position
-M98 P"0:/macros/System/Calibration/QC/Tests/Probe Calibration"
+M98 P"0:/macros/System/Calibration/Z Probe/Probe Calibration"
 
 ; Tigten Nozles & Adjust Purging Backets
 M98 P"0:/macros/System/Calibration/QC/Tests/Nozzle & Purge"

@@ -8,8 +8,5 @@ if input == 1
 ; Test Y - Homming Error
 ;M98 P"0:/macros/System/Calibration/QC/Tests/HomeY"
 
-; True Bed Leveling Test
-M98 P"0:/macros/System/Calibration/QC/Tests/TBL"
-
 ; XY - Movement Test // Add Timer // Add prompt to listen to Noises and watch temp graph
 M98 P"0:/macros/System/Calibration/QC/Tests/XY - Movement"
