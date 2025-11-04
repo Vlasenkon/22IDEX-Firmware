@@ -9,28 +9,66 @@ elif input == 2
 
 var minVoltage = 24
 var maxVoltage = 24.3
-var iter = 0
+var requiredStableTime = 20  ; Seconds voltage must remain in range to pass
+var consecutiveGoodReads = 0 ; Counter for consecutive good readings
+var checkInterval = 100      ; Check every 100ms
+var checksPerSecond = 1000 / var.checkInterval
+var requiredGoodReads = var.requiredStableTime * var.checksPerSecond  ; Total checks needed for stable pass
 
-if boards[0].vIn.current < var.minVoltage && boards[0].vIn.current > var.maxVoltage
-    echo "Board 0 voltage OK: " ^ boards[0].vIn.current ^ "V"
-    M99
+echo "Voltage Test: Monitoring voltage..."
+echo "Required range: " ^ var.minVoltage ^ "V - " ^ var.maxVoltage ^ "V"
+echo "Must remain stable in range for " ^ var.requiredStableTime ^ " seconds to pass"
 
 M98 P"0:/sys/led/dimmwhite.g"
 G1 S2
 
-while true && iterations < 900 && var.iter < 200
-    G4 P100
-    M42 P1 S0
-    M42 P2 S0
-    M42 P3 S0
-    if boards[0].vIn.current > var.maxVoltage
+var testComplete = false
+
+while !var.testComplete
+    G4 P{var.checkInterval}
+    
+    ; Turn off all LEDs
+    M42 P1 S0  ; Red off
+    M42 P2 S0  ; Green off
+    M42 P3 S0  ; Blue off
+    
+    var currentVoltage = boards[0].vIn.current
+    
+    if var.currentVoltage > var.maxVoltage
+        ; RED - Voltage too high
         M42 P1 S1
-    elif boards[0].vIn.current < var.minVoltage
+        set var.consecutiveGoodReads = 0  ; Reset counter
+        echo "Voltage HIGH: " ^ var.currentVoltage ^ "V (adjust down)"
+        
+    elif var.currentVoltage < var.minVoltage
+        ; BLUE - Voltage too low
         M42 P3 S1
+        set var.consecutiveGoodReads = 0  ; Reset counter
+        echo "Voltage LOW: " ^ var.currentVoltage ^ "V (adjust up)"
+        
     else
+        ; GREEN - Voltage in range
         M42 P2 S1
-        set var.iter = var.iter + 1
+        set var.consecutiveGoodReads = var.consecutiveGoodReads + 1
+        
+        var secondsStable = var.consecutiveGoodReads / var.checksPerSecond
+        if mod(var.consecutiveGoodReads, var.checksPerSecond) == 0  ; Report every second
+            echo "Voltage OK: " ^ var.currentVoltage ^ "V - Stable for " ^ var.secondsStable ^ " seconds"
+        
+        ; Check if we've been stable long enough
+        if var.consecutiveGoodReads >= var.requiredGoodReads
+            set var.testComplete = true
+            echo "TEST PASSED: Voltage stable at " ^ var.currentVoltage ^ "V for " ^ var.requiredStableTime ^ " seconds"
+    
+    ; Allow manual stop if endstops triggered (emergency exit during RED/BLUE)
+    if var.currentVoltage < var.minVoltage || var.currentVoltage > var.maxVoltage
+        if sensors.endstops[0].triggered || sensors.endstops[3].triggered
+            echo "Manual stop detected via endstop - Test aborted"
+            M98 P"0:/sys/led/fault.g"
+            G4 S1
+            M98 P"0:/sys/led/resetstatus.g"
+            abort "Voltage test manually stopped - voltage out of range"
 
-
-
+M98 P"0:/sys/led/end.g"
+G4 S2
 M98 P"0:/sys/led/resetstatus.g"
