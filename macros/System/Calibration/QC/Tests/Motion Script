@@ -1,0 +1,93 @@
+var speed = 500  ; mm/s
+var acceleration = 10000
+var current = 1800
+
+
+M566 X600 U600 Y600 Z244 E600:600             ; set maximum jerk (mm/min)
+M203 X{var.speed * 60} U{var.speed * 60} Y{var.speed * 60}       ; set maximum speeds (mm/min)
+M201 X{var.acceleration} U{var.acceleration} Y{var.acceleration}            ; set accelerations (mm/s^2)
+M906 X{var.current} U{var.current} Y{var.current}:{var.current}     ; set motor currents (mA) and motor idle factor in per cent
+M204 P{var.acceleration} T{var.acceleration}               ; set printing and travel acceleration (mm/s^2)
+
+
+
+
+if !move.axes[0].homed || !move.axes[1].homed || !move.axes[2].homed || !move.axes[3].homed
+    abort "Error: All axes must be homed before running this test."
+
+;Corners Left Tool
+T0
+G1 X-200 U200 Y160 F{var.speed * 60}
+G1 X-200 Y-175
+G1 X144  Y-175
+G1 X144  Y160
+G1 X-200 Y160
+;Diagonal 1
+G1 X144 Y-175
+G1 X-200 Y160 
+
+if sensors.endstops[0].triggered || sensors.endstops[3].triggered
+    abort "Endstop triggered, stopping test."
+
+;Diagonal 2
+G1 X144  Y160
+G1 X-200 Y-175
+G1 X144  Y160
+G1 X-200 Y160
+;Corners Right Tool
+G1 X-200 U200 Y160
+G1 U200 Y-175
+G1 U-144  Y-175
+G1 U-144  Y160
+G1 U200 Y160
+;Diagonal 1
+G1 U-144 Y-175
+G1 U200 Y160
+;Diagonal 2
+G1 U-144  Y160
+G1 U200 Y-175
+G1 U-144  Y160
+G1 U200 Y160
+
+if sensors.endstops[0].triggered || sensors.endstops[3].triggered
+    abort "Endstop triggered, stopping test."
+
+;Mirror Mode Corners
+T3
+G1 X-200 Y160 F{var.speed * 60}
+G1 X-200 Y-175
+G1 X-25  Y-175
+G1 X-25  Y160
+G1 X-200 Y160
+
+if sensors.endstops[0].triggered || sensors.endstops[3].triggered
+    abort "Endstop triggered, stopping test."
+
+;Mirror Mode ZigZag
+G1 X-25  Y103
+G1 X-200 Y65
+G1 X-25  Y0
+G1 X-200 Y-65
+G1 X-25 Y-118
+G1 X-200 Y-175
+G1 X-25  Y-175
+G1 X-200 Y-63
+G1 X-25  Y48
+G1 X-200 Y160
+
+if sensors.endstops[0].triggered || sensors.endstops[3].triggered
+    abort "Endstop triggered, stopping test."
+
+;Duplicate Mode ZigZag
+T2
+G1 X97.5    Y48 F{var.speed * 60}
+G1 X-102.5 Y-63
+G1 X2.5  Y-175
+G1 X2.5  Y160
+
+
+M203 X18000 U18000 Y18000 Z1200 E12000:12000                     ; set maximum speeds (mm/min)
+M201 X10000 U10000 Y10000 Z500 E5000:5000                        ; set accelerations (mm/s^2)
+M906 X1800 U1800 Y1800:1800 Z850 E600:600 I35                    ; set motor currents (mA) and motor idle factor in per cent
+M84 S10                                                          ; set idle timeout
+M204 P5000 T5000
