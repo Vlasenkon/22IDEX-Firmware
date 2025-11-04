@@ -51,7 +51,7 @@ if !exists(param.C)
   if exists(param.K) && exists(var.savedX) && exists(var.savedY)
     G1 X{var.savedX - sensors.probes[0].offsets[0]} Y{var.savedY - sensors.probes[0].offsets[1]} F18000
   else
-    G1 X{0-sensors.probes[0].offsets[0]} Y{0-sensors.probes[0].offsets[1]} F18000
+    G1 X{0-sensors.probes[0].offsets[0]} Y{10-sensors.probes[0].offsets[1]} F18000
   
   G30
   if result !=0
