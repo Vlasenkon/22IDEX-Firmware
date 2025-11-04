@@ -2,6 +2,9 @@ var xu_endstop = 208
 var y_endstop = 175
 var endstop_offset = 5
 
+; Safety margin for endstop approach
+var safety_margin = 5
+
 
 
 
@@ -12,13 +15,31 @@ M98 P"tfree3.g"                       ; Run the "tfree3.g" macro to free the too
 T0
 M204 T2000                            ; Set acceleration for non-printing moves
 
-
-
+; === SAFE POSITIONING BEFORE ENDSTOP CHECKS ===
+; Move to safer center positions instead of near endstops
 G90
-G1 Y{-var.y_endstop+var.endstop_offset} X{-var.xu_endstop+var.endstop_offset} U{var.xu_endstop-var.endstop_offset} F18000                        ; Move to safe Y position
+G1 X-100 U100 Y0 F18000               ; Move to center-ish safe position
+
+; Get axis limits from object model
+var x_min = move.axes[0].min          ; X axis minimum limit
+var x_max = move.axes[0].max          ; X axis maximum limit  
+var y_min = move.axes[1].min          ; Y axis minimum limit
+var y_max = move.axes[1].max          ; Y axis maximum limit
+var u_min = move.axes[3].min          ; U axis minimum limit
+var u_max = move.axes[3].max          ; U axis maximum limit
+
+; Calculate safe travel distances with safety margin
+var y_travel_distance = abs(var.y_min - move.axes[1].machinePosition) + var.safety_margin
+var x_travel_distance = abs(var.x_min - move.axes[0].machinePosition) + var.safety_margin
+var u_travel_distance = abs(var.u_max - move.axes[3].machinePosition) + var.safety_margin
+
+;echo "Calculated safe travel distances:"
+;echo "Y: " ^ {var.y_travel_distance} ^ " mm from current position to Y-min"
+;echo "X: " ^ {var.x_travel_distance} ^ " mm from current position to X-min"  
+;echo "U: " ^ {var.u_travel_distance} ^ " mm from current position to U-max"
 
 
-;== Y-AXIS POSITION CHECK ===
+;== Y-AXIS POSITION CHECK WITH SAFETY VERIFICATION ===
 
 ; Initialize variables to store the positions
 var leftEndstopPosition = 0
@@ -26,10 +47,17 @@ var rightEndstopPosition = 0
 var currentYPos = 0
 var side = ""
 
+; SAFETY CHECK: Move towards Y endstop with calculated safe distance
 G91                                   ; Switch to relative positioning
-G1 H4 Y-30 F1800                     ; Move towards Y endstop and record position when triggered
+G1 H4 Y{-var.y_travel_distance} F1800 ; Move towards Y endstop with safe calculated distance
+
+; Verify endstop was actually triggered
+if result == 0
+    M98 P"0:/sys/led/fault.g"
+    abort "ERROR: Y-axis endstop not triggered during safe approach. Possible endstop failure or mechanical issue."
+
 G1 Y2 F12000                           ; Move away from endstop by 2 mm
-G1 H4 Y-3 F140
+G1 H4 Y-3 F140                         ; Precise approach
 
 ; Check which endstop was triggered and record position
 M574 Y1 S1 P"io1.in"                  ; Configure right-hand side Y endstop on io1.in
@@ -95,33 +123,64 @@ M574 Y1 S1 P"io1.in+io2.in"           ; Configure endstops for both sides of the
 
 M400                                  ; Ensure all moves are completed
 
+; === Y-AXIS DEVIATION CHECK ===
+; Calculate Y-axis misalignment between left and right sides
+var y_deviation = abs(var.leftEndstopPosition - var.rightEndstopPosition)
 
- ; == X-AXIS POSITION CHECK ===
-G90                                   ; Switch to absolute positioningG90
+; Check if Y-axis deviation exceeds tolerance (similar to HomeY test)
+if var.y_deviation >= 0.5
+    M98 P"0:/sys/led/fault.g"
+    var y_error_msg = "Y-axis misalignment detected!<br><br>"
+    set var.y_error_msg = var.y_error_msg ^ "Left endstop: " ^ {var.leftEndstopPosition} ^ " mm<br>"
+    set var.y_error_msg = var.y_error_msg ^ "Right endstop: " ^ {var.rightEndstopPosition} ^ " mm<br>"
+    set var.y_error_msg = var.y_error_msg ^ "Deviation: " ^ {var.y_deviation} ^ " mm<br><br>"
+    set var.y_error_msg = var.y_error_msg ^ "The Y-axis gantry is not square.<br>Adjust Y-endstops before continuing."
+    M291 R"Y-Axis Alignment Error" P{var.y_error_msg} S2
+    abort "ERROR: Y-axis deviation of " ^ {var.y_deviation} ^ " mm exceeds 0.5mm tolerance. Test aborted."
+
+;echo "Y-axis alignment OK: " ^ {var.y_deviation} ^ " mm deviation"
+
+
+ ; == X-AXIS POSITION CHECK WITH SAFETY VERIFICATION ===
+G90                                   ; Switch to absolute positioning
 G1 Y172 F18000                        ; Move to safe Y position
+G1 X-100 U100 F18000                  ; Return to safer center position
 
-
+; SAFETY CHECK: Move towards X endstop with calculated safe distance
 G91                                   ; Switch to relative positioning
-G1 H4 X-375 F1800                     ; Move towards X endstop and record position when triggered
+G1 H4 X{-var.x_travel_distance} F1800 ; Move towards X endstop with safe calculated distance
+
+; Verify X endstop was actually triggered
+if result == 0
+    M98 P"0:/sys/led/fault.g"
+    abort "ERROR: X-axis endstop not triggered during safe approach. Possible endstop failure or mechanical issue."
+
 G1 X2 F1800                           ; Move away from endstop by 2 mm
 G1 H4 X-3 F140                        ; Move slowly to ensure endstop is triggered
 
 var xEndstopPosition = move.axes[0].machinePosition
 ;echo "X-axis endstop position: " ^ {var.xEndstopPosition} ^ " mm"
 
-G1 H2 X5 F1800                       ; Move away from endstop by 5 mm
+G1 H2 X5 F1800                        ; Move away from endstop by 5 mm
 
-; == U-AXIS POSITION CHECK ===
+; == U-AXIS POSITION CHECK WITH SAFETY VERIFICATION ===
 
+; SAFETY CHECK: Move towards U endstop with calculated safe distance
 G91                                   ; Switch to relative positioning
-G1 H4 U375 F1800                      ; Move towards U endstop and record position when triggered
-G1 U-2 F1800                         ; Move away from endstop by 2 mm
-G1 H4 U3 F140                        ; Move slowly to ensure endstop is triggered
+G1 H4 U{var.u_travel_distance} F1800  ; Move towards U endstop with safe calculated distance
+
+; Verify U endstop was actually triggered
+if result == 0
+    M98 P"0:/sys/led/fault.g"
+    abort "ERROR: U-axis endstop not triggered during safe approach. Possible endstop failure or mechanical issue."
+
+G1 U-2 F1800                          ; Move away from endstop by 2 mm
+G1 H4 U3 F140                         ; Move slowly to ensure endstop is triggered
 
 var uEndstopPosition = move.axes[3].machinePosition
 ;echo "U-axis endstop position: " ^ {var.uEndstopPosition} ^ " mm"
 
-G1 H2 U-5 F1800                      ; Move away from endstop by 5 mm
+G1 H2 U-5 F1800                       ; Move away from endstop by 5 mm
 
 M400                                  ; Ensure all moves are completed
 
