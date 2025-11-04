@@ -10,7 +10,7 @@ if input == 0
         M98 P"0:/macros/System/Calibration/Z Probe/Rotate holder to 0 degree"
         G4 S1
 
-    M291 R"Servo Motor Test" P"Was the servo motor able to rotate smoothly?" S4 K{"Yes","No"}
+    M291 R"Servo Motor Test" P"Was the servo motor able to rotate smoothly?" S4 K{"Servo Rotated Smoothly","Servo Failed"}
     if input == 1
         abort "Error: Servo Failed"
 elif input == 1
@@ -19,7 +19,7 @@ elif input == 2
     abort "Test cancelled by user"
 
 M564 H0
-M291 R"Position Build Plate" P"Position the build plate approximately 5cm (2 inches) from the nozzle to allow comfortable Z-probe installation and removal." Z1 S3
+M291 R"Position Build Plate" P"Position the build plate so you can remove and install the Z probe on the tool head, about 5 cm (~2 inches) from the nozzle." Z1 S3
 M564 H1
 
 if sensors.probes[0].value[0] != 1000
@@ -53,9 +53,6 @@ set var.start_time = state.upTime
 
 while var.press_count > 0
     M106 P6 S0 B0
-    M42 P2 S0
-    M42 P1 S0
-    G4 P50
     M42 P2 S1
     M42 P1 S1
     
@@ -70,11 +67,11 @@ while var.press_count > 0
     set var.press_count = var.press_count - 1
     echo "Left Nozzle Touched! Remaining: " ^{10 - var.press_count}
     M42 P1 S0
-    G4 S0.1
+    G4 S0.03
     
     ; Wait for probe to release (value returns to 1000)
     while sensors.probes[0].value[0] != 1000
-        G4 P100
+        G4 S0.01
         if (state.upTime - var.start_time) > var.timeout
             M98 P"0:/sys/led/fault.g"
             M291 R"Error" P"Time for releasing Left Nozzle from Bed has expired" S0
@@ -102,9 +99,6 @@ set var.start_time = state.upTime
 
 while var.press_count > 0
     M106 P6 S0 B0
-    M42 P2 S0
-    M42 P1 S0
-    G4 P50
     M42 P2 S1
     M42 P1 S1
     
@@ -119,11 +113,11 @@ while var.press_count > 0
     set var.press_count = var.press_count - 1
     echo "Right Nozzle Touched! Remaining: " ^{10 - var.press_count}
     M42 P1 S0
-    G4 S0.1
+    G4 S0.03
     
     ; Wait for probe to release (value returns to 1000)
     while sensors.probes[0].value[0] != 1000
-        G4 P100
+        G4 S0.01
         if (state.upTime - var.start_time) > var.timeout
             M98 P"0:/sys/led/fault.g"
             M291 R"Error" P"Time for releasing Right Nozzle from Bed has expired" S0
@@ -178,9 +172,6 @@ set var.start_time = state.upTime
 
 while var.press_count > 0
     M106 P6 S0 B0
-    M42 P2 S0
-    M42 P1 S0
-    G4 P50
     M42 P2 S1
     M42 P1 S1
     
@@ -195,11 +186,11 @@ while var.press_count > 0
     set var.press_count = var.press_count - 1
     echo "Z-Probe Clicked! Remaining: " ^{10 - var.press_count}
     M42 P1 S0
-    G4 S0.1
+    G4 S0.03
     
     ; Wait for probe to release (value returns to 0)
     while sensors.probes[0].value[0] != 0
-        G4 P100
+        G4 S0.01
         if (state.upTime - var.start_time) > var.timeout
             M98 P"0:/sys/led/fault.g"
             M291 R"Error" P"Time for releasing Z-Probe has expired" S0
