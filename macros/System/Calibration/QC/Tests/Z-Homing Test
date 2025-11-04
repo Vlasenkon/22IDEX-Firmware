@@ -3,7 +3,7 @@
 ; Useful for testing repeatability and reliability of Z-homing
 
 ; Ask user for confirmation to start the test
-M291 R"Z-Homing Iteration Test" P"Do you want to start the Z-homing iteration test?" K{"Yes","No"} S4 J0
+M291 R"Z-Homing Iteration Test" P"Do you want to start the Z-homing iteration test?" K{"Start Test","Cancel"} S4 J0
 if result == -1 || input == 1
   abort "Z-homing iteration test cancelled by user"
 
