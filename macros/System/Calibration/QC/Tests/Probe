@@ -97,7 +97,7 @@ if sensors.probes[0].value[0] != 1000
 
 M291 R"Testing Right Nozzle to Bed" P"Touch Right Nozzle to the Bed 10x and wait for light signal" S1 T60
 set var.press_count = 10
-var start_time = state.upTime
+set var.start_time = state.upTime
 
 while var.press_count > 0
     M106 P6 S0 B0
@@ -170,7 +170,7 @@ if sensors.probes[0].value[0] != 0
 
 M291 R"Testing Z-Probe Click" P"Click the Z-Probe 10x and wait for light signal" S1 T60
 set var.press_count = 10
-var start_time = state.upTime
+set var.start_time = state.upTime
 
 while var.press_count > 0
     M106 P6 S0 B0
