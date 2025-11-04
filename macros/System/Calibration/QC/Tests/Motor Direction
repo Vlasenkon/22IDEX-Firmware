@@ -1,14 +1,22 @@
+; Relax all XYU motors before manual movement test (in case of restart without homing)
+M84 XYU
+G4 S1
+
 M564 H0
 
-M291 R"Move Tools by Hand" P"Movement should be smooth and without binding" S4 K{"Ok","Skip","Cancel"}
+M291 R"Move Tools by Hand Test" P"Manually move both tool heads along X, Y, and U axes.<br><br>Check that movement is smooth and without binding.<br><br>Pay attention to any unusual resistance or sounds." S4 K{"Start Test","Skip","Cancel"}
 if input == 1
     M99
 elif input == 2
     abort "Test cancelled by user"
 
-M291 R"Information" P"Movements should be smooth. Pay attention to any unusual sounds or actions during the move." S3
+M291 R"Move XYU Axes Manually" P"Manually move both tool heads by hand.<br>Test all axes: X (left tool), U (right tool), and Y (gantry)." S4 K{"Axes Tested","Cancel"} X1 Y1 U1
+if input == 1
+    abort "Test cancelled by user"
 
-M291 R"Move XYU - Axis" P" " S3 X1 Y1 U1
+M291 R"Confirm Tool Movement" P"Confirm that all tool movements were smooth without binding or unusual resistance." S4 K{"Movement Smooth","Cancel"}
+if input == 1
+    abort "Test cancelled by user"
 
 M302 P0
 M564 H1
@@ -21,6 +29,8 @@ elif input == 2
 
 
 M564 H0
+
+M913 Z75 ; Reduce Z-axis current to 75% for safe motor testing
 
 ; Move Left lead screw
 M584 Z1.2     ; define driver mapping
@@ -55,5 +65,7 @@ G90               ; set to absolute positioning
 
 M400
 M584 Z1.0:1.1:1.2 ; restore original driver mapping
+
+M913 Z100 ; Reset Z-axis current to 100%
 
 M564 H1

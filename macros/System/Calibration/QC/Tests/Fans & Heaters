@@ -13,22 +13,26 @@ if input == 0
   ; ///// T0 Fans Test /////
   M106 P3 S0
   M106 P2 H0 S1 B0 T300
-  M291 R"T0 Fans Test" P"Are both T0 Fans are OFF?" S3
+  M291 R"T0 Fans Test" P"Confirm that both Tool 0 fans are NOT spinning." S4 K{"T0 Fans OFF","Cancel"}
+  if input == 1
+    abort "Test cancelled by user"
 
   M106 P3 S1
-  M291 R"T0 Part Cooling Fan Test" P"Is the T0 Part Cooling Fan spinning?" S3
+  M291 R"T0 Part Cooling Fan Test" P"Confirm that the Tool 0 Part Cooling Fan is spinning." S4 K{"T0 PCF Spinning","Cancel"}
+  if input == 1
+    abort "Test cancelled by user"
 
   M471 S"0:/sys/daemon.g" T"0:/sys/daemon.g.off"                  ; OFF daemon.g
 
   M106 P3 S0
   M106 P2 H1 S1 B0 T0
-  M291 R"T0 Hotend Fan Test" P"Is the T0 Hotend Fan spinning?" S4 K{"Ok","Cancel"} J0
+  M291 R"T0 Hotend Fan Test" P"Confirm that the Tool 0 Hotend Fan is spinning." S4 K{"T0 Hotend Fan ON","Cancel"}
 
   if input == 1
     M106 P3 S0
     M106 P2 H0 T70 S1 B0
     M471 S"0:/sys/daemon.g.off" T"0:/sys/daemon.g"                  ; ON daemon.g
-    abort
+    abort "Test cancelled by user"
   
   M106 P3 S0
   M106 P2 H0 T70 S1 B0
@@ -47,14 +51,16 @@ if input == 0
   ; Check if T0 is cold enough
   if heat.heaters[0].current > var.T0_Min_Temp
     M98 P"0:/sys/led/fault.g"
-    M291 R"T0 Heater Test" P"T0 Heater is already hot, please wait for it to cool down" S3
+    M291 R"T0 Heater Test" P"Tool 0 heater is currently above safe testing temperature. Waiting for cooldown..." S4 K{"Cooling...","Cancel"}
+    if input == 1
+        abort "Test cancelled by user"
     while heat.heaters[0].current > var.T0_Min_Temp
       G4 S1
       if sensors.endstops[0].triggered || sensors.endstops[3].triggered
         break
     M98 P"0:/sys/led/resetstatus.g"
 
-  M291 R"T0 Heater Test will start" P"Make sure is is heating UP my hand" S4 K{"Test","Skip","Cancel"}
+  M291 R"T0 Heater Test" P"Place your hand near Tool 0 heater block to feel warmth during heating test." S4 K{"Start Test","Skip","Cancel"}
   if input == 2
       abort "Test cancelled by user"
 
@@ -88,11 +94,15 @@ if input == 0
   if input == 0
 
     while true
-      M291 R"Remove the filament" P"Make Sure the filament is removed from T0" S3
+      M291 R"Remove Filament" P"Ensure filament is completely removed from Tool 0 extruder." S4 K{"Filament Removed","Cancel"}
+      if input == 1
+        abort "Test cancelled by user"
       if sensors.filamentMonitors[0].status != "ok"
         break
 
-    M291 R"T0 Extruder Motor Direction Test" P"Make Sure the T0 Extruder Gear is rotating Upwards ↑" S3
+    M291 R"T0 Extruder Motor Direction Test" P"Observe that the Tool 0 extruder gear rotates UPWARDS ↑ during this test." S4 K{"Start Test","Cancel"}
+    if input == 1
+      abort "Test cancelled by user"
     M302 P1 ; Allow cold extrudes
     T0 P0
     M83 ; Extruder to relative mode
@@ -119,23 +129,27 @@ if input == 0
   ; ///// T1 Fans Test /////
   M106 P1 S0
   M106 P0 H1 S1 B0 T300
-  M291 R"T1 Fans Test" P"Are both T1 Fans OFF?" S3
+  M291 R"T1 Fans Test" P"Confirm that both Tool 1 fans are NOT spinning." S4 K{"T1 Fans OFF","Cancel"}
+  if input == 1
+    abort "Test cancelled by user"
 
   M106 P1 S1
-  M291 R"T1 Part Cooling Fan Test" P"Is the T1 Part Cooling Fan spinning?" S3
+  M291 R"T1 Part Cooling Fan Test" P"Confirm that the Tool 1 Part Cooling Fan is spinning." S4 K{"T1 PCF Spinning","Cancel"}
+  if input == 1
+    abort "Test cancelled by user"
 
 
   M471 S"0:/sys/daemon.g" T"0:/sys/daemon.g.off"                  ; OFF daemon.g
 
   M106 P1 S0
   M106 P0 H1 S1 B0 T0
-  M291 R"T1 Hotend Fan Test" P"Is the T1 Hotend Fan spinning?" S4 K{"Ok","Cancel"} J0
+  M291 R"T1 Hotend Fan Test" P"Confirm that the Tool 1 Hotend Fan is spinning." S4 K{"T1 Hotend Fan ON","Cancel"}
 
   if input == 1
     M106 P1 S0
     M106 P0 H1 T70 S1 B0
     M471 S"0:/sys/daemon.g.off" T"0:/sys/daemon.g"                  ; ON daemon.g
-    abort
+    abort "Test cancelled by user"
 
   M106 P1 S0
   M106 P0 H1 T70 S1 B0
@@ -154,14 +168,16 @@ if input == 0
   ; Check if T1 is cold enough
   if heat.heaters[1].current > var.T1_Min_Temp
     M98 P"0:/sys/led/fault.g"
-    M291 R"T1 Heater Test" P"T1 Heater is already hot, please wait for it to cool down" S3
+    M291 R"T1 Heater Test" P"Tool 1 heater is currently above safe testing temperature. Waiting for cooldown..." S4 K{"Cooling...","Cancel"}
+    if input == 1
+        abort "Test cancelled by user"
     while heat.heaters[1].current > var.T1_Min_Temp
       G4 S1
       if sensors.endstops[0].triggered || sensors.endstops[3].triggered
         break
     M98 P"0:/sys/led/resetstatus.g"
 
-  M291 R"T1 Heater Test will start" P"Make sure is is heating UP my hand" S4 K{"Test","Skip","Cancel"}
+  M291 R"T1 Heater Test" P"Place your hand near Tool 1 heater block to feel warmth during heating test." S4 K{"Start Test","Skip","Cancel"}
   if input == 2
       abort "Test cancelled by user"
 
@@ -196,11 +212,15 @@ if input == 0
   if input == 0
 
     while true
-      M291 R"Remove the filament" P"Make Sure the filament is removed from T1" S3
+      M291 R"Remove Filament" P"Ensure filament is completely removed from Tool 1 extruder." S4 K{"Filament Removed","Cancel"}
+      if input == 1
+        abort "Test cancelled by user"
       if sensors.filamentMonitors[1].status != "ok"
         break
 
-    M291 R"T1 Extruder Motor Direction Test" P"Make Sure the T1 Extruder Gear is rotating Upwards ↑" S3
+    M291 R"T1 Extruder Motor Direction Test" P"Observe that the Tool 1 extruder gear rotates UPWARDS ↑ during this test." S4 K{"Start Test","Cancel"}
+    if input == 1
+      abort "Test cancelled by user"
     M302 P1
     T1 P0
     M83 ; Extruder to relative mode

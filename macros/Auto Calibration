@@ -2,10 +2,10 @@ if heat.heaters[0].state == "fault" || heat.heaters[1].state == "fault" || heat.
   M291 S1 R"Error" P"Heater fault detected"
   abort "Error: Heater fault detected"
 
-M291 S5 J1 F250 L150 H450 R"Set Left Tool Temperature" P"Please set the temperature for the filament previously loaded in the Left Tool.<br>If new machine, set to 250°C"
+M291 S5 J1 F250 L0 H450 R"Set Left Tool Temperature" P"Please set the temperature for the filament previously loaded in the Left Tool.<br>If new machine, set to 250°C"
 var ll = input
   
-M291 S5 J1 F{var.ll} L150 H450 R"Set Right Tool Temperature" P"Please set the temperature for the filament previously loaded in the Right Tool.<br>If new machine, set to 250°C"
+M291 S5 J1 F{var.ll} L0 H450 R"Set Right Tool Temperature" P"Please set the temperature for the filament previously loaded in the Right Tool.<br>If new machine, set to 250°C"
 var rr = input
 
 var delta = -40

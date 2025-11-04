@@ -12,7 +12,9 @@ M84
 M564 H0 S0 Z
 G91
 
-M291 R"Adjust the Bed Position" P"Please adjust the bed position.<br>Attantion: the bed must be positioned at a sufficient distance from Y-endstops<br>so that you can easily reach them." S3 Z1
+M291 R"Adjust the Bed Position" P"Position the build plate at a safe distance from Y-endstops so you can easily reach them by hand." S4 K{"Bed Positioned","Cancel"} Z1
+if input == 1
+    abort "Test cancelled by user"
 
 M564 H1 S1
 
@@ -48,9 +50,6 @@ elif input == 0
 
     M98 P"0:/sys/led/end.g"
     M98 P"0:/sys/led/resetstatus.g"
-    M291 R"Success" P"The Left Y-axis endstop test completed successfully.<br> Do you want to continue the endstop test?" S4 K{"yes","no"}
-    if input == 1
-        abort "Error: Test cancelled by user"
 
 
 
@@ -89,9 +88,6 @@ elif input == 0
 
     M98 P"0:/sys/led/end.g"
     M98 P"0:/sys/led/resetstatus.g"
-    M291 R"Success" P"The Right Y-axis endstop test completed successfully.<br> Do you want to continue the endstop test?" S4 K{"yes","no"}
-    if input == 1
-        abort "Error: Test cancelled by user"                                           ; Close the message window
 
 ; Restore Y-axis endstop configuration
 M574 Y1 S1 P"io1.in+io2.in"                       ; Restore original Y-axis endstop configuration
@@ -133,9 +129,6 @@ elif input == 0
 
     M98 P"0:/sys/led/end.g"
     M98 P"0:/sys/led/resetstatus.g"
-    M291 R"Success" P"The X-axis endstop test completed successfully.<br> Do you want to continue the endstop test?" S4 K{"yes","no"}
-    if input == 1
-        abort "Error: Test cancelled by user"
 
 
 
@@ -174,9 +167,6 @@ elif input == 0
 
     M98 P"0:/sys/led/end.g"
     M98 P"0:/sys/led/resetstatus.g"
-    M291 R"Success" P"The U-axis endstop test completed successfully.<br> Do you want to continue the endstop test?" S4 K{"yes","no"}
-    if input == 1
-        abort "Error: Test cancelled by user"
 
 
 
@@ -224,9 +214,6 @@ elif input == 0
 
     M98 P"0:/sys/led/end.g"
     M98 P"0:/sys/led/resetstatus.g"
-    M291 R"Success" P"The Left Filament Sensor test completed successfully.<br> Do you want to continue the endstop test?" S4 K{"yes","no"}
-    if input == 1
-        abort "Error: Test cancelled by user"
 
 
 
@@ -276,8 +263,6 @@ elif input == 0
     M42 P1 S0
     M98 P"0:/sys/led/end.g"
     M98 P"0:/sys/led/resetstatus.g"
-    M291 R"Success" P"The Right Filament Sensor test completed successfully." S2
-M291 R"Complete" P"Test execution complete" S2
 
 
 

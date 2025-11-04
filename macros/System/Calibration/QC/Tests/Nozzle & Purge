@@ -1,4 +1,4 @@
-M291 S5 J1 F350 R"Nozzle Tightening" P"Set the temperature for the Test"
+M291 S5 J1 L200 F350 R"Nozzle Tightening" P"Set the temperature for the Test"
 var temp = input
 
 M568 P0 S{var.temp} R{var.temp} A2
@@ -8,13 +8,12 @@ M568 P3 S{var.temp} R{var.temp} A2
 
 M564 H1 ; Disable movement without homing
 
-if !move.axes[1].homed
+if !move.axes[0].homed || !move.axes[1].homed || !move.axes[3].homed
     G28 Y
-if !move.axes[0].homed
     G28 X
-if !move.axes[3].homed
     G28 U
-if !move.axes[2].homed
+
+    if !move.axes[2].homed
     G28 Z
 
 M98 P"0:/sys/led/start_cold.g"
@@ -32,7 +31,9 @@ G4 S30
 
 M98 P"0:/sys/led/start_hot.g"
 G1 X-50 U50 Y-150 Z400 F18000
-M291 R"Tighten Nozzle" P" " S2
+M291 R"Tighten Nozzles" P"Both nozzles are at target temperature. Tighten each nozzle to 1.5Nm" S4 K{"Nozzles Tightened","Cancel"}
+if input == 1
+    abort "Test cancelled by user"
 
 
 M568 P0 S0 R0
@@ -43,7 +44,8 @@ M568 P3 S0 R0
 
 ; Purging Bucket Clearance Height Adjustment
 G1 X-190 U190 Y-73
-M291 R"Adjust Purgin Buckets" P"Click ""OK"" when ready to test clearance height." S4 K{"Test","Skip","Cancel"}
+var msg = "<b>IMPORTANT: Brush Positioning</b><br><br>• Brushes ONLY touch nozzle cone<br>• Position at cone/hex block junction<br>• Do NOT touch hex block<br><br>Ready to test?"
+M291 R"Adjust Purging Buckets" P{var.msg} S4 K{"Test","Skip","Cancel"}
 if input == 1
     M99
 elif input == 2

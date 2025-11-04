@@ -14,7 +14,9 @@ if input == 0
   ; Check if the bed is cold enough
   if heat.heaters[2].current > var.Bed_Min_Temp
     M98 P"0:/sys/led/fault.g"
-    M291 R"Bed Heater Test" P"Bed Heater is already hot, please wait for it to cool down" S3
+    M291 R"Bed Heater Test" P"Build plate heater is currently above safe testing temperature. Waiting for cooldown..." S4 K{"Cooling...","Cancel"}
+    if input == 1
+        abort "Test cancelled by user"
     while heat.heaters[2].current > var.Bed_Min_Temp
       G4 S1
       if sensors.endstops[0].triggered || sensors.endstops[3].triggered
@@ -22,7 +24,9 @@ if input == 0
     M98 P"0:/sys/led/resetstatus.g"
 
 
-  M291 R"Remove the Build Plate" P"Please revome the Build Plate before Bed Heater Test starting" S3
+  M291 R"Remove the Build Plate" P"Remove the build plate before starting the bed heater test to prevent false readings." S4 K{"Plate Removed","Cancel"}
+  if input == 1
+      abort "Test cancelled by user"
 
 
   var Bed_Start_Temp = heat.heaters[2].current                                                ; Save the current bed temperature
@@ -70,7 +74,9 @@ if input == 0
   ; Check if the Chamber is cold enough
   if sensors.analog[4].lastReading > var.ChamberHeater_Min_Temp
     M98 P"0:/sys/led/fault.g"
-    M291 R"Chamber Heater Test" P"Chamber Heater is already hot, please wait for it to cool down" S3
+    M291 R"Chamber Heater Test" P"Chamber heater is currently above safe testing temperature. Waiting for cooldown..." S4 K{"Cooling...","Cancel"}
+    if input == 1
+        abort "Test cancelled by user"
     while sensors.analog[4].lastReading > var.ChamberHeater_Min_Temp
       G4 S1
       if sensors.endstops[0].triggered || sensors.endstops[3].triggered
@@ -111,7 +117,9 @@ if input == 0
   M106 P4 H4 S1 B1 T300                                                                       ; Turn OFF Chamber Main Fan
   M106 P7 H3 S1 B0 T300                                                                       ; Turn OFF Hepa
 
-  M291 R"Chamber Fan Test" P"Are both Chamber Fans are OFF?" S3
+  M291 R"Chamber Fan Test" P"Confirm that both Chamber fans are NOT spinning." S4 K{"Fans OFF","Cancel"}
+  if input == 1
+      abort "Test cancelled by user"
   M106 P4 H4 S1 B1 T0                                                                         ; Turn ON Chamber Main Fan
   M106 P7 H3 S1 B0 T300                                                                       ; Turn OFF Hepa
 

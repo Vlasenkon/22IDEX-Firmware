@@ -7,11 +7,15 @@ elif input == 2
 M564 H0 S0 Z
 G91
 
-M291 R"Adjust the Bed Position" P"Please adjust the bed position.<br>Attantion: the bed must be positioned at a sufficient distance from the extreme positions." S3 Z1
+M291 R"Adjust the Bed Position" P"Position the build plate at a safe distance from extreme positions to allow movement testing." S4 K{"Bed Positioned","Cancel"} Z1
+if input == 1
+    abort "Test cancelled by user"
 
 M913 Z60 ; Reduce Z-axis current
 
-M291 R"Information" P"The bed will move up and down 20 units several times.<br>Pay attention to any unusual sounds or actions.<br>Press ""Ok"" to contimue." S3
+M291 R"Z-Axis Binding Test" P"The build plate will move up and down 20mm several times.<br>Listen for any unusual sounds or observe binding issues." S4 K{"Start Test","Cancel"}
+if input == 1
+    abort "Test cancelled by user"
 
 ; Move Z-axis up and down five times
 G91
@@ -22,7 +26,8 @@ while var.iter < 5
     set var.iter = var.iter + 1
 
 M913 Z100 ; Reset Z-axis current
-G1 Z25 F18000
+G91
+G1 Z-25 F18000
 
 M291 R"Was the motion smooth?" P"Choose an option:" K{"Yes","No"} S4
 

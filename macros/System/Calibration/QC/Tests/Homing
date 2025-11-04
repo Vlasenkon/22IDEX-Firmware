@@ -1,17 +1,25 @@
-M291 R"Home Y" P" " S4 K{"Test","Skip","Cancel"}
+M291 R"Homing Test" P"Test the homing sequence for all axes (Y, X, U). Observe for smooth movement and proper endstop triggering." S4 K{"Start Test","Skip","Cancel"}
 if input == 1
     M99
 elif input == 2
     abort "Test cancelled by user"
+
+M291 R"Homing Y-Axis" P"Homing the Y-axis (gantry). Watch for smooth movement to the endstops." S4 K{"Start Y Homing","Cancel"}
+if input == 1
+    abort "Test cancelled by user"
 G28 Y
 
-M291 R"Home X" P" " S3
+M291 R"Homing X-Axis" P"Homing the X-axis (left tool). Watch for smooth movement to the endstop." S4 K{"Start X Homing","Cancel"}
+if input == 1
+    abort "Test cancelled by user"
 G28 X
 
-M291 R"Home U" P" " S3
+M291 R"Homing U-Axis" P"Homing the U-axis (right tool). Watch for smooth movement to the endstop." S4 K{"Start U Homing","Cancel"}
+if input == 1
+    abort "Test cancelled by user"
 G28 U
 
-M291 R"Was Homing OK?" P" " S4 K{"Yes","No"}
+M291 R"Homing Test Complete" P"Confirm that all axes homed correctly without errors or unusual behavior." S4 K{"Homing OK","Homing Failed"}
 if input == 1
     abort "Error: Homing failed."
 
