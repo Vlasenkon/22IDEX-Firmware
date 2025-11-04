@@ -6,7 +6,23 @@ if input == 2
     abort "Test cancelled by user"
 elif input == 0
     M564 H0 S0 Z
-    M291 R"Fixing the motor screws" P"Hold the Z motors from below while tightening" S3 Z1
-    
+    M84 Z
+
+M291 R"True Bed Leveling Test" P"Tilt the bed manually to test the True Bed Leveling." S4 K{"Test","Skip","Cancel"}
+if input == 1
+    M99
+elif input == 2
+    abort "Test cancelled by user"
+
+M913 Z80 ; Reduce Z-axis current for safe manual movement
+M564 H0 S0 Z
+G91
+
+M291 R"Fixing the motor screws" P"Lower the build plate and hold the Z motors from below while tightening the mounting screws." S4 K{"Screws Tightened","Cancel"} Z1
+if input == 1
+    abort "Test cancelled by user"
+
+M913 Z100 ; Reset Z-axis current to 100%
 M564 H1 S1
+G90
 M84
