@@ -1,3 +1,13 @@
+; ===== Bed Hole Center Coordinates (adjust these to match your measured values) =====
+var LR = {-150.8437500, 159.2437}        ; U, Y  |  Left Rear Hole Center Coordinates
+var RR = {149.1125, 161.0938}            ; U, Y  |  Right Rear Hole Center Coordinates
+var RF = {145.7625, -158.5937500}        ; U, Y  |  Right Front Hole Center Coordinates
+
+; ===== Other Variables =====
+var holecoor = {0, 0, 0, 0}              ; UL, UR, YF, YR,  |  Border Coordinates of the Hole
+var max_Travel = 15
+
+
 if !exists(param.A)
   M291 S2 R"Use Auto Calibration macro" P"Using separate calibration macros may cause issues.<br>Please use the Auto Calibration macro"
   abort "Error: Auto Calibration macro required."
@@ -28,13 +38,6 @@ if global.xy_square_mode == "manual"
 M98 P"0:/sys/detachedcheck.g" ; Check if the probe is detached
 
 ;Start of Calculation
-
-var LR = {-149.7, 161}                   ; U, Y  |  Coordinates of Center of the Left Rear Hole 
-var RR = {150.8, 164.8}                  ; U, Y  |  Coordinates of Center of the Right Rear Hole
-var RF = {149.8, -156.2}                 ; U, Y  |  Coordinates of Center of the Right Front Hole
-var holecoor = {0, 0, 0, 0}              ; UL, UR, YF, YR,  |  Border Coordinates of the Hole
-var max_Travel = 15
-
 M558 K0 P8 C"1.io4.in" H5 F600 T18000
 M98 P"0:/user/probeoffset.g"                                                                   ; load global variables
 
@@ -80,11 +83,25 @@ G1 Z{var.T1_Ref_Z + 1}
 G1 Y{var.LR[1]} U{var.LR[0]} F12000                    ;Move to the Centre
 
 while iterations < 2000
-  G38.4 K0 Z{var.T1_Ref_Z - 0.5}                               ; Move down the Hole
+  M558 K0 P8 C"1.io4.in" H5 F60 T18000              ; Slow speed for safe diving
+  G38.4 K0 Z{var.T1_Ref_Z - 0.5} F60                ; Slowly dive down the hole
   if result == 0
     M98 P"0:/sys/led/pause.g"
     G1 Z{var.T1_Ref_Z + 1}
-    M291 S3 R"Position the head above the rear left hole in the bed." P"Press ""OK"" after positioning to countinue the macro." U1 Y1
+    M291 R"Position Nozzle Above Hole" P"Manually position the nozzle directly above the rear left hole center using XY jog controls." S4 K{"Positioned","Cancel"} U1 Y1
+    if input == 1
+        abort "Test cancelled by user"
+    ; Verify user positioned correctly by slow diving again
+    M558 K0 P8 C"1.io4.in" H5 F60 T18000              ; Slow speed for verification
+    G38.4 K0 Z{var.T1_Ref_Z - 1.0} F60                ; Dive slightly deeper to verify positioning
+    if result == 0
+        M98 P"0:/sys/led/fault.g"
+        abort "Error: Nozzle still not positioned correctly above hole. Please check alignment."
+    else
+        M98 P"0:/sys/led/resetstatus.g"
+        set var.LR[0] = move.axes[3].userPosition
+        set var.LR[1] = move.axes[1].userPosition
+        break
   else
     M98 P"0:/sys/led/resetstatus.g"
     set var.LR[0] = move.axes[3].userPosition
@@ -92,7 +109,7 @@ while iterations < 2000
     break
 
 ; =====LR Hole Center Coordinates Searching=====
-M558 K0 P8 C"1.io4.in" H5 F100 T18000              ; define Z probe parameters
+M558 K0 P8 C"1.io4.in" H5 F60 T18000              ; define Z probe parameters
 M98 P"0:/user/probeoffset.g"                       ; load global variables
 
 ; 1st Probe
@@ -174,11 +191,25 @@ G1 Z{var.T1_Ref_Z + 1}
 G1 Y{var.RR[1]} U{var.RR[0]} F12000                    ;Move to the Centre
 
 while iterations < 2000
-  G38.4 K0 Z{var.T1_Ref_Z - 0.5}                               ; Move down the Hole
+  M558 K0 P8 C"1.io4.in" H5 F60 T18000              ; Slow speed for safe diving
+  G38.4 K0 Z{var.T1_Ref_Z - 0.5} F60                ; Slowly dive down the hole
   if result == 0
     M98 P"0:/sys/led/pause.g"
     G1 Z{var.T1_Ref_Z + 1}
-    M291 S3 R"Position the head above the rear right hole in the bed." P"Press ""OK"" after positioning to countinue the macro." U1 Y1
+    M291 R"Position Nozzle Above Hole" P"Manually position the nozzle directly above the rear right hole center using XY jog controls." S4 K{"Positioned","Cancel"} U1 Y1
+    if input == 1
+        abort "Test cancelled by user"
+    ; Verify user positioned correctly by slow diving again
+    M558 K0 P8 C"1.io4.in" H5 F60 T18000              ; Slow speed for verification
+    G38.4 K0 Z{var.T1_Ref_Z - 1.0} F60                ; Dive slightly deeper to verify positioning
+    if result == 0
+        M98 P"0:/sys/led/fault.g"
+        abort "Error: Nozzle still not positioned correctly above hole. Please check alignment."
+    else
+        M98 P"0:/sys/led/resetstatus.g"
+        set var.RR[0] = move.axes[3].userPosition
+        set var.RR[1] = move.axes[1].userPosition
+        break
   else
     M98 P"0:/sys/led/resetstatus.g"
     set var.RR[0] = move.axes[3].userPosition
@@ -186,7 +217,7 @@ while iterations < 2000
     break
 
 ; =====RR Hole Center Coordinates Searching=====
-M558 K0 P8 C"1.io4.in" H5 F100 T18000              ; define Z probe parameters
+M558 K0 P8 C"1.io4.in" H5 F60 T18000              ; define Z probe parameters
 M98 P"0:/user/probeoffset.g"                       ; load global variables
 
 ; 1st Probe
@@ -275,11 +306,25 @@ G1 Z{var.T1_Ref_Z + 1}
 G1 Y{var.RF[1]} U{var.RF[0]} F12000                    ;Move to the Centre
 
 while iterations < 2000
-  G38.4 K0 Z{var.T1_Ref_Z - 0.5}                               ; Move down the Hole
+  M558 K0 P8 C"1.io4.in" H5 F60 T18000              ; Slow speed for safe diving
+  G38.4 K0 Z{var.T1_Ref_Z - 0.5} F60                ; Slowly dive down the hole
   if result == 0
     M98 P"0:/sys/led/pause.g"
     G1 Z{var.T1_Ref_Z + 1}
-    M291 S3 R"Position the head above the front right hole in the bed." P"Press ""OK"" after positioning to countinue the macro." U1 Y1
+    M291 R"Position Nozzle Above Hole" P"Manually position the nozzle directly above the front right hole center using XY jog controls." S4 K{"Positioned","Cancel"} U1 Y1
+    if input == 1
+        abort "Test cancelled by user"
+    ; Verify user positioned correctly by slow diving again
+    M558 K0 P8 C"1.io4.in" H5 F60 T18000              ; Slow speed for verification
+    G38.4 K0 Z{var.T1_Ref_Z - 1.0} F60                ; Dive slightly deeper to verify positioning
+    if result == 0
+        M98 P"0:/sys/led/fault.g"
+        abort "Error: Nozzle still not positioned correctly above hole. Please check alignment."
+    else
+        M98 P"0:/sys/led/resetstatus.g"
+        set var.RF[0] = move.axes[3].userPosition
+        set var.RF[1] = move.axes[1].userPosition
+        break
   else
     M98 P"0:/sys/led/resetstatus.g"
     set var.RF[0] = move.axes[3].userPosition
@@ -287,7 +332,7 @@ while iterations < 2000
     break
 
 ; =====RR Hole Center Coordinates Searching=====
-M558 K0 P8 C"1.io4.in" H5 F100 T18000              ; define Z probe parameters
+M558 K0 P8 C"1.io4.in" H5 F60 T18000              ; define Z probe parameters
 M98 P"0:/user/probeoffset.g"                       ; load global variables
 
 ; 1st Probe
