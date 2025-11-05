@@ -15,45 +15,57 @@ var checkInterval = 100      ; Check every 100ms
 var checksPerSecond = 1000 / var.checkInterval
 var requiredGoodReads = var.requiredStableTime * var.checksPerSecond  ; Total checks needed for stable pass
 
-echo "Voltage Test: Monitoring voltage..."
-echo "Required range: " ^ var.minVoltage ^ "V - " ^ var.maxVoltage ^ "V"
-echo "Must remain stable in range for " ^ var.requiredStableTime ^ " seconds to pass"
+echo "Voltage Test: Required range " ^ var.minVoltage ^ "V - " ^ var.maxVoltage ^ "V, stable for " ^ var.requiredStableTime ^ " seconds"
 
 M98 P"0:/sys/led/dimmwhite.g"
 G1 S2
 
 var testComplete = false
+var lastEchoTime = 0
+var lastState = ""  ; Track LED state to avoid unnecessary changes
 
 while !var.testComplete
     G4 P{var.checkInterval}
-    
-    ; Turn off all LEDs
-    M42 P1 S0  ; Red off
-    M42 P2 S0  ; Green off
-    M42 P3 S0  ; Blue off
     
     var currentVoltage = boards[0].vIn.current
     
     if var.currentVoltage > var.maxVoltage
         ; RED - Voltage too high
-        M42 P1 S1
+        if var.lastState != "red"
+            M42 P1 S0  ; Red off
+            M42 P2 S0  ; Green off
+            M42 P3 S0  ; Blue off
+            M42 P1 S1  ; Red on
+            set var.lastState = "red"
         set var.consecutiveGoodReads = 0  ; Reset counter
-        echo "Voltage HIGH: " ^ var.currentVoltage ^ "V (adjust down)"
+        ; Echo only every 10 seconds to avoid overflow
+        if (state.upTime - var.lastEchoTime) >= 10
+            echo "Voltage HIGH: " ^ var.currentVoltage ^ "V (adjust down)"
+            set var.lastEchoTime = state.upTime
         
     elif var.currentVoltage < var.minVoltage
         ; BLUE - Voltage too low
-        M42 P3 S1
+        if var.lastState != "blue"
+            M42 P1 S0  ; Red off
+            M42 P2 S0  ; Green off
+            M42 P3 S0  ; Blue off
+            M42 P3 S1  ; Blue on
+            set var.lastState = "blue"
         set var.consecutiveGoodReads = 0  ; Reset counter
-        echo "Voltage LOW: " ^ var.currentVoltage ^ "V (adjust up)"
+        ; Echo only every 10 seconds to avoid overflow
+        if (state.upTime - var.lastEchoTime) >= 10
+            echo "Voltage LOW: " ^ var.currentVoltage ^ "V (adjust up)"
+            set var.lastEchoTime = state.upTime
         
     else
-        ; GREEN - Voltage in range
-        M42 P2 S1
+        ; GREEN - Voltage in range (LED animation provides feedback, no echo needed)
+        if var.lastState != "green"
+            M42 P1 S0  ; Red off
+            M42 P2 S0  ; Green off
+            M42 P3 S0  ; Blue off
+            M42 P2 S1  ; Green on
+            set var.lastState = "green"
         set var.consecutiveGoodReads = var.consecutiveGoodReads + 1
-        
-        var secondsStable = var.consecutiveGoodReads / var.checksPerSecond
-        if mod(var.consecutiveGoodReads, var.checksPerSecond) == 0  ; Report every second
-            echo "Voltage OK: " ^ var.currentVoltage ^ "V - Stable for " ^ var.secondsStable ^ " seconds"
         
         ; Check if we've been stable long enough
         if var.consecutiveGoodReads >= var.requiredGoodReads

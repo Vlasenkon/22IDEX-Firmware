@@ -7,7 +7,7 @@ M568 P3 R0 S0
 
 ; ========================== T0 CONNECTION ==========================
 
-M291 R"T0 Connection Test" P"Do you want to start T0 Connection Test?" S4 K{"Test","Skip","Cancel"}
+M291 R"Left Tool (T0) Test" P"This test will verify Left Tool (T0) connections:<br><br>- Part Cooling Fan<br>- Hotend Fan<br>- Heater<br>- Thermistor<br>- Extruder Motor" S4 K{"Start Test","Skip","Cancel"}
 if input == 0
   
   ; ///// T0 Fans Test /////
@@ -48,23 +48,21 @@ if input == 0
   var T0_Raise_Temp = 30                                                                          ; Raise the temperature
   var T0_Max_Heat_Time = 60                                                                       ; Maximum time to heat up the T0 Heater
 
-  ; Check if T0 is cold enough
-  if heat.heaters[0].current > var.T0_Min_Temp
-    M98 P"0:/sys/led/fault.g"
-    M291 R"T0 Heater Test" P"Tool 0 heater is currently above safe testing temperature. Waiting for cooldown..." S4 K{"Cooling...","Cancel"}
-    if input == 1
-        abort "Test cancelled by user"
-    while heat.heaters[0].current > var.T0_Min_Temp
-      G4 S1
-      if sensors.endstops[0].triggered || sensors.endstops[3].triggered
-        break
-    M98 P"0:/sys/led/resetstatus.g"
-
   M291 R"T0 Heater Test" P"Place your hand near Tool 0 heater block to feel warmth during heating test." S4 K{"Start Test","Skip","Cancel"}
   if input == 2
-      abort "Test cancelled by user"
+    abort "Test cancelled by user"
 
   if input == 0
+    ; Check if T0 is cold enough
+    if heat.heaters[0].current > var.T0_Min_Temp
+      M98 P"0:/sys/led/fault.g"
+      M291 R"T0 Heater Test" P"Tool 0 heater is currently above safe testing temperature. Waiting for cooldown..." S1 T0
+      while heat.heaters[0].current > var.T0_Min_Temp
+        G4 S1
+        if sensors.endstops[0].triggered || sensors.endstops[3].triggered
+          break
+      M98 P"0:/sys/led/resetstatus.g"
+      M292
     var T0_Start_Temp = heat.heaters[0].current                                                     ; Save the current T0 temperature
     var T0_Start_Time = state.time                                                                  ; Save the current time
     var T0_Target_Temp = var.T0_Start_Temp + var.T0_Raise_Temp                                      ; Calculate the target temperature
@@ -87,29 +85,34 @@ if input == 0
       M291 R"T0 Heater Test" P"T0 Heater took too long to heat up" S1 T200
       abort "Error: T0 Heater took too long to heat up"
     M98 P"0:/sys/led/resetstatus.g"
+
+    ; Touch Verification - Confirm user felt heat
+    M291 R"T0 Heat Verification" P"Did you feel heat from the Left Tool (Tool 0) heater block?" S4 K{"Left Tool is Hot","Left Tool NOT Hot","Cancel"}
+    if input == 1
+      M98 P"0:/sys/led/fault.g"
+      abort "Error: Left Tool (Tool 0) did not heat properly - user did not feel heat"
+    elif input == 2
+      abort "Test cancelled by user"
   ; ///// T0 Heater Test End /////
 
   ; ///// T0 Extruder Motor Direction Test /////
-  M291 R"T0 Extruder Motor Direction Test" P"Do you want to start T0 Extruder Motor Direction Test?" S4 K{"Test", "Skip", "Cancel"}
-  if input == 0
-
-    while true
-      M291 R"Remove Filament" P"Ensure filament is completely removed from Tool 0 extruder." S4 K{"Filament Removed","Cancel"}
-      if input == 1
-        abort "Test cancelled by user"
-      if sensors.filamentMonitors[0].status != "ok"
-        break
-
-    M291 R"T0 Extruder Motor Direction Test" P"Observe that the Tool 0 extruder gear rotates UPWARDS ↑ during this test." S4 K{"Start Test","Cancel"}
-    if input == 1
+  while true
+    M291 R"Left Tool (T0) Extruder Motor Direction Test" P"Ensure filament is completely removed from Left Tool extruder.<br><br>Gears should spin UPWARDS ↑ during test." S4 K{"Filament Removed - Start","Skip Test","Cancel"}
+    if input == 0
+      M302 P1 ; Allow cold extrudes
+      T0 P0
+      M83 ; Extruder to relative mode
+      G1 E100 F1000 ; Feed filament
+      M400
+      M302 P0 ; Disallow cold extrudes
+    elif input == 1
+      break
+    elif input == 2
       abort "Test cancelled by user"
-    M302 P1 ; Allow cold extrudes
-    T0 P0
-    M83 ; Extruder to relative mode
-    G1 E100 F1000 ; Feed filament
-    M400
-    M302 P0 ; Disallow cold extrudes
-  ; ///// T0 Extruder Motor Direction Test End /////
+    if sensors.filamentMonitors[1].status != "ok"
+      break
+
+; ///// T0 Extruder Motor Direction Test End /////
 
 
 
@@ -123,7 +126,7 @@ if input == 0
 
 ; ========================== T1 CONNECTION ==========================
 
-M291 R"T1 Connection Test" P"Do you want to start T0 Connection Test?" S4 K{"Test","Skip","Cancel"}
+M291 R"Right Tool (T1) Test" P"This test will verify Right Tool (T1) connections:<br><br>- Part Cooling Fan<br>- Hotend Fan<br>- Heater<br>- Thermistor<br>- Extruder Motor" S4 K{"Start Test","Skip","Cancel"}
 if input == 0
 
   ; ///// T1 Fans Test /////
@@ -165,23 +168,21 @@ if input == 0
   var T1_Raise_Temp = 30                                                                        ; Temperature increase
   var T1_Max_Heat_Time = 60                                                                     ; Maximum heating time
 
-  ; Check if T1 is cold enough
-  if heat.heaters[1].current > var.T1_Min_Temp
-    M98 P"0:/sys/led/fault.g"
-    M291 R"T1 Heater Test" P"Tool 1 heater is currently above safe testing temperature. Waiting for cooldown..." S4 K{"Cooling...","Cancel"}
-    if input == 1
-        abort "Test cancelled by user"
-    while heat.heaters[1].current > var.T1_Min_Temp
-      G4 S1
-      if sensors.endstops[0].triggered || sensors.endstops[3].triggered
-        break
-    M98 P"0:/sys/led/resetstatus.g"
-
   M291 R"T1 Heater Test" P"Place your hand near Tool 1 heater block to feel warmth during heating test." S4 K{"Start Test","Skip","Cancel"}
   if input == 2
-      abort "Test cancelled by user"
+    abort "Test cancelled by user"
 
   if input == 0
+    ; Check if T1 is cold enough
+    if heat.heaters[1].current > var.T1_Min_Temp
+      M98 P"0:/sys/led/fault.g"
+      M291 R"T1 Heater Test" P"Tool 1 heater is currently above safe testing temperature. Waiting for cooldown..." S1 T0
+      while heat.heaters[1].current > var.T1_Min_Temp
+        G4 S1
+        if sensors.endstops[0].triggered || sensors.endstops[3].triggered
+          break
+      M98 P"0:/sys/led/resetstatus.g"
+      M292
 
     var T1_Start_Temp = heat.heaters[1].current                                                   ; Save current T1 temperature
     var T1_Start_Time = state.time                                                                ; Save current time
@@ -205,30 +206,35 @@ if input == 0
       M291 R"T1 Heater Test" P"T1 Heater took too long to heat up" S1 T200
       abort "Error: T1 Heater took too long to heat up"
     M98 P"0:/sys/led/resetstatus.g"
+
+    ; Touch Verification - Confirm user felt heat
+    M291 R"T1 Heat Verification" P"Did you feel heat from the Right Tool (Tool 1) heater block?" S4 K{"Right Tool is Hot","Right Tool NOT Hot","Cancel"}
+    if input == 1
+      M98 P"0:/sys/led/fault.g"
+      abort "Error: Right Tool (Tool 1) did not heat properly - user did not feel heat"
+    elif input == 2
+      abort "Test cancelled by user"
     ; ///// T1 Heater Test End /////
 
     ; ///// T1 Extruder Motor Direction Test /////
-  M291 R"T1 Extruder Motor Direction Test" P"Do you want to start T1 Extruder Motor Direction Test?" S4 K{"Test", "Skip", "Cancel"}
-  if input == 0
-
-    while true
-      M291 R"Remove Filament" P"Ensure filament is completely removed from Tool 1 extruder." S4 K{"Filament Removed","Cancel"}
-      if input == 1
-        abort "Test cancelled by user"
-      if sensors.filamentMonitors[1].status != "ok"
-        break
-
-    M291 R"T1 Extruder Motor Direction Test" P"Observe that the Tool 1 extruder gear rotates UPWARDS ↑ during this test." S4 K{"Start Test","Cancel"}
-    if input == 1
+  while true
+    M291 R"Right Tool (T1) Extruder Motor Direction Test" P"Ensure filament is completely removed from Right Tool extruder.<br><br>Gears should spin UPWARDS ↑ during test." S4 K{"Filament Removed - Start","Skip Test","Cancel"}
+    if input == 0
+      M302 P1 ; Allow cold extrudes
+      T1 P0
+      M83 ; Extruder to relative mode
+      G1 E100 F1000 ; Feed filament
+      M400
+      M302 P0 ; Disallow cold extrudes
+    elif input == 1
+      break
+    elif input == 2
       abort "Test cancelled by user"
-    M302 P1
-    T1 P0
-    M83 ; Extruder to relative mode
-    G1 E100 F1000 ; Feed filament
-    M400
-    M302 P0 ; Disallow cold extrudes
-    T0 P0 
-  ; ///// T1 Extruder Motor Direction Test End /////
+    if sensors.filamentMonitors[0].status != "ok"
+      break
+
+  T0 P0 
+; ///// T1 Extruder Motor Direction Test End /////
 
 
 

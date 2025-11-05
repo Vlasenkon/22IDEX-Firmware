@@ -1,142 +1,196 @@
 M291 R"Bed Heater Test" P"Do you want to start Bed Heating Test?" S4 K{"Test","Skip","Cancel"}
-if input == 0
-
-  M98 P"0:/sys/led/resetstatus.g"
-
-  M140 S0 R0
-
-  ; ///// Bed Heater Test /////
-  var Bed_Min_Temp = 50                                                                       ; Minimum temperature to start the test
-  var Bed_Raise_Temp = 10
-  var Bed_Max_Heat_Time = 100
-  
-
-  ; Check if the bed is cold enough
-  if heat.heaters[2].current > var.Bed_Min_Temp
-    M98 P"0:/sys/led/fault.g"
-    M291 R"Bed Heater Test" P"Build plate heater is currently above safe testing temperature. Waiting for cooldown..." S4 K{"Cooling...","Cancel"}
-    if input == 1
-        abort "Test cancelled by user"
-    while heat.heaters[2].current > var.Bed_Min_Temp
-      G4 S1
-      if sensors.endstops[0].triggered || sensors.endstops[3].triggered
-        break
-    M98 P"0:/sys/led/resetstatus.g"
+if input == 1
+  M99
+elif input == 2
+  abort "Test cancelled by user"
 
 
-  M291 R"Remove the Build Plate" P"Remove the build plate before starting the bed heater test to prevent false readings." S4 K{"Plate Removed","Cancel"}
+M98 P"0:/sys/led/resetstatus.g"
+
+M140 S0 R0
+
+; ///// Bed Heater Test /////
+var Bed_Min_Temp = 50
+var Bed_Raise_Temp = 10
+var Bed_Warning_Time = 80                                                                   ; Show warning if heating takes longer than this
+var Bed_Max_Wait_Time = 180                                                                 ; Maximum time to wait before failing (3 minutes)
+
+
+; Check if the bed is cold enough
+if heat.heaters[2].current > var.Bed_Min_Temp
+  M98 P"0:/sys/led/start_cold.g"
+  M291 R"Bed Heater Test" P"Build plate heater is currently above safe testing temperature. Waiting for cooldown..." S1 T0
   if input == 1
       abort "Test cancelled by user"
-
-
-  var Bed_Start_Temp = heat.heaters[2].current                                                ; Save the current bed temperature
-  var Bed_Start_Time = state.time                                                             ; Save the current time
-  var Bed_Target_Temp = var.Bed_Start_Temp + var.Bed_Raise_Temp                               ; Calculate the target temperature
-
-  M140 S160 R160                                          ; Set the bed temperature to the target temperature
-  M98 P"0:/sys/led/start_cold.g"                                                              ; LED Signalize preheating
-
-  while heat.heaters[2].current < var.Bed_Target_Temp
-    G4 P100
+  while heat.heaters[2].current > var.Bed_Min_Temp
+    G4 S1
     if sensors.endstops[0].triggered || sensors.endstops[3].triggered
       break
-
-  M140 S0 R0                                                                                  ; Turn off the bed heater
-  M98 P"0:/sys/led/end.g"                                                                     ; LED Signalize the end of the test
-
-  var Bed_Heat_Time = state.time - var.Bed_Start_Time                                         ; Calculate the time it took to heat up the bed
-
-  M291 R"Test Complete" P{"Bed Heater Test completed! <br>Bed Heater took " ^{var.Bed_Heat_Time}^ " seconds to heat up"} S2
-
-  if var.Bed_Heat_Time > var.Bed_Max_Heat_Time
-    M98 P"0:/sys/led/fault.g"
-    M291 R"Bed Heater Test" P"Bed Heater took too long to heat up. Please check the Bed Heater." S2 T200
-    M98 P"0:/sys/led/resetstatus.g"
-    abort "Error: Bed Heater took too long to heat up"
   M98 P"0:/sys/led/resetstatus.g"
-  ; ///// Bed Heater Test End /////
+
+M292
+
+M291 R"Remove the Build Plate" P"Remove the build plate before starting the bed heater test to prevent false readings." S4 K{"Plate Removed","Cancel"}
+if input == 1
+    abort "Test cancelled by user"
+
+
+var Bed_Start_Temp = heat.heaters[2].current                                                ; Save the current bed temperature
+var Bed_Start_Time = state.time                                                             ; Save the current time
+var Bed_Target_Temp = var.Bed_Start_Temp + var.Bed_Raise_Temp                               ; Calculate the target temperature
+
+M140 S160 R160                                          ; Set the bed temperature to the target temperature
+M98 P"0:/sys/led/start_cold.g"                                                              ; LED Signalize preheating
+
+var warningShown = false
+var Bed_Elapsed_Time = 0
+
+while heat.heaters[2].current < var.Bed_Target_Temp
+  G4 P100
+  
+  set var.Bed_Elapsed_Time = state.time - var.Bed_Start_Time
+  
+  ; Show warning if heating is taking too long (but keep waiting)
+  if var.Bed_Elapsed_Time > var.Bed_Warning_Time && !var.warningShown
+    M98 P"0:/sys/led/fault.g"
+    set var.warningShown = true
+  
+  ; Check if maximum wait time exceeded
+  if var.Bed_Elapsed_Time > var.Bed_Max_Wait_Time
+    M140 S0 R0
+    M98 P"0:/sys/led/fault.g"
+    M291 R"Bed Heater Test Failed" P{"Bed Heater failed to reach target temperature within " ^{var.Bed_Max_Wait_Time}^ " seconds.<br><br>Test aborted. Please check the bed heater."} S2
+    M98 P"0:/sys/led/resetstatus.g"
+    abort "Error: Bed Heater failed to heat up within maximum time"
+  
+  if sensors.endstops[0].triggered || sensors.endstops[3].triggered
+    break
+
+M140 S0 R0                                                                                  ; Turn off the bed heater
+
+var Bed_Heat_Time = state.time - var.Bed_Start_Time                                         ; Calculate the time it took to heat up the bed
+
+; Determine test result message
+if var.Bed_Heat_Time <= var.Bed_Warning_Time
+  ; Normal heating time - PASS
+  M98 P"0:/sys/led/end.g"
+  var passMsg = "Bed Heater Test completed successfully!<br><br>Heating time: " ^ var.Bed_Heat_Time ^ " seconds<br>Average normal time: 60-70 seconds<br>Maximum allowed: " ^ var.Bed_Warning_Time ^ " seconds"
+  M291 R"Bed Heater Test Passed" P{var.passMsg} S2
+  M98 P"0:/sys/led/resetstatus.g"
+else
+  ; Heating took longer than warning threshold but completed
+  M98 P"0:/sys/led/fault.g"
+  var warnMsg = "Bed Heater heated up but took longer than expected.<br><br>Heating time: " ^ var.Bed_Heat_Time ^ " seconds"
+  set var.warnMsg = var.warnMsg ^ "<br>Average normal time: 60-70 seconds<br>Maximum allowed: " ^ var.Bed_Warning_Time ^ " seconds"
+  set var.warnMsg = var.warnMsg ^ "<br><br><b>Please check bed heater performance.</b>"
+  M291 R"Bed Heater Test Warning" P{var.warnMsg} S2
+  M98 P"0:/sys/led/resetstatus.g"
+
+; ///// Bed Heater Test End /////
 
 
 M291 R"Chamber Heater and Fans Test" P"Do you want to start Chamber Heating and Fans Test?" S4 K{"Test","Skip","Cancel"}
 if input == 0
 
-  M98 P"0:/sys/led/resetstatus.g"
+M98 P"0:/sys/led/resetstatus.g"
 
-  M141 S0 R0
-  M106 P4 H-1 S0                                                                        ; Restore Chamber Main Fan
-  M106 P7 H-1 S0                                                                        ; Restore CrFan
+M141 S0 R0
+M106 P4 H-1 S0                                                                        ; Restore Chamber Main Fan
+M106 P7 H-1 S0                                                                        ; Restore CrFan
 
-  ; ///// Chamber Heater Test /////
-  var ChamberHeater_Min_Temp = 80                                                             ; Minimum temperature to start the test
-  var ChamberHeater_Raise_Temp = 30                                                           ; Raise the temperature by 20C
-  var ChamberHeater_Max_Heat_Time = 30                                                        ; Maximum time to heat up the Chamber Heater
+; ///// Chamber Heater Test /////
+var ChamberHeater_Min_Temp = 80                                                             ; Minimum temperature to start the test
+var ChamberHeater_Raise_Temp = 30                                                           ; Raise the temperature by 20C
+var ChamberHeater_Max_Heat_Time = 30                                                        ; Maximum time to heat up the Chamber Heater
 
-  ; Check if the Chamber is cold enough
-  if sensors.analog[4].lastReading > var.ChamberHeater_Min_Temp
-    M98 P"0:/sys/led/fault.g"
-    M291 R"Chamber Heater Test" P"Chamber heater is currently above safe testing temperature. Waiting for cooldown..." S4 K{"Cooling...","Cancel"}
-    if input == 1
-        abort "Test cancelled by user"
-    while sensors.analog[4].lastReading > var.ChamberHeater_Min_Temp
-      G4 S1
-      if sensors.endstops[0].triggered || sensors.endstops[3].triggered
-        break
-    M98 P"0:/sys/led/resetstatus.g"
-
-  var ChamberHeater_Start_Temp = sensors.analog[4].lastReading                                ; Save the current Chamber temperature
-  var ChamberHeater_Start_Time = state.time                                                   ; Save the current time
-  var ChamberHeater_Target_Temp = var.ChamberHeater_Start_Temp + var.ChamberHeater_Raise_Temp ; Calculate the target temperature
-
-  M291 R"Chamber Heater Test" P"Chamber heater is heating up. LEDs will turn blue during heating, then green when target temperature is reached." S1 T5
-  M141 S100 R100                                                                              ; Set the Chamber temperature to the target temperature
-  M98 P"0:/sys/led/start_cold.g"                                                              ; LED Signalize preheating
-
-  while sensors.analog[4].lastReading < var.ChamberHeater_Target_Temp
-    G4 P100
-    if sensors.endstops[0].triggered || sensors.endstops[3].triggered
-      break
-
-  M141 S0 R0                                                                                  ; Turn off the chamber heater
-
-  M98 P"0:/sys/led/end.g"                                                                     ; LED Signalize the end of the test
-
-  var ChamberHeater_Heat_Time = state.time - var.ChamberHeater_Start_Time                     ; Calculate the time it took to heat up the Chamber
-
-  M291 R"Test Complete" P{"Chamber Heater Test completed!<br>Chamber Heater took "^{var.ChamberHeater_Heat_Time}^ " seconds to heat up"} S2
-
-  if var.ChamberHeater_Heat_Time > var.ChamberHeater_Max_Heat_Time
-    M98 P"0:/sys/led/fault.g"
-    M291 R"Chamber Heater Test" P"Chamber Heater took too long to heat up. Please check the Chamber Heater." S2 T200
-    M98 P"0:/sys/led/resetstatus.g"
-    abort "Error: Chamber Heater took too long to heat up"
-  M98 P"0:/sys/led/resetstatus.g"
-  ;// ///// Chamber Heater Test End /////
-
-
-
-  ; ///// Chamber Fans Test /////
-  M106 P4 H4 S1 B1 T300                                                                       ; Turn OFF Chamber Main Fan
-  M106 P7 H3 S1 B0 T300                                                                       ; Turn OFF Hepa
-
-  M291 R"Chamber Fan Test" P"Confirm that both HEPA fan and chamber heater fan are NOT spinning." S4 K{"Both Fans OFF","Cancel"}
+; Check if the Chamber is cold enough
+if sensors.analog[4].lastReading > var.ChamberHeater_Min_Temp
+  M98 P"0:/sys/led/fault.g"
+  M291 R"Chamber Heater Test" P"Chamber heater is currently above safe testing temperature. Waiting for cooldown..." S4 K{"Cooling...","Cancel"}
   if input == 1
       abort "Test cancelled by user"
-  M106 P4 H4 S1 B1 T0                                                                         ; Turn ON Chamber Main Fan
-  M106 P7 H3 S1 B0 T300                                                                       ; Turn OFF Hepa
+  while sensors.analog[4].lastReading > var.ChamberHeater_Min_Temp
+    G4 S1
+    if sensors.endstops[0].triggered || sensors.endstops[3].triggered
+      break
+  M98 P"0:/sys/led/resetstatus.g"
 
-  M291 R"Main Chamber Fan Test" P"Is the Main Chamber Fan spinning?" S4 K{"Fan is Spinning","No"} J0
-  if input == 1
-    abort "Error: Main Chamber Fan didn`t work."
+var ChamberHeater_Start_Temp = sensors.analog[4].lastReading                                ; Save the current Chamber temperature
+var ChamberHeater_Start_Time = state.time                                                   ; Save the current time
+var ChamberHeater_Target_Temp = var.ChamberHeater_Start_Temp + var.ChamberHeater_Raise_Temp ; Calculate the target temperature
 
-  M106 P7 H3 S1 B0 T0                                                                         ; Turn ON Hepa
-  M106 P4 H4 S1 B1 T300                                                                       ; Turn OFF Chamber Main Fan
+M291 R"Chamber Heater Test" P"Chamber heater is heating up.<br><br>LEDs will turn:<br>• <b>Green</b> when target temperature is reached (test passed)<br>• <b>Red</b> if heating takes too long (test failed)" S1 T0
+M141 S100 R100                                                                              ; Set the Chamber temperature to the target temperature
+M98 P"0:/sys/led/start_cold.g"                                                              ; LED Signalize preheating
 
-  M291 R"HEPA Fan Test" P"Is HEPA Fan spinning?" S4 K{"HEPA is Spinning","No"} J0
-  if input == 1
-    abort "Error: HEPA Fan didn`t work."
+while sensors.analog[4].lastReading < var.ChamberHeater_Target_Temp
+  G4 P100
+  if sensors.endstops[0].triggered || sensors.endstops[3].triggered
+    break
 
-  M106 P4 H4 T80 S1 B1                                                                        ; Restore Chamber Main Fan
-  M106 P7 H3 T50 S1 B0                                                                        ; Restore Hepa
-  ;// ///// Chamber Fans Test End /////
+M141 S0 R0                                                                                  ; Turn off the chamber heater
 
-  M291 R"Test Complete" P{"Chamber Heater and Fans Test completed!"} S2
+M98 P"0:/sys/led/end.g"                                                                     ; LED Signalize the end of the test
+
+var ChamberHeater_Heat_Time = state.time - var.ChamberHeater_Start_Time                     ; Calculate the time it took to heat up the Chamber
+
+M292
+M291 R"Test Complete" P{"Chamber Heater Test completed!<br>Chamber Heater took "^{var.ChamberHeater_Heat_Time}^ " seconds to heat up"} S3
+
+if var.ChamberHeater_Heat_Time > var.ChamberHeater_Max_Heat_Time
+  M98 P"0:/sys/led/fault.g"
+  M291 R"Chamber Heater Test" P"Chamber Heater took too long to heat up. Please check the Chamber Heater." S2
+  M98 P"0:/sys/led/resetstatus.g"
+  abort "Error: Chamber Heater took too long to heat up"
+M98 P"0:/sys/led/resetstatus.g"
+;// ///// Chamber Heater Test End /////
+
+
+
+; ///// Chamber Fans Test /////
+M106 P4 H4 S1 B1 T300                                                                       ; Turn OFF Chamber Main Fan
+M106 P7 H3 S1 B0 T300                                                                       ; Turn OFF Hepa
+
+M291 R"Chamber Fan Test" P"Confirm that Chamber Heater Fan is NOT spinning." S4 K{"Fan is OFF","Cancel"}
+if input == 1
+    abort "Test cancelled by user"
+M106 P4 H4 S1 B1 T0                                                                         ; Turn ON Chamber Main Fan
+M106 P7 H3 S1 B0 T300                                                                       ; Turn OFF Hepa
+
+M291 R"Main Chamber Fan Test" P"Is the Main Chamber Fan spinning?" S4 K{"Fan is Spinning","No"}
+if input == 1
+  abort "Error: Main Chamber Fan didn`t work."
+
+; ///// HEPA Fan RPM Test /////
+M291 R"HEPA Fan Self Test" P"Starting HEPA fan self test..." S1 T0
+
+; First verify HEPA is at 0 RPM when OFF
+M106 P7 S0 H-1                                                                              ; Ensure HEPA is OFF
+G4 S2                                                                                       ; Wait 2 seconds for fan to stop
+if fans[7].rpm != 0
+  M292                                                                                      ; Close previous notification
+  M291 R"Error" P{"HEPA Fan should be at 0 RPM but reports " ^ fans[7].rpm ^ " RPM<br>Check fan wiring or controller."} S1 T0
+  abort "Error: HEPA Fan not at 0 RPM when OFF."
+
+; Turn ON HEPA and verify RPM after 10 seconds
+M106 P7 H3 S1 B0 T0                                                                         ; Turn ON Hepa
+M106 P4 H4 S1 B1 T300                                                                       ; Turn OFF Chamber Main Fan
+
+G4 S10                                                                                      ; Wait 10 seconds
+
+if fans[7].rpm <= 500
+  M292                                                                                      ; Close previous notification
+  M291 R"Error" P{"HEPA Fan RPM is " ^ fans[7].rpm ^ " which is below 500 RPM minimum<br>Expected: >500 RPM<br>Check fan operation."} S1 T0
+  M106 P4 H4 T80 S1 B1                                                                      ; Restore Chamber Main Fan
+  M106 P7 H3 T50 S1 B0                                                                      ; Restore Hepa
+  abort "Error: HEPA Fan RPM too low."
+
+; Test passed - show success with green LED blink
+M292                                                                                        ; Close previous notification
+M98 P"0:/sys/led/end.g"
+M291 R"HEPA Fan Test Passed" P{"HEPA Fan spinning at " ^ fans[7].rpm ^ " RPM - Test successful (>500 RPM)"} S2
+M98 P"0:/sys/led/restorewhite.g"
+
+M106 P4 H4 T80 S1 B1                                                                        ; Restore Chamber Main Fan
+M106 P7 H3 T50 S1 B0                                                                        ; Restore Hepa
+;// ///// Chamber Fans Test End /////
