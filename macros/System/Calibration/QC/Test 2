@@ -14,5 +14,8 @@ M98 P"0:/macros/System/Calibration/QC/Tests/Nozzle & Purge"
 ; True Bed Leveling Test & Z-Axis Lubrication
 M98 P"0:/macros/System/Calibration/QC/Tests/TBL & Lube"
 
+; Z-Homing Iteration Test
+M98 P"0:/macros/System/Troubleshooting/Z - Homing Test"
+
 ; XY - Movement Test // Add Timer // Add prompt to listen to Noises and watch temp graph
 M98 P"0:/macros/System/Calibration/QC/Tests/XY - Movement"
