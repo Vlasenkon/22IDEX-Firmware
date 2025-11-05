@@ -305,7 +305,7 @@ if var.bestError > var.maxAcceptableError
   var failMsg = "CALIBRATION FAILED - Results:<br>Best C coefficient: " ^ var.cSign ^ var.cFormatted ^ "e-8<br>"
   set var.failMsg = var.failMsg ^ "Final error: " ^ var.bestError ^ "°C (>" ^ var.maxAcceptableError ^ "°C)<br>"
   set var.failMsg = var.failMsg ^ "Iterations: " ^ var.iterations ^ "<br>Error too large - using default sensor settings"
-  M291 R"Calibration Failed" P{var.failMsg} S2 T0
+  M291 R"Calibration Failed" P{var.failMsg} S2
 else
   ; Save calibrated result
   var sensorConfig = "M308 S3 A""Chamber Air"" P""1.temp0"" Y""thermistor"" T200000 B3950 R2200 C" ^ var.cSign ^ var.cFormatted ^ "e-8"
@@ -321,7 +321,7 @@ else
   var successMsg = "CALIBRATION SUCCESS - Results:<br>Best C coefficient: " ^ var.cSign ^ var.cFormatted ^ "e-8<br>"
   set var.successMsg = var.successMsg ^ "Final error: " ^ var.bestError ^ "°C (≤" ^ var.maxAcceptableError ^ "°C)<br>"
   set var.successMsg = var.successMsg ^ "Iterations: " ^ var.iterations ^ "<br>Configuration saved and applied"
-  M291 R"Calibration Successful" P{var.successMsg} S2 T0
+  M291 R"Calibration Successful" P{var.successMsg} S2
 
 ; Restore white LED
 M98 P"0:/sys/led/restorewhite.g"
