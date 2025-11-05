@@ -2,9 +2,11 @@ M98 P"0:/sys/led/resetstatus.g"
 M98 P"0:/macros/System/Calibration/QC/Disable Probe"
 
 
-M291 R"Servo Motor Test" P"Servo motor will rotate to 0 degree and then to a set degree" S4 K{"Test","Skip","Cancel"}
+M291 R"Servo Motor Test" P"Servo motor will rotate to 0 degree and then to a set degree.<br><br>Press X or U endstop to stop the test early." S4 K{"Test","Skip","Cancel"}
 if input == 0
     while iterations < 30
+        if sensors.endstops[0].triggered || sensors.endstops[3].triggered
+            break
         M98 P"0:/macros/System/Calibration/Z Probe/Rotate holder to a set degree"
         G4 S2
         M98 P"0:/macros/System/Calibration/Z Probe/Rotate holder to 0 degree"
@@ -36,6 +38,7 @@ G4 S1
 
 var timeout = 120
 var press_count = 10
+var start_time = 0
 var max_iter = 1200 ; 120 seconds
 var iter = 0
 
@@ -47,38 +50,30 @@ if sensors.probes[0].value[0] != 1000
     M98 P"0:/sys/led/fault.g"
     abort "Error: S1 Z-Probe value is not 1000 before test"
 
-M291 R"Testing Right Nozzle to Bed" P"Touch Right Nozzle to the Bed 10x and wait for light signal" S1 T60
+M291 R"Testing Right Nozzle to Bed" P"Touch Right Nozzle to the Bed 10x and wait for light signal" S1 T0
 set var.press_count = 10
 set var.start_time = state.upTime
 
 while var.press_count > 0
     M106 P6 S0 B0
-    M42 P2 S1
-    M42 P1 S1
-    
-    ; Wait for probe to trigger (value changes to 0)
-    while sensors.probes[0].value[0] != 0
-        G4 P100
-        if (state.upTime - var.start_time) > var.timeout
-            M98 P"0:/sys/led/fault.g"
-            M291 R"Error" P"Time for touching Left Nozzle to Bed has expired" S0
-            abort "Error: Time for touching Left Nozzle to Bed has expired"
-    
-    set var.press_count = var.press_count - 1
-    echo "Left Nozzle Touched! Remaining: " ^{10 - var.press_count}
+    M42 P2 S0
     M42 P1 S0
-    G4 S0.03
-    
-    ; Wait for probe to release (value returns to 1000)
-    while sensors.probes[0].value[0] != 1000
-        G4 S0.01
-        if (state.upTime - var.start_time) > var.timeout
-            M98 P"0:/sys/led/fault.g"
-            M291 R"Error" P"Time for releasing Left Nozzle from Bed has expired" S0
-            abort "Error: Time for releasing Left Nozzle from Bed has expired"
+    M42 P3 S1
+    if sensors.probes[0].value[0] == 0
+        set var.press_count = var.press_count - 1
+        M42 P3 S0
+        M42 P2 S1
+        G4 S0.03
+        while sensors.probes[0].value[0] == 0
+            G4 S0.01
+    if (state.upTime - var.start_time) > var.timeout
+        M98 P"0:/sys/led/fault.g"
+        M291 R"Error" P"Time for touching Left Nozzle to Bed has expired" S1 T0
+        abort "Error: Time for touching Left Nozzle to Bed has expired"
 
 M98 P"0:/sys/led/end.g"
 M98 P"0:/sys/led/resetstatus.g"
+M292
 
 
 
@@ -93,38 +88,30 @@ if sensors.probes[0].value[0] != 1000
     M98 P"0:/sys/led/fault.g"
     abort "Error: S2 Z-Probe value is not 1000 before test"
 
-M291 R"Testing Left Nozzle to Bed" P"Touch Left Nozzle to the Bed 10x and wait for light signal" S1 T60
+M291 R"Testing Left Nozzle to Bed" P"Touch Left Nozzle to the Bed 10x and wait for light signal" S1 T0
 set var.press_count = 10
 set var.start_time = state.upTime
 
 while var.press_count > 0
     M106 P6 S0 B0
-    M42 P2 S1
-    M42 P1 S1
-    
-    ; Wait for probe to trigger (value changes to 0)
-    while sensors.probes[0].value[0] != 0
-        G4 P100
-        if (state.upTime - var.start_time) > var.timeout
-            M98 P"0:/sys/led/fault.g"
-            M291 R"Error" P"Time for touching Right Nozzle to Bed has expired" S0
-            abort "Error: Time for touching Right Nozzle to Bed has expired"
-    
-    set var.press_count = var.press_count - 1
-    echo "Right Nozzle Touched! Remaining: " ^{10 - var.press_count}
+    M42 P2 S0
     M42 P1 S0
-    G4 S0.03
-    
-    ; Wait for probe to release (value returns to 1000)
-    while sensors.probes[0].value[0] != 1000
-        G4 S0.01
-        if (state.upTime - var.start_time) > var.timeout
-            M98 P"0:/sys/led/fault.g"
-            M291 R"Error" P"Time for releasing Right Nozzle from Bed has expired" S0
-            abort "Error: Time for releasing Right Nozzle from Bed has expired"
+    M42 P3 S1
+    if sensors.probes[0].value[0] == 0
+        set var.press_count = var.press_count - 1
+        M42 P3 S0
+        M42 P2 S1
+        G4 S0.03
+        while sensors.probes[0].value[0] == 0
+            G4 S0.01
+    if (state.upTime - var.start_time) > var.timeout
+        M98 P"0:/sys/led/fault.g"
+        M291 R"Error" P"Time for touching Right Nozzle to Bed has expired" S1 T0
+        abort "Error: Time for touching Right Nozzle to Bed has expired"
 
 M98 P"0:/sys/led/end.g"
 M98 P"0:/sys/led/resetstatus.g"
+M292
 
 
 
@@ -136,7 +123,7 @@ G4 S1
 ; 3 - Attach the Z-Probe to the holder ============================================================================
 ; check if z-probe value is 1000
 if sensors.probes[0].value[0] == 1000
-    M291 R"Attach the Z-Probe to the holder" P"Attach the Z-Probe to the holder, Z - Probe value should change to 0" S1 T60
+    M291 R"Attach the Z-Probe to the holder" P"Attach the Z-Probe to the holder, Z - Probe value should change to 0" S1 T0
 else
     M98 P"0:/sys/led/fault.g"
     abort "Error: S3 Z-Probe value is not 1000"
@@ -154,7 +141,7 @@ else
     abort "Error: S3 Probe was not recognized"
 
 
-
+M292
 M98 P"0:/sys/led/start_cold.g"
 G4 S1
 
@@ -166,40 +153,31 @@ if sensors.probes[0].value[0] != 0
     M98 P"0:/sys/led/fault.g"
     abort "Error: S4 Probe was not attached"
 
-M291 R"Testing Z-Probe Click" P"Click the Z-Probe 10x and wait for light signal" S1 T60
+M291 R"Testing Z-Probe Click" P"Click the Z-Probe 10x and wait for light signal" S1 T0
 set var.press_count = 10
 set var.start_time = state.upTime
 
 while var.press_count > 0
     M106 P6 S0 B0
-    M42 P2 S1
-    M42 P1 S1
-    
-    ; Wait for probe to click (value changes to 1000)
-    while sensors.probes[0].value[0] != 1000
-        G4 P100
-        if (state.upTime - var.start_time) > var.timeout
-            M98 P"0:/sys/led/fault.g"
-            M291 R"Error" P"Time for clicking Z-Probe has expired" S0
-            abort "Error: Time for clicking Z-Probe has expired"
-    
-    set var.press_count = var.press_count - 1
-    echo "Z-Probe Clicked! Remaining: " ^{10 - var.press_count}
+    M42 P2 S0
     M42 P1 S0
-    G4 S0.03
-    
-    ; Wait for probe to release (value returns to 0)
-    while sensors.probes[0].value[0] != 0
-        G4 S0.01
-        if (state.upTime - var.start_time) > var.timeout
-            M98 P"0:/sys/led/fault.g"
-            M291 R"Error" P"Time for releasing Z-Probe has expired" S0
-            abort "Error: Time for releasing Z-Probe has expired"
+    M42 P3 S1
+    if sensors.probes[0].value[0] == 1000
+        set var.press_count = var.press_count - 1
+        M42 P3 S0
+        M42 P2 S1
+        G4 S0.03
+        while sensors.probes[0].value[0] == 1000
+            G4 S0.01
+    if (state.upTime - var.start_time) > var.timeout
+        M98 P"0:/sys/led/fault.g"
+        M291 R"Error" P"Time for clicking Z-Probe has expired" S1 T0
+        abort "Error: Time for clicking Z-Probe has expired"
 
 M98 P"0:/sys/led/end.g"
 M98 P"0:/sys/led/resetstatus.g"
 
 
 M98 P"0:/macros/System/Calibration/QC/Disable Probe" ; Disable probe
-
 M98 P"0:/sys/led/resetstatus.g"
+M292
