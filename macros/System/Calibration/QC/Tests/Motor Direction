@@ -1,32 +1,37 @@
+M98 P"0:/sys/led/resetstatus.g"
+
 ; Relax all XYU motors before manual movement test (in case of restart without homing)
 M84 XYU
 G4 S1
 
 M564 H0
 
-M291 R"Move Tools by Hand Test" P"Manually move both tool heads along X, Y, and U axes.<br><br>Check that movement is smooth and without binding.<br><br>Pay attention to any unusual resistance or sounds." S4 K{"Start Test","Skip","Cancel"}
-if input == 1
-    M99
-elif input == 2
-    abort "Test cancelled by user"
-
-M291 R"Move XYU Axes Manually" P"Manually move both tool heads by hand.<br>Test all axes: X (left tool), U (right tool), and Y (gantry)." S3 X1 Y1 U1
-
-M291 R"Confirm Tool Movement" P"Confirm that all tool movements were smooth without binding or unusual resistance." S4 K{"Movement Smooth","Cancel"}
+M291 R"Move Tools by Hand Test" P"Manually move both tool heads along X, Y, and U axes.<br><br>Check that movement is smooth and without binding.<br><br>Pay attention to any unusual resistance or sounds." S4 K{"Movement was Smooth","Cancel"}
 if input == 1
     abort "Test cancelled by user"
+
+M291 R"Move XYU Axes Manually" P"Manually move both tool heads by hand.<br>Test all axes: X (left tool), U (right tool), and Y (Cross Bar)." S3 X1 Y1 U1
 
 M302 P0
-M564 H1
-
-M291 R"Z - Motor Connection Test" P"Each motor will move in sequence: Left, Right, Rear" S4 K{"Test","Skip","Cancel"}
-if input == 1
-    M99
-elif input == 2
-    abort "Test cancelled by user"
-
 
 M564 H0
+M291 R"Z - Motor Connection Test" P"Each motor will move in sequence: Left, Right, Rear" S4 K{"Test","Raise Up","Skip","Cancel"}
+if input == 1
+    ; Raise Up option - move Z-axis up by 25mm
+    M564 H0 ; Ensure movement without homing is allowed
+    G91 ; Set to relative positioning
+    G1 Z-25 F18000 ; Move Z-axis up by 25mm (negative Z = up)
+    G90 ; Set to absolute positioning
+    M400 ; Wait for movement to complete
+    M291 R"Z - Motor Connection Test" P"Z-axis raised by 25mm.<br><br>Each motor will move in sequence: Left, Right, Rear" S4 K{"Test","Skip","Cancel"}
+    if input == 1
+        M99
+    elif input == 2
+        abort "Test cancelled by user"
+elif input == 2
+    M99
+elif input == 3
+    abort "Test cancelled by user"
 
 M913 Z75 ; Reduce Z-axis current to 75% for safe motor testing
 
