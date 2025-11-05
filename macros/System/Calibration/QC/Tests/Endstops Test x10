@@ -33,7 +33,6 @@ while var.press_count > 0
     M42 P3 S1
     if sensors.endstops[1].triggered
         set var.press_count = var.press_count - 1
-        echo "Left Y-axis Pressed! Remaining: " ^{10 - var.press_count}
         M42 P3 S0
         M42 P2 S1
         G4 S0.03
@@ -68,7 +67,6 @@ while var.press_count > 0
     M42 P3 S1
     if sensors.endstops[1].triggered
         set var.press_count = var.press_count - 1
-        echo "Right Y-axis Pressed! Remaining: " ^{10 - var.press_count}
         M42 P3 S0
         M42 P2 S1
         G4 S0.03
@@ -106,7 +104,6 @@ while var.press_count > 0
     M42 P3 S1
     if sensors.endstops[0].triggered
         set var.press_count = var.press_count - 1
-        echo "X-axis Pressed! Remaining: " ^{10 - var.press_count}
         M42 P3 S0
         M42 P2 S1
         G4 S0.03
@@ -141,7 +138,6 @@ while var.press_count > 0
     M42 P3 S1
     if sensors.endstops[3].triggered
         set var.press_count = var.press_count - 1
-        echo "U-axis Pressed! Remaining: " ^{10 - var.press_count}
         M42 P3 S0
         M42 P2 S1
         G4 S0.03
@@ -193,7 +189,6 @@ elif input == 0
 
         if var.lastButtonState == 1 || var.currentButtonState == 0
             set var.press_count = var.press_count - 1
-            echo "Left Filament Sensor Pressed! Remaining: " ^{10 - var.press_count}
 
         if (state.upTime - var.start_time) > var.timeout
             M98 P"0:/sys/led/fault.g"
@@ -240,7 +235,6 @@ elif input == 0
 
         if var.secondLastButtonState == 1 || var.secondCurrentButtonState == 0
             set var.press_count = var.press_count - 1
-            echo "Right Filament Sensor Pressed! Remaining: " ^{10 - var.press_count}
 
         if (state.upTime - var.start_time) > var.timeout
             M98 P"0:/sys/led/fault.g"
