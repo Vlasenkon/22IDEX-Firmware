@@ -1,5 +1,5 @@
 if !exists(param.A)
-  M291 S2 R"Use Auto Calibration macro" P"Using separate calibration macros may cause issues.<br>Please use the Auto Calibration macro"
+  M291 S1 T0 R"Use Auto Calibration macro" P"Using separate calibration macros may cause issues.<br>Please use the Auto Calibration macro"
   abort "Error: Auto Calibration macro required."
 
 
