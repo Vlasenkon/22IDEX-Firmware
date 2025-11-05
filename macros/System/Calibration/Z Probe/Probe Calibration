@@ -1,3 +1,24 @@
+; Check if probe is detached before starting calibration
+M42 P4 S1
+M400
+G4 P500              ; Wait for Probe value to stabilize
+
+; If probe is attached, warn user and try to place it
+if sensors.probes[0].value[0] < 500
+    M42 P4 S0
+    M98 P"0:/sys/led/fault.g"
+    M291 R"Probe Attached" P"Please detach the probe from the tool head and place it on the holder in the correct orientation.<br><br><b>Important:</b> Magnets down, lever up." S3
+    M98 P"0:/sys/led/resetstatus.g"
+
+    ; Check again if probe is still attached
+    if sensors.probes[0].value[0] < 500
+        M42 P4 S0
+        M98 P"0:/sys/led/fault.g"
+        M291 S0 R"Probe Still Attached" P"Probe is still connected to the tool head. Please manually detach and place it correctly."
+        abort "Error: Probe is still connected"
+
+M42 P4 S0
+
 if !exists(global.probePickY)
   global probePickY = {move.axes[1].max}
 
