@@ -10,9 +10,7 @@ if input == 1
 elif input == 2
     abort "Test cancelled by user"
 
-M291 R"Move XYU Axes Manually" P"Manually move both tool heads by hand.<br>Test all axes: X (left tool), U (right tool), and Y (gantry)." S4 K{"Axes Tested","Cancel"} X1 Y1 U1
-if input == 1
-    abort "Test cancelled by user"
+M291 R"Move XYU Axes Manually" P"Manually move both tool heads by hand.<br>Test all axes: X (left tool), U (right tool), and Y (gantry)." S3 X1 Y1 U1
 
 M291 R"Confirm Tool Movement" P"Confirm that all tool movements were smooth without binding or unusual resistance." S4 K{"Movement Smooth","Cancel"}
 if input == 1

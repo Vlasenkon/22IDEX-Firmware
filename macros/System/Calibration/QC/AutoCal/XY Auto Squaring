@@ -88,9 +88,7 @@ while iterations < 2000
   if result == 0
     M98 P"0:/sys/led/pause.g"
     G1 Z{var.T1_Ref_Z + 1}
-    M291 R"Position Nozzle Above Hole" P"Manually position the nozzle directly above the rear left hole center using XY jog controls." S4 K{"Positioned","Cancel"} U1 Y1
-    if input == 1
-        abort "Test cancelled by user"
+    M291 R"Position Nozzle Above Hole" P"Manually position the nozzle directly above the rear left hole center using XY jog controls." S3 U1 Y1
     ; Verify user positioned correctly by slow diving again
     M558 K0 P8 C"1.io4.in" H5 F60 T18000              ; Slow speed for verification
     G38.4 K0 Z{var.T1_Ref_Z - 1.0} F60                ; Dive slightly deeper to verify positioning
@@ -196,9 +194,7 @@ while iterations < 2000
   if result == 0
     M98 P"0:/sys/led/pause.g"
     G1 Z{var.T1_Ref_Z + 1}
-    M291 R"Position Nozzle Above Hole" P"Manually position the nozzle directly above the rear right hole center using XY jog controls." S4 K{"Positioned","Cancel"} U1 Y1
-    if input == 1
-        abort "Test cancelled by user"
+    M291 R"Position Nozzle Above Hole" P"Manually position the nozzle directly above the rear right hole center using XY jog controls." S3 U1 Y1
     ; Verify user positioned correctly by slow diving again
     M558 K0 P8 C"1.io4.in" H5 F60 T18000              ; Slow speed for verification
     G38.4 K0 Z{var.T1_Ref_Z - 1.0} F60                ; Dive slightly deeper to verify positioning
@@ -311,9 +307,7 @@ while iterations < 2000
   if result == 0
     M98 P"0:/sys/led/pause.g"
     G1 Z{var.T1_Ref_Z + 1}
-    M291 R"Position Nozzle Above Hole" P"Manually position the nozzle directly above the front right hole center using XY jog controls." S4 K{"Positioned","Cancel"} U1 Y1
-    if input == 1
-        abort "Test cancelled by user"
+    M291 R"Position Nozzle Above Hole" P"Manually position the nozzle directly above the front right hole center using XY jog controls." S3 U1 Y1
     ; Verify user positioned correctly by slow diving again
     M558 K0 P8 C"1.io4.in" H5 F60 T18000              ; Slow speed for verification
     G38.4 K0 Z{var.T1_Ref_Z - 1.0} F60                ; Dive slightly deeper to verify positioning
