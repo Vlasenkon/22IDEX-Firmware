@@ -16,9 +16,13 @@ G10 P3 S{var.temp} R{var.temp}
 M140 S150 R150
 M141 S100 R100
 
-; Homing XYU axis if they are not homed
+; Homing XYU axis
 if !move.axes[0].homed || !move.axes[1].homed || !move.axes[2].homed || !move.axes[3].homed
-  M98 P"homeall.g"
+  M98 P"homeall.g"                    ; Home all if any axis is not homed
+else
+  G28 Y                               ; Home Y axis
+  G28 X                               ; Home X axis
+  G28 U                               ; Home U axis
 
 G90
 G1 Z300 F18000
@@ -205,7 +209,7 @@ if var.errorDetected
     set var.failureMsg = var.failureMsg ^ "Test duration: " ^ {floor(var.XY_Mov_Time/60)} ^ " min<br>"
     set var.failureMsg = var.failureMsg ^ "Results: Settings→Testing→Motion_Accuracy_Test.csv"
     
-    M291 S2 R"Motion Test Failed" P{var.failureMsg} T0
+    M291 S2 R"Motion Test Failed" P{var.failureMsg}
 else
     echo "=== MOTION ACCURACY TEST COMPLETE ==="
     echo "All iterations completed successfully within tolerance"
@@ -218,4 +222,4 @@ else
     set var.successMsg = var.successMsg ^ "Bed: " ^ {var.bed} ^ "°C, Chamber: " ^ {var.chamber} ^ "°C<br><br>"
     set var.successMsg = var.successMsg ^ "All within tolerance.<br>Results: Settings→Testing→Motion_Accuracy_Test.csv"
     
-    M291 S2 R"Motion Test Complete" P{var.successMsg} T0
+    M291 S2 R"Motion Test Complete" P{var.successMsg}
