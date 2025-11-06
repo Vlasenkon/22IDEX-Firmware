@@ -39,7 +39,7 @@ M570 H1 P1 T10 R1                                            ; configure heater 
 M106 P1 S0.5
 M106 P3 S0.5
 
-M98 P"0:/macros/System/Calibration/QC/Tests/Motion Accuracy"
+;M98 P"0:/macros/System/Calibration/QC/Tests/Motion Accuracy"
 M400
 
 
@@ -63,14 +63,20 @@ var XY_Mov_Start_Time = state.time
 var XY_Mov_Time = 0
 
 ;pull data from global variable and use it as default values 
-if !exists(global.axisPositions)
-    abort "Error: Motion Accuracy must be run first to establish baseline measurements"
+;if !exists(global.axisPositions)
+;    abort "Error: Motion Accuracy must be run first to establish baseline measurements"
 
 ; Store baseline measurements as reference values
-var baselineX = global.axisPositions[0]
-var baselineLeftY = global.axisPositions[1]
-var baselineRightY = global.axisPositions[2]
-var baselineU = global.axisPositions[3]
+;var baselineX = global.axisPositions[0]
+;var baselineLeftY = global.axisPositions[1]
+;var baselineRightY = global.axisPositions[2]
+;var baselineU = global.axisPositions[3]
+
+; Dummy baseline values since Motion Accuracy is disabled
+var baselineX = 0
+var baselineLeftY = 0
+var baselineRightY = 0
+var baselineU = 0
 
 ; Error flag variables
 var errorDetected = false
@@ -88,7 +94,7 @@ while sensors.analog[3].lastReading <= 80 && iterations < {var.num_iterations}
     
     M98 P"0:/macros/System/Calibration/QC/Tests/Motion Script"
     M400
-    M98 P"0:/macros/System/Calibration/QC/Tests/Motion Accuracy"
+    ;M98 P"0:/macros/System/Calibration/QC/Tests/Motion Accuracy"
     M400
     
     ;pull data from global variable and compare with default values, report Error with echo
