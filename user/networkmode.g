@@ -1,1 +1,1 @@
-M552 I1 S2 ; Enable WiFi AP Mode
+M552 I1 S1 ; Enable WiFi Client Mode

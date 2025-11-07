@@ -1,0 +1,10 @@
+=== Motion Accuracy Debug Log - 2025-11-07T16:07:08 ===
+\n>>> ITERATION 0 START <<<
+After T0 setup - X:-208.000 Y:150.000 U:208.000
+After move to starting - X:-183.000 Y:-150.000 U:183.000
+\n>>> ITERATION 1 START <<<
+After T0 setup - X:-208.000 Y:172.000 U:208.000
+After move to starting - X:-183.000 Y:-150.000 U:183.000
+After Y precise approach - Y:-175.000
+After G1 Y172 command - Y:172.000 (Expected: 172)
+After X starting position - X:-183.000

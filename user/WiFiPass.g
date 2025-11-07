@@ -1,1 +1,1 @@
-M587 S"AddWise" P"SubtractWise"
+M587 S"AddWiseWeb" P"SubtractWise"

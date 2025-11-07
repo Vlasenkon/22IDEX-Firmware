@@ -137,8 +137,7 @@ G1 Z{var.T0_Ref_Z + 5}
 
 
 T1 ; Select Tool 1 before wiping
-M98 P"0:/sys/nozzlewipe.g" T1
-T0 ; Return to Tool 0
+M98 P"0:/sys/nozzlewipe.g"
 
 ;==== T1 Z refference point ====
 G90

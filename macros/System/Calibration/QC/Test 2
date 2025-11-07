@@ -1,5 +1,5 @@
 ; Prompt user to confirm starting the test
-M291 R"Start Test 2" P"Do you want to start Test 2?" K{"Start Test","Cancel"} S4 J1
+M291 R"Start Test 2" P"Do you want to start Test 2?" K{"Start Test","Cancel"} S4
 
 ; Check if user selected to start the test (index 0 = Start Test, index 1 = Cancel)
 if input == 1

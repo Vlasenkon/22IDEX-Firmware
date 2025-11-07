@@ -1,0 +1,533 @@
+power up + 00:00:02 [info] Event logging started at level warn
+power up + 00:00:02 [info] Running: Duet 3 MB6HC v1.02b: 3.6.0+1 (2025-06-10 09:25:38)
+power up + 00:00:06 [warn] Ethernet is disabled.
+power up + 00:00:09 [warn] WiFi module started
+power up + 00:00:10 [warn] WiFi module is providing access point 22 IDEX, IP address 192.168.0.1
+power up + 00:00:45 [warn] HTTP client 192.168.0.2 login succeeded (session key 3889511367)
+2025-11-05 15:16:03 [warn] Date and time set at power up + 00:00:45
+2025-11-05 15:17:24 [warn] WiFi module started
+2025-11-05 15:17:39 [warn] WiFi module started
+2025-11-05 15:17:44 [warn] WiFi module is connected to access point AddWiseWeb, IP address 192.168.0.116
+2025-11-05 15:17:45 [warn] HTTP client 192.168.0.2 login succeeded (session key 3584228212)
+2025-11-05 15:17:54 [warn] WiFi module started
+2025-11-05 15:17:57 [warn] WiFi module is providing access point 22 IDEX, IP address 192.168.0.1
+2025-11-05 15:18:24 [warn] HTTP client 192.168.0.2 login succeeded (session key 2884939335)
+2025-11-05 15:18:50 [warn] WiFi module started
+2025-11-05 15:18:59 [warn] Error: WiFi module reported: Authentication failed
+2025-11-05 15:18:59 [warn] WiFi module is idle
+2025-11-05 15:19:03 [warn] WiFi module is connected to access point AddWiseWeb, IP address 192.168.0.116
+2025-11-05 15:19:04 [warn] HTTP client 192.168.0.2 login succeeded (session key 4003484580)
+2025-11-05 15:19:07 [warn] HTTP client 192.168.0.9 login succeeded (session key 1459893084)
+2025-11-05 15:19:49 [warn] WiFi module started
+2025-11-05 15:20:11 [warn] WiFi module started
+2025-11-05 15:20:19 [warn] WiFi module is connected to access point AddWiseWeb, IP address 192.168.0.116
+2025-11-05 15:20:19 [warn] HTTP client 192.168.0.2 login succeeded (session key 3516008148)
+2025-11-05 15:20:21 [warn] HTTP client 192.168.0.9 login succeeded (session key 1170945891)
+power up + 00:00:02 [info] Event logging started at level warn
+power up + 00:00:02 [info] Running: Duet 3 MB6HC v1.02b: 3.6.0+1 (2025-06-10 09:25:38)
+power up + 00:00:06 [warn] Ethernet is disabled.
+power up + 00:00:09 [warn] WiFi module started
+power up + 00:00:23 [warn] Error: WiFi module reported: Authentication failed
+power up + 00:00:23 [warn] WiFi module is idle
+power up + 00:00:43 [warn] Network stopped
+power up + 00:01:03 [warn] Network stopped
+power up + 00:01:06 [warn] WiFi module started
+power up + 00:01:11 [warn] WiFi module is connected to access point AddWiseWeb, IP address 192.168.0.116
+power up + 00:01:12 [warn] HTTP client 192.168.0.2 login succeeded (session key 3583834914)
+2025-11-05 15:22:03 [warn] Date and time set at power up + 00:01:12
+2025-11-05 15:22:03 [warn] HTTP client 192.168.0.9 login succeeded (session key 714638108)
+2025-11-05 15:22:06 [warn] Error: Cannot delete file 0:/sys/runonce.g because it is open
+2025-11-05 15:26:17 [warn] HTTP client 192.168.0.2 login succeeded (session key 1277965137)
+2025-11-05 15:54:23 [warn] HTTP client 192.168.0.2 login succeeded (session key 1395782703)
+2025-11-05 16:13:54 [warn] HTTP client 192.168.0.2 login succeeded (session key 2592414944)
+2025-11-05 16:18:33 [warn] HTTP client 192.168.0.2 login succeeded (session key 3777175446)
+2025-11-05 16:21:15 [warn] HTTP client 192.168.0.2 login succeeded (session key 1090859728)
+2025-11-05 16:21:38 [warn] HTTP client 192.168.0.2 login succeeded (session key 1655078952)
+2025-11-05 16:23:31 [warn] HTTP client 192.168.0.2 login succeeded (session key 3120678381)
+2025-11-05 16:23:50 [warn] HTTP client 192.168.0.2 login succeeded (session key 1029448781)
+2025-11-05 16:24:06 [warn] HTTP client 192.168.0.2 login succeeded (session key 1496610282)
+2025-11-05 16:54:24 [warn] HTTP client 192.168.0.9 login succeeded (session key 2013478464)
+2025-11-05 17:00:59 [warn] HTTP client 192.168.0.2 login succeeded (session key 1351045990)
+power up + 00:00:02 [info] Event logging started at level warn
+power up + 00:00:02 [info] Running: Duet 3 MB6HC v1.02b: 3.6.0+1 (2025-06-10 09:25:38)
+power up + 00:00:06 [warn] Ethernet is disabled.
+power up + 00:00:09 [warn] WiFi module started
+power up + 00:00:18 [warn] WiFi module is connected to access point AddWiseWeb, IP address 192.168.0.116
+power up + 00:00:20 [warn] HTTP client 192.168.0.2 login succeeded (session key 1314675857)
+2025-11-06 09:34:17 [warn] Date and time set at power up + 00:00:20
+2025-11-06 09:43:56 [warn] HTTP client 192.168.0.2 login succeeded (session key 2667356173)
+2025-11-06 09:46:22 [warn] HTTP client 192.168.0.2 login succeeded (session key 3698660427)
+2025-11-06 09:46:33 [warn] HTTP client 192.168.0.2 login succeeded (session key 3664442809)
+2025-11-06 09:48:07 [warn] HTTP client 192.168.0.2 login succeeded (session key 3218302406)
+2025-11-06 09:48:18 [warn] HTTP client 192.168.0.2 login succeeded (session key 3236615818)
+2025-11-06 09:49:05 [warn] HTTP client 192.168.0.2 login succeeded (session key 3734069721)
+2025-11-06 09:51:12 [warn] HTTP client 192.168.0.9 login succeeded (session key 4143469400)
+2025-11-06 09:51:22 [warn] HTTP client 192.168.0.9 login succeeded (session key 634392442)
+2025-11-06 10:07:32 [warn] Leadscrew adjustments made: -8.054 2.820 3.071, points used 3, (mean, deviation) before (-0.094, 0.941) after (0.000, 0.000)
+2025-11-06 10:07:50 [warn] Leadscrew adjustments made: 0.305 0.272 0.203, points used 4, (mean, deviation) before (0.263, 0.036) after (0.000, 0.007)
+2025-11-06 10:27:00 [warn] Leadscrew adjustments made: 0.084 0.050 -0.146, points used 3, (mean, deviation) before (0.006, 0.018) after (0.000, 0.000)
+2025-11-06 10:27:18 [warn] Leadscrew adjustments made: 0.162 0.099 0.218, points used 4, (mean, deviation) before (0.147, 0.055) after (-0.000, 0.037)
+2025-11-06 10:38:19 [warn] Warning: 12V under-voltage event (9.5V)
+power up + 00:00:02 [info] Event logging started at level warn
+power up + 00:00:02 [info] Running: Duet 3 MB6HC v1.02b: 3.6.0+1 (2025-06-10 09:25:38)
+power up + 00:00:06 [warn] Ethernet is disabled.
+power up + 00:00:09 [warn] WiFi module started
+power up + 00:00:19 [warn] Error: WiFi module reported: Authentication failed
+power up + 00:00:19 [warn] WiFi module is idle
+power up + 00:00:23 [warn] WiFi module is connected to access point AddWiseWeb, IP address 192.168.0.116
+power up + 00:00:23 [warn] HTTP client 192.168.0.9 login succeeded (session key 4244873072)
+2025-11-06 10:42:11 [warn] Date and time set at power up + 00:00:23
+2025-11-06 10:42:11 [warn] HTTP client 192.168.0.2 login succeeded (session key 2519000971)
+2025-11-06 10:43:41 [warn] Leadscrew adjustments made: -0.160 -0.051 0.208, points used 3, (mean, deviation) before (-0.010, 0.026) after (-0.000, 0.000)
+2025-11-06 10:44:01 [warn] Leadscrew adjustments made: -1.028 0.044 0.226, points used 4, (mean, deviation) before (-0.193, 0.465) after (0.000, 0.090)
+2025-11-06 10:53:01 [warn] Leadscrew adjustments made: 0.022 0.143 -0.545, points used 3, (mean, deviation) before (-0.079, 0.058) after (-0.000, 0.000)
+2025-11-06 10:53:19 [warn] Leadscrew adjustments made: 0.208 0.080 0.256, points used 4, (mean, deviation) before (0.161, 0.079) after (-0.000, 0.051)
+2025-11-06 10:58:15 [warn] Leadscrew adjustments made: -0.103 -0.039 -0.103, points used 3, (mean, deviation) before (-0.074, 0.007) after (-0.000, 0.000)
+2025-11-06 10:58:33 [warn] Leadscrew adjustments made: 0.188 0.182 0.226, points used 4, (mean, deviation) before (0.195, 0.043) after (-0.000, 0.040)
+2025-11-06 11:13:39 [warn] Leadscrew adjustments made: -5.907 1.175 2.352, points used 3, (mean, deviation) before (-0.445, 0.638) after (0.000, 0.000)
+2025-11-06 11:13:56 [warn] Leadscrew adjustments made: 6.187 -0.782 -2.019, points used 4, (mean, deviation) before (0.742, 2.978) after (-0.000, 0.034)
+2025-11-06 11:35:02 [warn] HTTP client 192.168.0.2 login succeeded (session key 3702501148)
+2025-11-06 11:36:58 [warn] Leadscrew adjustments made: -0.019 -0.034 0.027, points used 3, (mean, deviation) before (-0.013, 0.005) after (-0.000, 0.000)
+2025-11-06 11:37:15 [warn] Leadscrew adjustments made: 0.267 0.259 0.242, points used 4, (mean, deviation) before (0.257, 0.045) after (0.000, 0.044)
+power up + 00:00:02 [info] Event logging started at level warn
+power up + 00:00:02 [info] Running: Duet 3 MB6HC v1.02b: 3.6.0+1 (2025-06-10 09:25:38)
+power up + 00:00:06 [warn] Ethernet is disabled.
+power up + 00:00:09 [warn] WiFi module started
+power up + 00:00:18 [warn] Error: WiFi module reported: Authentication failed
+power up + 00:00:18 [warn] WiFi module is idle
+power up + 00:00:22 [warn] WiFi module is connected to access point AddWiseWeb, IP address 192.168.0.116
+power up + 00:00:25 [warn] HTTP client 192.168.0.2 login succeeded (session key 2368002401)
+2025-11-06 11:48:42 [warn] Date and time set at power up + 00:00:25
+2025-11-06 12:10:52 [warn] HTTP client 192.168.0.9 login succeeded (session key 2123313448)
+2025-11-06 12:14:17 [warn] HTTP client 192.168.0.2 login succeeded (session key 3478229409)
+2025-11-06 12:14:58 [warn] HTTP client 192.168.0.2 login succeeded (session key 1936188013)
+2025-11-06 12:16:36 [warn] Leadscrew adjustments made: -0.111 -0.046 -0.035, points used 3, (mean, deviation) before (-0.061, 0.006) after (0.000, 0.000)
+2025-11-06 12:16:54 [warn] Leadscrew adjustments made: 0.212 0.113 0.170, points used 4, (mean, deviation) before (0.155, 0.063) after (-0.000, 0.053)
+Z-homing iteration test completed: 3 iterations successful
+power up + 00:00:02 [info] Event logging started at level warn
+power up + 00:00:02 [info] Running: Duet 3 MB6HC v1.02b: 3.6.0+1 (2025-06-10 09:25:38)
+power up + 00:00:06 [warn] Ethernet is disabled.
+power up + 00:00:09 [warn] WiFi module started
+power up + 00:00:18 [warn] Error: WiFi module reported: Authentication failed
+power up + 00:00:18 [warn] WiFi module is idle
+power up + 00:00:22 [warn] WiFi module is connected to access point AddWiseWeb, IP address 192.168.0.116
+power up + 00:00:23 [warn] HTTP client 192.168.0.9 login succeeded (session key 2342400926)
+2025-11-06 12:32:18 [warn] Date and time set at power up + 00:00:23
+2025-11-06 12:32:18 [warn] HTTP client 192.168.0.2 login succeeded (session key 3000015587)
+2025-11-06 12:34:01 [warn] Leadscrew adjustments made: 4.136 3.876 3.983, points used 3, (mean, deviation) before (3.977, 0.023) after (-0.000, 0.000)
+2025-11-06 12:34:18 [warn] Leadscrew adjustments made: 0.398 0.598 0.405, points used 4, (mean, deviation) before (0.493, 0.084) after (-0.000, 0.037)
+power up + 00:00:02 [info] Event logging started at level warn
+power up + 00:00:02 [info] Running: Duet 3 MB6HC v1.02b: 3.6.0+1 (2025-06-10 09:25:38)
+power up + 00:00:06 [warn] Ethernet is disabled.
+power up + 00:00:09 [warn] WiFi module started
+power up + 00:00:18 [warn] Error: WiFi module reported: Authentication failed
+power up + 00:00:18 [warn] WiFi module is idle
+power up + 00:00:22 [warn] WiFi module is connected to access point AddWiseWeb, IP address 192.168.0.116
+power up + 00:00:23 [warn] HTTP client 192.168.0.9 login succeeded (session key 2350928360)
+2025-11-06 12:35:38 [warn] Date and time set at power up + 00:00:23
+2025-11-06 12:35:38 [warn] HTTP client 192.168.0.2 login succeeded (session key 1632433969)
+2025-11-06 12:37:05 [warn] Leadscrew adjustments made: -0.018 0.004 0.059, points used 3, (mean, deviation) before (0.013, 0.005) after (0.000, 0.000)
+2025-11-06 12:37:22 [warn] Leadscrew adjustments made: 0.398 0.505 0.363, points used 4, (mean, deviation) before (0.439, 0.064) after (-0.000, 0.040)
+power up + 00:00:02 [info] Event logging started at level warn
+power up + 00:00:02 [info] Running: Duet 3 MB6HC v1.02b: 3.6.0+1 (2025-06-10 09:25:38)
+power up + 00:00:06 [warn] Ethernet is disabled.
+power up + 00:00:09 [warn] WiFi module started
+power up + 00:00:14 [warn] WiFi module is connected to access point AddWiseWeb, IP address 192.168.0.116
+power up + 00:00:14 [warn] HTTP client 192.168.0.9 login succeeded (session key 3286781906)
+2025-11-06 12:40:28 [warn] Date and time set at power up + 00:00:14
+2025-11-06 12:40:28 [warn] HTTP client 192.168.0.2 login succeeded (session key 4030034392)
+2025-11-06 12:40:30 [warn] HTTP client 192.168.0.2 login succeeded (session key 0)
+2025-11-06 12:41:55 [warn] Leadscrew adjustments made: 0.041 -0.034 0.118, points used 3, (mean, deviation) before (0.028, 0.013) after (-0.000, 0.000)
+2025-11-06 12:42:13 [warn] Leadscrew adjustments made: 0.402 0.464 0.369, points used 4, (mean, deviation) before (0.422, 0.050) after (-0.000, 0.039)
+power up + 00:00:02 [info] Event logging started at level warn
+power up + 00:00:02 [info] Running: Duet 3 MB6HC v1.02b: 3.6.0+1 (2025-06-10 09:25:38)
+power up + 00:00:06 [warn] Ethernet is disabled.
+power up + 00:00:09 [warn] WiFi module started
+power up + 00:00:18 [warn] Error: WiFi module reported: Authentication failed
+power up + 00:00:18 [warn] WiFi module is idle
+power up + 00:00:22 [warn] WiFi module is connected to access point AddWiseWeb, IP address 192.168.0.116
+power up + 00:00:23 [warn] HTTP client 192.168.0.9 login succeeded (session key 1701860811)
+2025-11-06 12:46:10 [warn] Date and time set at power up + 00:00:23
+2025-11-06 12:46:10 [warn] HTTP client 192.168.0.2 login succeeded (session key 3060740252)
+2025-11-06 12:47:31 [warn] Leadscrew adjustments made: 0.004 -0.089 0.173, points used 3, (mean, deviation) before (0.008, 0.022) after (0.000, 0.000)
+2025-11-06 12:47:49 [warn] Leadscrew adjustments made: 0.403 0.476 0.300, points used 4, (mean, deviation) before (0.410, 0.073) after (-0.000, 0.043)
+2025-11-06 12:49:06 [warn] Error: in file macro line 79 column 39: meta command: expected ','
+power up + 00:00:02 [info] Event logging started at level warn
+power up + 00:00:02 [info] Running: Duet 3 MB6HC v1.02b: 3.6.0+1 (2025-06-10 09:25:38)
+power up + 00:00:06 [warn] Ethernet is disabled.
+power up + 00:00:09 [warn] WiFi module started
+power up + 00:00:18 [warn] Error: WiFi module reported: Authentication failed
+power up + 00:00:18 [warn] WiFi module is idle
+power up + 00:00:22 [warn] WiFi module is connected to access point AddWiseWeb, IP address 192.168.0.116
+power up + 00:00:23 [warn] HTTP client 192.168.0.9 login succeeded (session key 1392698665)
+2025-11-06 12:50:03 [warn] Date and time set at power up + 00:00:23
+2025-11-06 12:50:03 [warn] HTTP client 192.168.0.2 login succeeded (session key 1382240277)
+2025-11-06 12:51:23 [warn] Leadscrew adjustments made: 0.027 -0.076 0.134, points used 3, (mean, deviation) before (0.010, 0.019) after (-0.000, 0.000)
+2025-11-06 12:51:42 [warn] Leadscrew adjustments made: 0.367 0.464 0.327, points used 4, (mean, deviation) before (0.402, 0.064) after (-0.000, 0.043)
+power up + 00:00:02 [info] Event logging started at level warn
+power up + 00:00:02 [info] Running: Duet 3 MB6HC v1.02b: 3.6.0+1 (2025-06-10 09:25:38)
+power up + 00:00:06 [warn] Ethernet is disabled.
+power up + 00:00:09 [warn] WiFi module started
+power up + 00:00:18 [warn] Error: WiFi module reported: Authentication failed
+power up + 00:00:18 [warn] WiFi module is idle
+power up + 00:00:22 [warn] WiFi module is connected to access point AddWiseWeb, IP address 192.168.0.116
+power up + 00:00:25 [warn] HTTP client 192.168.0.2 login succeeded (session key 3919593627)
+2025-11-06 12:54:30 [warn] Date and time set at power up + 00:00:25
+2025-11-06 14:16:26 [warn] Warning: 12V under-voltage event (9.5V)
+power up + 00:00:02 [info] Event logging started at level warn
+power up + 00:00:02 [info] Running: Duet 3 MB6HC v1.02b: 3.6.0+1 (2025-06-10 09:25:38)
+power up + 00:00:06 [warn] Ethernet is disabled.
+power up + 00:00:09 [warn] WiFi module started
+power up + 00:00:20 [warn] WiFi module is connected to access point AddWiseWeb, IP address 192.168.0.116
+power up + 00:00:20 [warn] HTTP client 192.168.0.2 login succeeded (session key 162233256)
+2025-11-06 15:55:30 [warn] Date and time set at power up + 00:00:20
+2025-11-06 15:55:48 [warn] HTTP client 192.168.0.2 login succeeded (session key 2325118672)
+2025-11-06 15:56:11 [warn] HTTP client 192.168.0.9 login succeeded (session key 163832552)
+2025-11-06 15:59:03 [warn] Leadscrew adjustments made: 0.015 -0.044 -0.016, points used 3, (mean, deviation) before (-0.020, 0.005) after (-0.000, 0.000)
+2025-11-06 15:59:21 [warn] Leadscrew adjustments made: 0.297 0.250 0.208, points used 4, (mean, deviation) before (0.251, 0.054) after (-0.000, 0.044)
+power up + 00:00:02 [info] Event logging started at level warn
+power up + 00:00:02 [info] Running: Duet 3 MB6HC v1.02b: 3.6.0+1 (2025-06-10 09:25:38)
+power up + 00:00:06 [warn] Ethernet is disabled.
+power up + 00:00:09 [warn] WiFi module started
+power up + 00:00:14 [warn] WiFi module is connected to access point AddWiseWeb, IP address 192.168.0.116
+power up + 00:00:14 [warn] HTTP client 192.168.0.9 login succeeded (session key 206884301)
+2025-11-06 16:04:18 [warn] Date and time set at power up + 00:00:14
+2025-11-06 16:04:18 [warn] HTTP client 192.168.0.2 login succeeded (session key 2373721200)
+2025-11-06 16:04:21 [warn] HTTP client 192.168.0.2 login succeeded (session key 0)
+power up + 00:00:02 [info] Event logging started at level warn
+power up + 00:00:02 [info] Running: Duet 3 MB6HC v1.02b or later: 3.5.3 (2024-09-18 11:27:36)
+power up + 00:00:07 [warn] Ethernet is disabled.
+power up + 00:00:10 [warn] WiFi module started
+power up + 00:00:20 [warn] Error: WiFi module reported: Authentication failed
+power up + 00:00:20 [warn] WiFi module is idle
+power up + 00:00:24 [warn] WiFi module is connected to access point AddWiseWeb, IP address 192.168.0.116
+power up + 00:00:24 [warn] HTTP client 192.168.0.2 login succeeded (session key 3171970345)
+2025-11-06 16:09:21 [warn] Date and time set at power up + 00:00:24
+2025-11-06 16:09:22 [warn] HTTP client 192.168.0.9 login succeeded (session key 1497242106)
+2025-11-06 16:09:50 [warn] Error: Failed to switch off remote heater 2: Board 1 does not have heater 2
+2025-11-06 16:09:50 [warn] Error: Failed to switch off remote heater 3: Board 1 does not have heater 3
+2025-11-06 16:09:50 [info] Event logging stopped
+power up + 00:00:02 [info] Event logging started at level warn
+power up + 00:00:02 [info] Running: Duet 3 MB6HC v1.02b or later: 3.5.3 (2024-09-18 11:27:36)
+power up + 00:00:06 [warn] Ethernet is disabled.
+power up + 00:00:09 [warn] WiFi module started
+power up + 00:00:18 [warn] Error: WiFi module reported: Authentication failed
+power up + 00:00:18 [warn] WiFi module is idle
+power up + 00:00:22 [warn] WiFi module is connected to access point AddWiseWeb, IP address 192.168.0.116
+power up + 00:00:25 [warn] HTTP client 192.168.0.9 login succeeded (session key 488442894)
+2025-11-06 16:10:17 [warn] Date and time set at power up + 00:00:25
+2025-11-06 16:10:17 [warn] HTTP client 192.168.0.2 login succeeded (session key 1264153209)
+2025-11-06 16:11:59 [warn] Leadscrew adjustments made: -0.121 -0.062 0.062, points used 3, (mean, deviation) before (-0.044, 0.013) after (0.000, 0.000)
+2025-11-06 16:12:16 [warn] Leadscrew adjustments made: 0.290 0.273 0.153, points used 4, (mean, deviation) before (0.246, 0.073) after (-0.000, 0.053)
+power up + 00:00:02 [info] Event logging started at level warn
+power up + 00:00:02 [info] Running: Duet 3 MB6HC v1.02b or later: 3.5.3 (2024-09-18 11:27:36)
+power up + 00:00:06 [warn] Ethernet is disabled.
+power up + 00:00:09 [warn] WiFi module started
+power up + 00:00:14 [warn] WiFi module is connected to access point AddWiseWeb, IP address 192.168.0.116
+power up + 00:00:15 [warn] HTTP client 192.168.0.9 login succeeded (session key 2608523444)
+2025-11-06 16:13:22 [warn] Date and time set at power up + 00:00:15
+2025-11-06 16:13:22 [warn] HTTP client 192.168.0.2 login succeeded (session key 3920071092)
+2025-11-06 16:13:25 [warn] HTTP client 192.168.0.2 login succeeded (session key 0)
+2025-11-06 16:15:03 [warn] Leadscrew adjustments made: -0.152 0.048 -0.183, points used 3, (mean, deviation) before (-0.070, 0.024) after (-0.000, 0.000)
+2025-11-06 16:15:20 [warn] Leadscrew adjustments made: 0.350 0.200 0.368, points used 4, (mean, deviation) before (0.285, 0.082) after (-0.000, 0.054)
+power up + 00:00:02 [info] Event logging started at level warn
+power up + 00:00:02 [info] Running: Duet 3 MB6HC v1.02b or later: 3.5.3 (2024-09-18 11:27:36)
+power up + 00:00:06 [warn] Ethernet is disabled.
+power up + 00:00:09 [warn] WiFi module started
+power up + 00:00:18 [warn] Error: WiFi module reported: Authentication failed
+power up + 00:00:18 [warn] WiFi module is idle
+power up + 00:00:22 [warn] WiFi module is connected to access point AddWiseWeb, IP address 192.168.0.116
+power up + 00:00:23 [warn] HTTP client 192.168.0.2 login succeeded (session key 2352791749)
+2025-11-06 16:17:37 [warn] Date and time set at power up + 00:00:23
+2025-11-06 16:17:37 [warn] HTTP client 192.168.0.9 login succeeded (session key 4154695854)
+2025-11-06 16:20:51 [warn] Leadscrew adjustments made: -0.079 -0.148 -0.033, points used 3, (mean, deviation) before (-0.098, 0.010) after (0.000, 0.000)
+2025-11-06 16:21:08 [warn] Leadscrew adjustments made: 0.335 0.310 0.319, points used 4, (mean, deviation) before (0.319, 0.045) after (-0.000, 0.045)
+power up + 00:00:02 [info] Event logging started at level warn
+power up + 00:00:02 [info] Running: Duet 3 MB6HC v1.02b or later: 3.5.3 (2024-09-18 11:27:36)
+power up + 00:00:06 [warn] Ethernet is disabled.
+power up + 00:00:09 [warn] WiFi module started
+power up + 00:00:18 [warn] Error: WiFi module reported: Authentication failed
+power up + 00:00:18 [warn] WiFi module is idle
+power up + 00:00:22 [warn] WiFi module is connected to access point AddWiseWeb, IP address 192.168.0.116
+power up + 00:00:23 [warn] HTTP client 192.168.0.9 login succeeded (session key 4008442680)
+2025-11-06 16:22:52 [warn] Date and time set at power up + 00:00:23
+2025-11-06 16:22:53 [warn] HTTP client 192.168.0.2 login succeeded (session key 1672935167)
+2025-11-06 16:24:41 [warn] Leadscrew adjustments made: -0.032 -0.097 -0.109, points used 3, (mean, deviation) before (-0.083, 0.006) after (0.000, 0.000)
+2025-11-06 16:24:59 [warn] Leadscrew adjustments made: 0.329 0.328 0.287, points used 4, (mean, deviation) before (0.317, 0.048) after (-0.000, 0.045)
+2025-11-06 16:35:27 [warn] HTTP client 192.168.0.2 login succeeded (session key 1620961763)
+2025-11-06 16:35:55 [warn] HTTP client 192.168.0.2 login succeeded (session key 975798039)
+2025-11-06 16:38:37 [warn] HTTP client 192.168.0.2 login succeeded (session key 242953180)
+2025-11-06 16:39:04 [warn] HTTP client 192.168.0.2 login succeeded (session key 1426306951)
+power up + 00:00:02 [info] Event logging started at level warn
+power up + 00:00:02 [info] Running: Duet 3 MB6HC v1.02b or later: 3.5.3 (2024-09-18 11:27:36)
+power up + 00:00:06 [warn] Ethernet is disabled.
+power up + 00:00:09 [warn] WiFi module started
+power up + 00:00:18 [warn] Error: WiFi module reported: Authentication failed
+power up + 00:00:18 [warn] WiFi module is idle
+power up + 00:00:22 [warn] WiFi module is connected to access point AddWiseWeb, IP address 192.168.0.116
+power up + 00:00:23 [warn] HTTP client 192.168.0.9 login succeeded (session key 2763666650)
+2025-11-06 16:39:39 [warn] Date and time set at power up + 00:00:23
+2025-11-06 16:39:39 [warn] HTTP client 192.168.0.2 login succeeded (session key 351091347)
+2025-11-06 16:39:50 [warn] HTTP client 192.168.0.2 login succeeded (session key 0)
+2025-11-06 16:41:30 [warn] Leadscrew adjustments made: -0.058 -0.083 0.064, points used 3, (mean, deviation) before (-0.036, 0.012) after (-0.000, 0.000)
+2025-11-06 16:41:48 [warn] Leadscrew adjustments made: 0.385 0.381 0.309, points used 4, (mean, deviation) before (0.363, 0.055) after (-0.000, 0.047)
+power up + 00:00:02 [info] Event logging started at level warn
+power up + 00:00:02 [info] Running: Duet 3 MB6HC v1.02b or later: 3.5.3 (2024-09-18 11:27:36)
+power up + 00:00:06 [warn] Ethernet is disabled.
+power up + 00:00:09 [warn] WiFi module started
+power up + 00:00:18 [warn] Error: WiFi module reported: Authentication failed
+power up + 00:00:18 [warn] WiFi module is idle
+power up + 00:00:22 [warn] WiFi module is connected to access point AddWiseWeb, IP address 192.168.0.116
+power up + 00:00:23 [warn] HTTP client 192.168.0.9 login succeeded (session key 2721007210)
+2025-11-06 16:59:04 [warn] Date and time set at power up + 00:00:23
+2025-11-06 17:00:51 [warn] Leadscrew adjustments made: -0.178 -0.161 0.082, points used 3, (mean, deviation) before (-0.099, 0.021) after (0.000, 0.000)
+2025-11-06 17:01:09 [warn] Leadscrew adjustments made: 0.402 0.365 0.223, points used 4, (mean, deviation) before (0.337, 0.071) after (0.000, 0.032)
+2025-11-06 17:10:12 [warn] Error:  line 20 column 7: meta command: unknown value 'triggered'
+2025-11-06 17:10:17 [warn] Error:  line 21 column 7: meta command: unknown value 'trigered'
+2025-11-06 17:17:34 [warn] HTTP client 192.168.0.2 login succeeded (session key 1864145471)
+power up + 00:00:02 [info] Event logging started at level warn
+power up + 00:00:02 [info] Running: Duet 3 MB6HC v1.02b or later: 3.5.3 (2024-09-18 11:27:36)
+power up + 00:00:06 [warn] Ethernet is disabled.
+power up + 00:00:09 [warn] WiFi module started
+power up + 00:00:18 [warn] Error: WiFi module reported: Authentication failed
+power up + 00:00:22 [warn] WiFi module is connected to access point AddWiseWeb, IP address 192.168.0.116
+power up + 00:00:23 [warn] HTTP client 192.168.0.9 login succeeded (session key 2016146536)
+2025-11-06 17:19:56 [warn] Date and time set at power up + 00:00:23
+2025-11-06 17:19:57 [warn] HTTP client 192.168.0.2 login succeeded (session key 4129542181)
+2025-11-06 17:21:48 [warn] Leadscrew adjustments made: -0.071 -0.048 -0.133, points used 3, (mean, deviation) before (-0.078, 0.007) after (-0.000, 0.000)
+2025-11-06 17:22:07 [warn] Leadscrew adjustments made: 0.235 0.305 0.290, points used 4, (mean, deviation) before (0.282, 0.073) after (-0.000, 0.069)
+power up + 00:00:02 [info] Event logging started at level warn
+power up + 00:00:02 [info] Running: Duet 3 MB6HC v1.02b or later: 3.5.3 (2024-09-18 11:27:36)
+power up + 00:00:06 [warn] Ethernet is disabled.
+power up + 00:00:09 [warn] WiFi module started
+power up + 00:00:18 [warn] Error: WiFi module reported: Authentication failed
+power up + 00:00:18 [warn] WiFi module is idle
+power up + 00:00:22 [warn] WiFi module is connected to access point AddWiseWeb, IP address 192.168.0.116
+power up + 00:00:23 [warn] HTTP client 192.168.0.2 login succeeded (session key 1129517310)
+2025-11-06 17:23:29 [warn] Date and time set at power up + 00:00:23
+2025-11-06 17:23:29 [warn] HTTP client 192.168.0.9 login succeeded (session key 13533366)
+2025-11-06 17:23:47 [warn] HTTP client 192.168.0.9 login succeeded (session key 2968765748)
+2025-11-06 17:28:11 [warn] Leadscrew adjustments made: -0.256 -0.078 0.004, points used 3, (mean, deviation) before (-0.104, 0.018) after (0.000, 0.000)
+2025-11-06 17:28:28 [warn] Leadscrew adjustments made: 0.309 0.093 0.107, points used 4, (mean, deviation) before (0.154, 0.089) after (-0.000, 0.036)
+2025-11-06 17:29:04 [warn] Error: in file macro line 136 column 44: meta command: expected "'"
+power up + 00:00:02 [info] Event logging started at level warn
+power up + 00:00:02 [info] Running: Duet 3 MB6HC v1.02b or later: 3.5.3 (2024-09-18 11:27:36)
+power up + 00:00:06 [warn] Ethernet is disabled.
+power up + 00:00:09 [warn] WiFi module started
+power up + 00:00:18 [warn] Error: WiFi module reported: Authentication failed
+power up + 00:00:18 [warn] WiFi module is idle
+power up + 00:00:22 [warn] WiFi module is connected to access point AddWiseWeb, IP address 192.168.0.116
+power up + 00:00:23 [warn] HTTP client 192.168.0.9 login succeeded (session key 1256335985)
+2025-11-06 17:31:07 [warn] Date and time set at power up + 00:00:23
+2025-11-06 17:31:07 [warn] HTTP client 192.168.0.2 login succeeded (session key 2482544246)
+2025-11-06 17:32:32 [warn] Leadscrew adjustments made: -0.152 -0.107 0.078, points used 3, (mean, deviation) before (-0.068, 0.017) after (0.000, 0.000)
+2025-11-06 17:32:51 [warn] Leadscrew adjustments made: 0.229 0.168 0.089, points used 4, (mean, deviation) before (0.164, 0.063) after (0.000, 0.042)
+2025-11-06 17:48:01 [warn] HTTP client 192.168.0.9 login succeeded (session key 3252329602)
+power up + 00:00:02 [info] Event logging started at level warn
+power up + 00:00:02 [info] Running: Duet 3 MB6HC v1.02b or later: 3.5.3 (2024-09-18 11:27:36)
+power up + 00:00:06 [warn] Ethernet is disabled.
+power up + 00:00:09 [warn] WiFi module started
+power up + 00:00:21 [warn] WiFi module is connected to access point AddWiseWeb, IP address 192.168.0.116
+power up + 00:19:23 [warn] HTTP client 192.168.0.2 login succeeded (session key 3756174206)
+2025-11-07 09:22:12 [warn] Date and time set at power up + 00:19:23
+2025-11-07 09:27:04 [warn] HTTP client 192.168.0.9 login succeeded (session key 1890091877)
+2025-11-07 09:44:17 [warn] HTTP client 192.168.0.9 login succeeded (session key 1527974972)
+2025-11-07 09:57:26 [warn] HTTP client 192.168.0.2 login succeeded (session key 6114736)
+2025-11-07 10:01:51 [warn] HTTP client 192.168.0.9 login succeeded (session key 748524788)
+2025-11-07 10:05:00 [warn] HTTP client 192.168.0.2 login succeeded (session key 3863925364)
+2025-11-07 10:05:43 [warn] HTTP client 192.168.0.2 login succeeded (session key 1489884122)
+2025-11-07 10:05:54 [warn] HTTP client 192.168.0.2 login succeeded (session key 754482041)
+2025-11-07 10:07:15 [warn] HTTP client 192.168.0.2 login succeeded (session key 2893192369)
+2025-11-07 10:07:40 [warn] HTTP client 192.168.0.2 login succeeded (session key 1446824608)
+2025-11-07 10:07:58 [warn] HTTP client 192.168.0.2 login succeeded (session key 2125457523)
+2025-11-07 10:08:13 [warn] HTTP client 192.168.0.2 login succeeded (session key 4273206084)
+2025-11-07 10:33:12 [warn] HTTP client 192.168.0.9 login succeeded (session key 836545482)
+2025-11-07 10:34:25 [warn] Leadscrew adjustments made: -0.092 -0.038 -0.092, points used 3, (mean, deviation) before (-0.068, 0.006) after (0.000, 0.000)
+2025-11-07 10:34:43 [warn] Leadscrew adjustments made: 0.179 0.035 0.066, points used 4, (mean, deviation) before (0.081, 0.066) after (-0.000, 0.043)
+power up + 00:00:02 [info] Event logging started at level warn
+power up + 00:00:02 [info] Running: Duet 3 MB6HC v1.02b or later: 3.5.3 (2024-09-18 11:27:36)
+power up + 00:00:06 [warn] Ethernet is disabled.
+power up + 00:00:09 [warn] WiFi module started
+power up + 00:00:14 [warn] WiFi module is connected to access point AddWiseWeb, IP address 192.168.0.116
+power up + 00:00:14 [warn] HTTP client 192.168.0.9 login succeeded (session key 2731456267)
+2025-11-07 10:38:50 [warn] Date and time set at power up + 00:00:14
+2025-11-07 10:38:51 [warn] HTTP client 192.168.0.2 login succeeded (session key 89540007)
+2025-11-07 10:38:52 [warn] HTTP client 192.168.0.2 login succeeded (session key 0)
+2025-11-07 10:41:05 [warn] Leadscrew adjustments made: -0.118 0.012 -0.041, points used 3, (mean, deviation) before (-0.038, 0.011) after (-0.000, 0.000)
+2025-11-07 10:41:23 [warn] Leadscrew adjustments made: 0.086 0.000 0.050, points used 4, (mean, deviation) before (0.036, 0.060) after (0.000, 0.052)
+power up + 00:00:02 [info] Event logging started at level warn
+power up + 00:00:02 [info] Running: Duet 3 MB6HC v1.02b or later: 3.5.3 (2024-09-18 11:27:36)
+power up + 00:00:06 [warn] Ethernet is disabled.
+power up + 00:00:09 [warn] WiFi module started
+power up + 00:00:14 [warn] WiFi module is connected to access point AddWiseWeb, IP address 192.168.0.116
+power up + 00:00:14 [warn] HTTP client 192.168.0.9 login succeeded (session key 2733814081)
+2025-11-07 11:01:19 [warn] Date and time set at power up + 00:00:14
+2025-11-07 11:02:47 [warn] Leadscrew adjustments made: -0.113 0.056 0.009, points used 3, (mean, deviation) before (-0.003, 0.014) after (0.000, 0.000)
+2025-11-07 11:03:05 [warn] Leadscrew adjustments made: 0.205 0.184 0.115, points used 4, (mean, deviation) before (0.171, 0.057) after (-0.000, 0.047)
+power up + 00:00:02 [info] Event logging started at level warn
+power up + 00:00:02 [info] Running: Duet 3 MB6HC v1.02b or later: 3.5.3 (2024-09-18 11:27:36)
+power up + 00:00:06 [warn] Ethernet is disabled.
+power up + 00:00:09 [warn] WiFi module started
+power up + 00:00:18 [warn] Error: WiFi module reported: Authentication failed
+power up + 00:00:18 [warn] WiFi module is idle
+power up + 00:00:22 [warn] WiFi module is connected to access point AddWiseWeb, IP address 192.168.0.116
+power up + 00:00:23 [warn] HTTP client 192.168.0.9 login succeeded (session key 3992644682)
+2025-11-07 11:04:48 [warn] Date and time set at power up + 00:00:23
+2025-11-07 11:08:58 [warn] Leadscrew adjustments made: -0.085 0.032 -0.023, points used 3, (mean, deviation) before (-0.015, 0.010) after (0.000, 0.000)
+2025-11-07 11:09:15 [warn] Leadscrew adjustments made: 0.286 0.151 0.130, points used 4, (mean, deviation) before (0.181, 0.075) after (0.000, 0.049)
+2025-11-07 11:10:18 [warn] HTTP client 192.168.0.2 login succeeded (session key 2830074144)
+2025-11-07 11:10:21 [warn] HTTP client 192.168.0.2 login succeeded (session key 0)
+power up + 00:00:02 [info] Event logging started at level warn
+power up + 00:00:02 [info] Running: Duet 3 MB6HC v1.02b or later: 3.5.3 (2024-09-18 11:27:36)
+power up + 00:00:06 [warn] Ethernet is disabled.
+power up + 00:00:09 [warn] WiFi module started
+power up + 00:00:18 [warn] Error: WiFi module reported: Authentication failed
+power up + 00:00:22 [warn] WiFi module is connected to access point AddWiseWeb, IP address 192.168.0.116
+power up + 00:00:23 [warn] HTTP client 192.168.0.9 login succeeded (session key 430429005)
+2025-11-07 11:23:17 [warn] Date and time set at power up + 00:00:23
+2025-11-07 11:23:17 [warn] HTTP client 192.168.0.2 login succeeded (session key 1509627601)
+2025-11-07 11:23:18 [warn] HTTP client 192.168.0.2 login succeeded (session key 0)
+2025-11-07 11:29:21 [warn] Leadscrew adjustments made: -0.117 0.027 0.052, points used 3, (mean, deviation) before (-0.006, 0.013) after (-0.000, 0.000)
+2025-11-07 11:29:39 [warn] Leadscrew adjustments made: 0.212 0.204 0.121, points used 4, (mean, deviation) before (0.184, 0.058) after (-0.000, 0.047)
+2025-11-07 11:30:52 [warn] Error: Bad command: ..var xu_endstop = 208
+power up + 00:00:02 [info] Event logging started at level warn
+power up + 00:00:02 [info] Running: Duet 3 MB6HC v1.02b or later: 3.5.3 (2024-09-18 11:27:36)
+power up + 00:00:06 [warn] Ethernet is disabled.
+power up + 00:00:09 [warn] WiFi module started
+power up + 00:00:18 [warn] Error: WiFi module reported: Authentication failed
+power up + 00:00:18 [warn] WiFi module is idle
+power up + 00:00:22 [warn] WiFi module is connected to access point AddWiseWeb, IP address 192.168.0.116
+power up + 00:00:24 [warn] HTTP client 192.168.0.9 login succeeded (session key 209342641)
+2025-11-07 11:32:01 [warn] Date and time set at power up + 00:00:24
+2025-11-07 11:33:34 [warn] Leadscrew adjustments made: -0.032 0.016 -0.001, points used 3, (mean, deviation) before (-0.002, 0.004) after (0.000, 0.000)
+2025-11-07 11:33:52 [warn] Leadscrew adjustments made: 0.233 0.181 0.106, points used 4, (mean, deviation) before (0.175, 0.062) after (-0.000, 0.045)
+power up + 00:00:02 [info] Event logging started at level warn
+power up + 00:00:02 [info] Running: Duet 3 MB6HC v1.02b or later: 3.5.3 (2024-09-18 11:27:36)
+power up + 00:00:06 [warn] Ethernet is disabled.
+power up + 00:00:09 [warn] WiFi module started
+power up + 00:00:18 [warn] Error: WiFi module reported: Authentication failed
+power up + 00:00:18 [warn] WiFi module is idle
+power up + 00:00:22 [warn] WiFi module is connected to access point AddWiseWeb, IP address 192.168.0.116
+power up + 00:00:02 [info] Event logging started at level warn
+power up + 00:00:02 [info] Running: Duet 3 MB6HC v1.02b or later: 3.5.3 (2024-09-18 11:27:36)
+power up + 00:00:06 [warn] Ethernet is disabled.
+power up + 00:00:09 [warn] WiFi module started
+power up + 00:00:18 [warn] Error: WiFi module reported: Authentication failed
+power up + 00:00:22 [warn] WiFi module is connected to access point AddWiseWeb, IP address 192.168.0.116
+power up + 00:01:02 [warn] HTTP client 192.168.0.9 login succeeded (session key 4164750053)
+2025-11-07 11:40:22 [warn] Date and time set at power up + 00:01:02
+2025-11-07 11:43:01 [warn] Leadscrew adjustments made: -0.114 0.002 0.162, points used 3, (mean, deviation) before (0.014, 0.019) after (-0.000, 0.000)
+2025-11-07 11:43:19 [warn] Leadscrew adjustments made: 0.286 0.156 0.080, points used 4, (mean, deviation) before (0.170, 0.080) after (0.000, 0.039)
+2025-11-07 11:46:12 [warn] HTTP client 192.168.0.2 login succeeded (session key 1776161300)
+2025-11-07 11:47:53 [warn] Error: Cannot delete file /macros/System/Calibration/QC/Tests/Motion Accuracy because it is open
+power up + 00:00:02 [info] Event logging started at level warn
+power up + 00:00:02 [info] Running: Duet 3 MB6HC v1.02b or later: 3.5.3 (2024-09-18 11:27:36)
+power up + 00:00:06 [warn] Ethernet is disabled.
+power up + 00:00:09 [warn] WiFi module started
+power up + 00:00:18 [warn] Error: WiFi module reported: Authentication failed
+power up + 00:00:18 [warn] WiFi module is idle
+power up + 00:00:22 [warn] WiFi module is connected to access point AddWiseWeb, IP address 192.168.0.116
+power up + 00:00:23 [warn] HTTP client 192.168.0.9 login succeeded (session key 1713202946)
+2025-11-07 11:48:27 [warn] Date and time set at power up + 00:00:23
+2025-11-07 11:48:27 [warn] HTTP client 192.168.0.2 login succeeded (session key 1443158216)
+2025-11-07 11:48:27 [warn] HTTP client 192.168.0.2 login succeeded (session key 0)
+2025-11-07 12:05:03 [warn] Leadscrew adjustments made: -0.217 -0.014 -0.156, points used 3, (mean, deviation) before (-0.108, 0.019) after (0.000, 0.000)
+2025-11-07 12:05:21 [warn] Leadscrew adjustments made: 0.308 0.094 0.149, points used 4, (mean, deviation) before (0.165, 0.084) after (0.000, 0.039)
+2025-11-07 12:19:56 [warn] Leadscrew adjustments made: -0.049 0.002 0.074, points used 3, (mean, deviation) before (0.007, 0.008) after (-0.000, 0.000)
+2025-11-07 12:20:12 [warn] Error: G30: Z probe readings not consistent
+2025-11-07 12:24:42 [warn] HTTP client 192.168.0.9 login succeeded (session key 4013458754)
+power up + 00:00:02 [info] Event logging started at level warn
+power up + 00:00:02 [info] Running: Duet 3 MB6HC v1.02b or later: 3.5.3 (2024-09-18 11:27:36)
+power up + 00:00:06 [warn] Ethernet is disabled.
+power up + 00:00:09 [warn] WiFi module started
+power up + 00:00:18 [warn] Error: WiFi module reported: Authentication failed
+power up + 00:00:18 [warn] WiFi module is idle
+power up + 00:00:22 [warn] WiFi module is connected to access point AddWiseWeb, IP address 192.168.0.116
+power up + 00:00:23 [warn] HTTP client 192.168.0.9 login succeeded (session key 2805580710)
+2025-11-07 12:25:15 [warn] Date and time set at power up + 00:00:23
+2025-11-07 12:25:16 [warn] HTTP client 192.168.0.2 login succeeded (session key 2113984971)
+2025-11-07 12:25:17 [warn] HTTP client 192.168.0.2 login succeeded (session key 0)
+2025-11-07 14:31:49 [warn] HTTP client 192.168.0.2 login succeeded (session key 229254615)
+2025-11-07 14:48:33 [warn] HTTP client 192.168.0.9 login succeeded (session key 1932470672)
+2025-11-07 15:00:42 [warn] Leadscrew adjustments made: -0.203 0.008 -0.019, points used 3, (mean, deviation) before (-0.058, 0.018) after (0.000, 0.000)
+2025-11-07 15:01:00 [warn] Leadscrew adjustments made: 0.216 0.008 0.123, points used 4, (mean, deviation) before (0.094, 0.069) after (-0.000, 0.005)
+2025-11-07 15:02:22 [warn] HTTP client 192.168.0.9 login succeeded (session key 231521237)
+power up + 00:00:02 [info] Event logging started at level warn
+power up + 00:00:02 [info] Running: Duet 3 MB6HC v1.02b or later: 3.5.3 (2024-09-18 11:27:36)
+power up + 00:00:06 [warn] Ethernet is disabled.
+power up + 00:00:09 [warn] WiFi module started
+power up + 00:00:14 [warn] WiFi module is connected to access point AddWiseWeb, IP address 192.168.0.116
+power up + 00:00:15 [warn] HTTP client 192.168.0.9 login succeeded (session key 4292070664)
+2025-11-07 15:04:40 [warn] Date and time set at power up + 00:00:15
+2025-11-07 15:04:41 [warn] HTTP client 192.168.0.2 login succeeded (session key 602810077)
+2025-11-07 15:04:42 [warn] HTTP client 192.168.0.2 login succeeded (session key 0)
+2025-11-07 15:06:19 [warn] Leadscrew adjustments made: -0.113 -0.016 -0.113, points used 3, (mean, deviation) before (-0.069, 0.011) after (-0.000, 0.000)
+2025-11-07 15:06:37 [warn] Leadscrew adjustments made: 0.160 0.064 0.089, points used 4, (mean, deviation) before (0.096, 0.034) after (-0.000, 0.006)
+power up + 00:00:02 [info] Event logging started at level warn
+power up + 00:00:02 [info] Running: Duet 3 MB6HC v1.02b or later: 3.5.3 (2024-09-18 11:27:36)
+power up + 00:00:06 [warn] Ethernet is disabled.
+power up + 00:00:09 [warn] WiFi module started
+power up + 00:00:18 [warn] Error: WiFi module reported: Authentication failed
+power up + 00:00:18 [warn] WiFi module is idle
+power up + 00:00:22 [warn] WiFi module is connected to access point AddWiseWeb, IP address 192.168.0.116
+power up + 00:00:23 [warn] HTTP client 192.168.0.9 login succeeded (session key 3204103090)
+2025-11-07 15:14:13 [warn] Date and time set at power up + 00:00:23
+2025-11-07 15:14:13 [warn] HTTP client 192.168.0.2 login succeeded (session key 135510933)
+2025-11-07 15:14:14 [warn] HTTP client 192.168.0.2 login succeeded (session key 0)
+2025-11-07 15:15:47 [warn] Leadscrew adjustments made: -0.167 -0.062 -0.044, points used 3, (mean, deviation) before (-0.086, 0.009) after (0.000, 0.000)
+2025-11-07 15:16:05 [warn] Leadscrew adjustments made: 0.162 0.052 0.123, points used 4, (mean, deviation) before (0.100, 0.038) after (-0.000, 0.004)
+2025-11-07 15:27:36 [warn] HTTP client 192.168.0.2 login succeeded (session key 2269632750)
+power up + 00:00:02 [info] Event logging started at level warn
+power up + 00:00:02 [info] Running: Duet 3 MB6HC v1.02b or later: 3.5.3 (2024-09-18 11:27:36)
+power up + 00:00:06 [warn] Ethernet is disabled.
+power up + 00:00:09 [warn] WiFi module started
+power up + 00:00:18 [warn] Error: WiFi module reported: Authentication failed
+power up + 00:00:22 [warn] WiFi module is connected to access point AddWiseWeb, IP address 192.168.0.116
+power up + 00:00:23 [warn] HTTP client 192.168.0.9 login succeeded (session key 3939289519)
+2025-11-07 15:29:21 [warn] Date and time set at power up + 00:00:23
+2025-11-07 15:29:21 [warn] HTTP client 192.168.0.2 login succeeded (session key 2646243793)
+2025-11-07 15:29:22 [warn] HTTP client 192.168.0.2 login succeeded (session key 0)
+2025-11-07 15:31:39 [warn] Leadscrew adjustments made: -0.152 0.025 -0.198, points used 3, (mean, deviation) before (-0.085, 0.022) after (0.000, 0.000)
+2025-11-07 15:31:57 [warn] Leadscrew adjustments made: 0.161 -0.005 0.141, points used 4, (mean, deviation) before (0.078, 0.061) after (-0.000, 0.004)
+power up + 00:00:02 [info] Event logging started at level warn
+power up + 00:00:02 [info] Running: Duet 3 MB6HC v1.02b or later: 3.5.3 (2024-09-18 11:27:36)
+power up + 00:00:06 [warn] Ethernet is disabled.
+power up + 00:00:09 [warn] WiFi module started
+power up + 00:00:18 [warn] Error: WiFi module reported: Authentication failed
+power up + 00:00:18 [warn] WiFi module is idle
+power up + 00:00:22 [warn] WiFi module is connected to access point AddWiseWeb, IP address 192.168.0.116
+power up + 00:00:23 [warn] HTTP client 192.168.0.9 login succeeded (session key 1302303181)
+2025-11-07 15:45:09 [warn] Date and time set at power up + 00:00:23
+2025-11-07 15:45:09 [warn] HTTP client 192.168.0.2 login succeeded (session key 3483798881)
+2025-11-07 15:45:10 [warn] HTTP client 192.168.0.2 login succeeded (session key 0)
+power up + 00:00:02 [info] Event logging started at level warn
+power up + 00:00:02 [info] Running: Duet 3 MB6HC v1.02b or later: 3.5.3 (2024-09-18 11:27:36)
+power up + 00:00:06 [warn] Ethernet is disabled.
+power up + 00:00:09 [warn] WiFi module started
+power up + 00:00:14 [warn] WiFi module is connected to access point AddWiseWeb, IP address 192.168.0.116
+power up + 00:00:14 [warn] HTTP client 192.168.0.9 login succeeded (session key 2918068417)
+2025-11-07 15:51:27 [warn] Date and time set at power up + 00:00:14
+2025-11-07 15:51:28 [warn] HTTP client 192.168.0.2 login succeeded (session key 3276223207)
+2025-11-07 15:51:29 [warn] HTTP client 192.168.0.2 login succeeded (session key 0)
+power up + 00:00:02 [info] Event logging started at level warn
+power up + 00:00:02 [info] Running: Duet 3 MB6HC v1.02b or later: 3.5.3 (2024-09-18 11:27:36)
+power up + 00:00:06 [warn] Ethernet is disabled.
+power up + 00:00:09 [warn] WiFi module started
+power up + 00:00:18 [warn] Error: WiFi module reported: Authentication failed
+power up + 00:00:18 [warn] WiFi module is idle
+power up + 00:00:22 [warn] WiFi module is connected to access point AddWiseWeb, IP address 192.168.0.116
+power up + 00:00:23 [warn] HTTP client 192.168.0.9 login succeeded (session key 2939431181)
+2025-11-07 15:57:43 [warn] Date and time set at power up + 00:00:23
+2025-11-07 15:59:16 [warn] Leadscrew adjustments made: -0.166 0.072 -0.166, points used 3, (mean, deviation) before (-0.058, 0.026) after (0.000, 0.000)
+2025-11-07 15:59:33 [warn] Leadscrew adjustments made: 0.240 -0.016 0.155, points used 4, (mean, deviation) before (0.097, 0.087) after (0.000, 0.000)
+power up + 00:00:02 [info] Event logging started at level warn
+power up + 00:00:02 [info] Running: Duet 3 MB6HC v1.02b or later: 3.5.3 (2024-09-18 11:27:36)
+power up + 00:00:06 [warn] Ethernet is disabled.
+power up + 00:00:09 [warn] WiFi module started
+power up + 00:00:14 [warn] WiFi module is connected to access point AddWiseWeb, IP address 192.168.0.116
+power up + 00:00:15 [warn] HTTP client 192.168.0.9 login succeeded (session key 3219216957)
+2025-11-07 16:04:50 [warn] Date and time set at power up + 00:00:15
+2025-11-07 16:06:08 [warn] HTTP client 192.168.0.2 login succeeded (session key 756109587)
+2025-11-07 16:06:09 [warn] HTTP client 192.168.0.2 login succeeded (session key 0)
+2025-11-07 16:06:34 [warn] Leadscrew adjustments made: -0.148 0.009 -0.179, points used 3, (mean, deviation) before (-0.086, 0.019) after (0.000, 0.000)
+2025-11-07 16:06:52 [warn] Leadscrew adjustments made: 0.169 -0.009 0.117, points used 4, (mean, deviation) before (0.072, 0.061) after (0.000, 0.002)

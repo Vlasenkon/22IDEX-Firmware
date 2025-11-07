@@ -4,7 +4,7 @@ if !exists(param.A)
 
 
 
-var x_test_pos = -90
+var x_test_pos = -105
 var mid_y_test_pos = -101
 var add_z_offset = -0.070
 var max_nozzle_height_error = 0.05  ; Maximum allowed nozzle height deviation in mm

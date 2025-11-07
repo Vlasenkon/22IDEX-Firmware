@@ -2,8 +2,10 @@ var xu_endstop = 208
 var y_endstop = 175
 var endstop_offset = 5
 
-; Safety margin for endstop approach
+; Safety margin - buffer distance from endstop when stopping
 var safety_margin = 5
+; Starting position - distance away from endstop limit to begin approach
+var starting_position = 25
 
 
 
@@ -11,16 +13,25 @@ var safety_margin = 5
 if !move.axes[0].homed || !move.axes[1].homed || !move.axes[2].homed || !move.axes[3].homed
     abort "Error: All axes must be homed before running this test."
 
+; Start debug log (append mode to track multiple iterations)
+if !exists(global.motionTestIteration)
+    global motionTestIteration = 0
+    echo >"0:/macros/System/Calibration/QC/Tests/motion_debug.log" "=== Motion Accuracy Debug Log - " ^ {state.time} ^ " ==="
+else
+    set global.motionTestIteration = global.motionTestIteration + 1
+
+echo >>"0:/macros/System/Calibration/QC/Tests/motion_debug.log" "\n>>> ITERATION " ^ {global.motionTestIteration} ^ " START <<<"
+
 M98 P"tfree3.g"                       ; Run the "tfree3.g" macro to free the tool
 T0
 M204 T2000                            ; Set acceleration for non-printing moves
 
-; === SAFE POSITIONING BEFORE ENDSTOP CHECKS ===
-; Move to safer center positions instead of near endstops
-G90
-G1 X-100 U100 Y0 F18000               ; Move to center-ish safe position
+M400
+G4 P500
+echo >>"0:/macros/System/Calibration/QC/Tests/motion_debug.log" "After T0 setup - X:" ^ {move.axes[0].machinePosition} ^ " Y:" ^ {move.axes[1].machinePosition} ^ " U:" ^ {move.axes[3].machinePosition}
 
-; Get axis limits from object model
+; === SAFE POSITIONING BEFORE ENDSTOP CHECKS ===
+; Get axis limits from object model first
 var x_min = move.axes[0].min          ; X axis minimum limit
 var x_max = move.axes[0].max          ; X axis maximum limit  
 var y_min = move.axes[1].min          ; Y axis minimum limit
@@ -28,15 +39,25 @@ var y_max = move.axes[1].max          ; Y axis maximum limit
 var u_min = move.axes[3].min          ; U axis minimum limit
 var u_max = move.axes[3].max          ; U axis maximum limit
 
-; Calculate safe travel distances with safety margin
-var y_travel_distance = abs(var.y_min - move.axes[1].machinePosition) + var.safety_margin
-var x_travel_distance = abs(var.x_min - move.axes[0].machinePosition) + var.safety_margin
-var u_travel_distance = abs(var.u_max - move.axes[3].machinePosition) + var.safety_margin
+; Move to starting positions (away from endstops)
+G90
+G1 X{var.x_min + var.starting_position} U{var.u_max - var.starting_position} Y{var.y_min + var.starting_position} F18000
 
-;echo "Calculated safe travel distances:"
-;echo "Y: " ^ {var.y_travel_distance} ^ " mm from current position to Y-min"
-;echo "X: " ^ {var.x_travel_distance} ^ " mm from current position to X-min"  
-;echo "U: " ^ {var.u_travel_distance} ^ " mm from current position to U-max"
+M400
+G4 P500
+echo >>"0:/macros/System/Calibration/QC/Tests/motion_debug.log" "After move to starting - X:" ^ {move.axes[0].machinePosition} ^ " Y:" ^ {move.axes[1].machinePosition} ^ " U:" ^ {move.axes[3].machinePosition}
+
+; Calculate travel distances towards endstops
+; Y and X: negative travel (towards min limits)
+; U: positive travel (towards max limit)
+var y_travel_distance = -(var.starting_position + var.safety_margin)  ; Negative travel towards Y-min
+var x_travel_distance = -(var.starting_position + var.safety_margin)  ; Negative travel towards X-min
+var u_travel_distance = var.starting_position + var.safety_margin      ; Positive travel towards U-max
+
+echo "Starting positions and travel distances:"
+echo "Y start: " ^ {var.y_min + var.starting_position} ^ " mm, travel: " ^ {var.y_travel_distance} ^ " mm"
+echo "X start: " ^ {var.x_min + var.starting_position} ^ " mm, travel: " ^ {var.x_travel_distance} ^ " mm"
+echo "U start: " ^ {var.u_max - var.starting_position} ^ " mm, travel: " ^ {var.u_travel_distance} ^ " mm"
 
 
 ;== Y-AXIS POSITION CHECK WITH SAFETY VERIFICATION ===
@@ -47,35 +68,48 @@ var rightEndstopPosition = 0
 var currentYPos = 0
 var side = ""
 
-; SAFETY CHECK: Move towards Y endstop with calculated safe distance
-G91                                   ; Switch to relative positioning
-G1 H4 Y{-var.y_travel_distance} F1800 ; Move towards Y endstop with safe calculated distance
+; Configure Y-axis endstops (both sides like in homey.g)
+M574 Y1 S1 P"io1.in+io2.in"           ; Configure endstops for both sides of the Y axis
+M400
+G4 P500
 
-; Verify endstop was actually triggered
-if result == 0
+; SAFETY CHECK: Move towards Y endstop from starting position
+G91                                   ; Switch to relative positioning
+while !sensors.endstops[1].triggered
+    G1 Y-0.1 F600   ; Move NEGATIVE towards endstop at 10mm/s
+
+; Verify endstop was actually triggered by checking object model
+M400
+G4 P100
+if !sensors.endstops[1].triggered
     M98 P"0:/sys/led/fault.g"
     abort "ERROR: Y-axis endstop not triggered during safe approach. Possible endstop failure or mechanical issue."
 
-G1 Y2 F12000                           ; Move away from endstop by 2 mm
-G1 H4 Y-3 F140                         ; Precise approach
+while !sensors.endstops[1].triggered
+    G1 Y0.1 F12000                           ; Move away from endstop by 2 mm
+G1 Y-3 F140                         ; Precise approach
+
+M400
+G4 P500
+echo >>"0:/macros/System/Calibration/QC/Tests/motion_debug.log" "After Y precise approach - Y:" ^ {move.axes[1].machinePosition}
 
 ; Check which endstop was triggered and record position
 M574 Y1 S1 P"io1.in"                  ; Configure right-hand side Y endstop on io1.in
 M400
-G4 P300
+G4 P500
 
 if sensors.endstops[1].triggered      ; Check if the right-hand side Y endstop is triggered
     set var.side = "right"            ; Right-hand side endstop (io1.in) is triggered
 elif !sensors.endstops[1].triggered   ; If right-hand side not triggered, check left-hand side
     M574 Y1 S1 P"io2.in"              ; Configure left-hand side Y endstop on io2.in
     M400
-    G4 P300
+    G4 P500
     if sensors.endstops[1].triggered  ; Check if the left-hand side Y endstop is triggered
         set var.side = "left"         ; Left-hand side endstop (io2.in) is triggered
     else
         M574 Y1 S1 P"io1.in+io2.in"  ; Check both endstops
         M400
-        G4 P300
+        G4 P500
         if sensors.endstops[1].triggered
             set var.side = "both"     ; Both endstops triggered
 
@@ -84,37 +118,41 @@ elif !sensors.endstops[1].triggered   ; If right-hand side not triggered, check 
 
 ; Record the first endstop position
 M400
-G4 P300
+G4 P500
 set var.currentYPos = move.axes[1].machinePosition
 if var.side == "right"
     set var.rightEndstopPosition = var.currentYPos
-    ;echo "Right Y endstop position: " ^ {var.rightEndstopPosition} ^ " mm"
+    echo "Right Y endstop position: " ^ {var.rightEndstopPosition} ^ " mm"
 elif var.side == "left" 
     set var.leftEndstopPosition = var.currentYPos
-    ;echo "Left Y endstop position: " ^ {var.leftEndstopPosition} ^ " mm"
+    echo "Left Y endstop position: " ^ {var.leftEndstopPosition} ^ " mm"
 elif var.side == "both"
     set var.leftEndstopPosition = var.currentYPos
     set var.rightEndstopPosition = var.currentYPos
-    ;echo "Both Y endstops triggered simultaneously. Please check wiring."
+    echo "Both Y endstops triggered simultaneously. Please check wiring."
 
 ; Now check the other endstop by switching motor drivers
 if var.side == "right"
   M584 Y0.4                           ; Switch to the other driver for the Y axis
   M574 Y1 S1 P"io2.in"                ; Configure the Y endstop on io2.in
-  G1 H4 Y-10 F140                     ; Move towards left endstop and record position
+  while !sensors.endstops[1].triggered
+    G4 P100
+    G1 Y-0.1 F1800                     ; Move towards left endstop and record position
   M400
-  G4 P300
+  G4 P500
   set var.leftEndstopPosition = move.axes[1].machinePosition
-  ;echo "Left Y endstop position: " ^ {var.leftEndstopPosition} ^ " mm"
+  echo "Left Y endstop position: " ^ {var.leftEndstopPosition} ^ " mm"
 
 if var.side == "left"
   M584 Y0.1                           ; Switch to the other driver for the Y axis  
   M574 Y1 S1 P"io1.in"                ; Configure the Y endstop on io1.in
-  G1 H4 Y-10 F140                     ; Move towards right endstop and record position
+  while !sensors.endstops[1].triggered
+    G4 P100
+    G1 Y-0.1 F1800                     ; Move towards left endstop and record position
   M400
-  G4 P300
+  G4 P500
   set var.rightEndstopPosition = move.axes[1].machinePosition
-  ;echo "Right Y endstop position: " ^ {var.rightEndstopPosition} ^ " mm"
+  echo "Right Y endstop position: " ^ {var.rightEndstopPosition} ^ " mm"
 
 
 ; Restore Y-axis configuration
@@ -135,7 +173,7 @@ if var.y_deviation >= 0.5
     set var.y_error_msg = var.y_error_msg ^ "Right endstop: " ^ {var.rightEndstopPosition} ^ " mm<br>"
     set var.y_error_msg = var.y_error_msg ^ "Deviation: " ^ {var.y_deviation} ^ " mm<br><br>"
     set var.y_error_msg = var.y_error_msg ^ "The Y-axis gantry is not square.<br>Adjust Y-endstops before continuing."
-    M291 R"Y-Axis Alignment Error" P{var.y_error_msg} S2
+    M291 R"Y-Axis Alignment Error" P{var.y_error_msg} S1 T0
     abort "ERROR: Y-axis deviation of " ^ {var.y_deviation} ^ " mm exceeds 0.5mm tolerance. Test aborted."
 
 ;echo "Y-axis alignment OK: " ^ {var.y_deviation} ^ " mm deviation"
@@ -144,40 +182,63 @@ if var.y_deviation >= 0.5
  ; == X-AXIS POSITION CHECK WITH SAFETY VERIFICATION ===
 G90                                   ; Switch to absolute positioning
 G1 Y172 F18000                        ; Move to safe Y position
-G1 X-100 U100 F18000                  ; Return to safer center position
 
-; SAFETY CHECK: Move towards X endstop with calculated safe distance
+M400
+G4 P500
+echo >>"0:/macros/System/Calibration/QC/Tests/motion_debug.log" "After G1 Y172 command - Y:" ^ {move.axes[1].machinePosition} ^ " (Expected: 172)"
+
+G1 X{var.x_min + var.starting_position} F18000  ; Move to starting position away from X-min endstop
+
+M400
+G4 P500
+echo >>"0:/macros/System/Calibration/QC/Tests/motion_debug.log" "After X starting position - X:" ^ {move.axes[0].machinePosition}
+
+; SAFETY CHECK: Move towards X endstop
 G91                                   ; Switch to relative positioning
-G1 H4 X{-var.x_travel_distance} F1800 ; Move towards X endstop with safe calculated distance
+while !sensors.endstops[0].triggered
+    G1 X0.1 F600   ; Move NEGATIVE towards endstop at 10mm/s
 
-; Verify X endstop was actually triggered
-if result == 0
+; Verify X endstop was actually triggered by checking object model
+M400
+G4 P100
+if !sensors.endstops[0].triggered
     M98 P"0:/sys/led/fault.g"
     abort "ERROR: X-axis endstop not triggered during safe approach. Possible endstop failure or mechanical issue."
 
 G1 X2 F1800                           ; Move away from endstop by 2 mm
-G1 H4 X-3 F140                        ; Move slowly to ensure endstop is triggered
+G1 H4 X-2 F140                        ; Move slowly to ensure endstop is triggered
 
+M400
+G4 P500
 var xEndstopPosition = move.axes[0].machinePosition
+echo >>"0:/macros/System/Calibration/QC/Tests/motion_debug.log" "X endstop position: " ^ {var.xEndstopPosition}
 ;echo "X-axis endstop position: " ^ {var.xEndstopPosition} ^ " mm"
 
 G1 H2 X5 F1800                        ; Move away from endstop by 5 mm
 
 ; == U-AXIS POSITION CHECK WITH SAFETY VERIFICATION ===
+G90                                   ; Switch to absolute positioning
+G1 U{var.u_max - var.starting_position} F18000  ; Move to starting position away from U-max endstop
 
-; SAFETY CHECK: Move towards U endstop with calculated safe distance
+; SAFETY CHECK: Move towards U endstop
 G91                                   ; Switch to relative positioning
-G1 H4 U{var.u_travel_distance} F1800  ; Move towards U endstop with safe calculated distance
+while !sensors.endstops[3].triggered
+    G1 U0.1 F600   ; Move POSITIVE towards endstop at 10mm/s
 
-; Verify U endstop was actually triggered
-if result == 0
+; Verify U endstop was actually triggered by checking object model
+M400
+G4 P100
+if !sensors.endstops[3].triggered
     M98 P"0:/sys/led/fault.g"
     abort "ERROR: U-axis endstop not triggered during safe approach. Possible endstop failure or mechanical issue."
 
 G1 U-2 F1800                          ; Move away from endstop by 2 mm
-G1 H4 U3 F140                         ; Move slowly to ensure endstop is triggered
+G1 H4 U2 F140                         ; Move slowly to ensure endstop is triggered
 
+M400
+G4 P500
 var uEndstopPosition = move.axes[3].machinePosition
+echo >>"0:/macros/System/Calibration/QC/Tests/motion_debug.log" "U endstop position: " ^ {var.uEndstopPosition}
 ;echo "U-axis endstop position: " ^ {var.uEndstopPosition} ^ " mm"
 
 G1 H2 U-5 F1800                       ; Move away from endstop by 5 mm
@@ -189,3 +250,12 @@ if exists(global.axisPositions)
     set global.axisPositions = {var.xEndstopPosition, var.leftEndstopPosition, var.rightEndstopPosition, var.uEndstopPosition}
 else
     global axisPositions = {var.xEndstopPosition, var.leftEndstopPosition, var.rightEndstopPosition, var.uEndstopPosition}
+
+; Ensure we're in absolute positioning mode for subsequent operations
+G90
+
+M400
+G4 P500
+echo >>"0:/macros/System/Calibration/QC/Tests/motion_debug.log" "Final positions - X:" ^ {var.xEndstopPosition} ^ " Y-Left:" ^ {var.leftEndstopPosition} ^ " Y-Right:" ^ {var.rightEndstopPosition} ^ " U:" ^ {var.uEndstopPosition}
+echo >>"0:/macros/System/Calibration/QC/Tests/motion_debug.log" "Current tool: " ^ {state.currentTool} ^ " | Motors: Y0.1:" ^ {(move.axes[1].drivers[0] != null ? "Y" : "N")} ^ " Y0.4:" ^ {(move.axes[1].drivers[1] != null ? "Y" : "N")}
+echo >>"0:/macros/System/Calibration/QC/Tests/motion_debug.log" ">>> ITERATION " ^ {global.motionTestIteration} ^ " END <<<\n"
