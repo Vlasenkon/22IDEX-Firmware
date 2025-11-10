@@ -166,7 +166,7 @@ elif input == 0
     var currentButtonState = 0
     var lastButtonState = 0
 
-    while sensors.filamentMonitors[1].status == "ok"
+    while sensors.filamentMonitors[0].status == "ok"
         M291 R"Error: Left Filament Sensor is already triggered" P"Please release the endstop and try again." S2
     M291 R"Testing Left Filament Sensor" P"Please load filament to the Left Filament Sensor 10x and wait for light signal" S1 T60
     set var.press_count = 10
@@ -178,11 +178,11 @@ elif input == 0
         M42 P1 S1
         M42 P2 S1
         set var.lastButtonState = var.currentButtonState
-        while sensors.filamentMonitors[1].status == "ok"
+        while sensors.filamentMonitors[0].status == "ok"
             set var.currentButtonState = 1
             M42 P1 S0
             M42 P2 S1
-        while sensors.filamentMonitors[1].status != "ok"
+        while sensors.filamentMonitors[0].status != "ok"
             set var.currentButtonState = 0
             M42 P2 S1
             M42 P1 S1
@@ -211,7 +211,7 @@ elif input == 0
     var secondCurrentButtonState = 0
     var secondLastButtonState = 0
 
-    while sensors.filamentMonitors[0].status == "ok"
+    while sensors.filamentMonitors[1].status == "ok"
         M291 R"Error: Right Filament Sensor is already triggered" P"Please release the endstop and try again." S2
     M291 R"Testing Right Filament Sensor" P"Please load filament to the Right Filament Sensor 10x and wait for light signal" S1 T60
     set var.press_count = 10
@@ -223,11 +223,11 @@ elif input == 0
         M42 P1 S1
         M42 P2 S1
         set var.secondLastButtonState = var.secondCurrentButtonState
-        while sensors.filamentMonitors[0].status == "ok"
+        while sensors.filamentMonitors[1].status == "ok"
             set var.secondCurrentButtonState = 1
             M42 P1 S0
             M42 P2 S1
-        while sensors.filamentMonitors[0].status != "ok"
+        while sensors.filamentMonitors[1].status != "ok"
             set var.secondCurrentButtonState = 0
             M42 P2 S1
             M42 P1 S1
