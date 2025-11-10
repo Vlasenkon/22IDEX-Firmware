@@ -1,0 +1,14 @@
+M291 S4 R"RHS Tool 1 Filament Sensor" P"Select an option:" K{"Enable", "Disable"} H1
+
+if input = 0
+    ; Enable RHS Tool 1 Sensor
+    echo >"0:/user/filamentsensor1.g" "M591 P1 C""io6.in"" S1 D1 ; Enable RHS Tool 1 filament sensor monitoring"
+    M591 P1 C"io6.in" S1 D1
+    M291 S1 T10 R"RHS Tool 1 Sensor Enabled" P"Right-Hand Side (Tool 1) sensor is now active"
+    echo "RHS Tool 1 Sensor Enabled"
+elif input = 1
+    ; Disable RHS Tool 1 Sensor
+    echo >"0:/user/filamentsensor1.g" "M591 P1 C""io6.in"" S0 D1 ; Disable RHS Tool 1 filament sensor monitoring"
+    M591 P1 C"io6.in" S0 D1
+    M291 S1 T10 R"RHS Tool 1 Sensor Disabled" P"Right-Hand Side (Tool 1) sensor is now inactive"
+    echo "RHS Tool 1 Sensor Disabled"
