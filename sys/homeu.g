@@ -8,7 +8,16 @@ G91
 G1 H2 Z10 F18000        ; lift Z relative to current position
 G1 H2 U-5 F18000
 G90
-G1 Y172 F18000
+
+; Check if global.homeXUPosition exists and is within valid range (160-180)
+if !exists(global.homeXUPosition)
+  G1 Y172 F18000        ; use default value if variable doesn't exist
+elif global.homeXUPosition < 160 || global.homeXUPosition > 180
+  M98 P"0:/sys/led/fault.g"  ; activate red LEDs for error
+  echo >>"0:/sys/eventlog.txt" "Error: homeXUPosition value "^global.homeXUPosition^" is out of range (160-180)"
+  abort "Error: homeXUPosition value "^global.homeXUPosition^" is out of range (160-180)"
+else
+  G1 Y{global.homeXUPosition} F18000  ; use the stored position value
 
 
 G91                     ; relative positioning

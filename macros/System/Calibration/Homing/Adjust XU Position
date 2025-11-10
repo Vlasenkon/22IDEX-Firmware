@@ -1,0 +1,32 @@
+; Adjust XU Position Macro
+; This macro allows the user to adjust the homing Y position for X and U axes
+
+; Determine the current value to display as default
+var currentValue = 172.0
+if exists(global.homeXUPosition)
+  set var.currentValue = global.homeXUPosition
+
+; Prompt user to enter new position value (S5 = integer input, L = min, H = max, F = default, J1 = cancel button terminates macro)
+M291 R"Adjust Homing Position" P"Please adjust the homing position (160-180 mm)" S5 L160 H180 F{var.currentValue}
+
+; Store the user input
+var newPosition = input
+
+; Validate the input is within range (double check, though M291 should enforce it)
+if var.newPosition < 160 || var.newPosition > 180
+  M98 P"0:/sys/led/fault.g"  ; activate red LEDs for error
+  echo >>"0:/sys/eventlog.txt" "Error: homeXUPosition value "^var.newPosition^" is out of range (160-180)"
+  M291 R"Error" P{"Value " ^ var.newPosition ^ " is out of range (160-180)"} S1 T10
+  abort "Error: homeXUPosition value is out of range (160-180)"
+
+; Save the new value to the file
+echo >"0:/user/homeXUPosition.g" "if exists(global.homeXUPosition)"
+echo >>"0:/user/homeXUPosition.g" "  set global.homeXUPosition = "^var.newPosition
+echo >>"0:/user/homeXUPosition.g" "else"
+echo >>"0:/user/homeXUPosition.g" "  global homeXUPosition = "^var.newPosition
+
+; Load the new value immediately
+M98 P"0:/user/homeXUPosition.g"
+
+; Confirm to user (S1 = close button, T5 = 5 second timeout)
+M291 R"Success" P{"Homing position updated to " ^ var.newPosition ^ " mm"} S1 T5

@@ -164,8 +164,11 @@ M98 P"0:/user/tool1retract.g"                                    ; load tool 1 r
 M98 P"0:/user/tool0extrude.g"                                    ; load tool 0 extrude value
 M98 P"0:/user/tool1extrude.g"                                    ; load tool 1 extrude value
 M98 P"0:/user/xy_square_manual.g"                                ; load XY squaring manual value
-M98 P"0:/user/xy_square_auto.g"                                  ; load XY squaring auto value
-M98 P"0:/user/xy_square_mode.g"                                  ; load XY squaring mode
+M98 P"0:/user/xy_square_auto.g"                                ; load XY squaring auto value
+M98 P"0:/user/xy_square_mode.g"                                ; load XY squaring mode
+
+if fileexists("0:/user/homeXUPosition.g")
+  M98 P"0:/user/homeXUPosition.g"                              ; load homing XU position value
 
 echo >"0:/sys/resetzbabystep.g" "                                ; do nothing"
 
