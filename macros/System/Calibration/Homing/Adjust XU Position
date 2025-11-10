@@ -2,18 +2,18 @@
 ; This macro allows the user to adjust the homing Y position for X and U axes
 
 ; Determine the current value to display as default
-var currentValue = 172.0
+var currentValue = 172
 if exists(global.homeXUPosition)
-  set var.currentValue = global.homeXUPosition
+  set var.currentValue = floor(global.homeXUPosition + 0.5)
 
 ; Prompt user to enter new position value (S5 = integer input, L = min, H = max, F = default, J1 = cancel button terminates macro)
-M291 R"Adjust Homing Position" P"Please adjust the homing position (160-180 mm)" S5 L160 H180 F{var.currentValue}
+M291 R"Adjust Homing Position" P"Please adjust the homing position (160-180 mm)" S5 L160 H180 F{var.currentValue} J1
 
-; Store the user input
-var newPosition = input
+; Store the user input (convert to float for consistency with global variable)
+var newPosition = 0.0 + input
 
 ; Validate the input is within range (double check, though M291 should enforce it)
-if var.newPosition < 160 || var.newPosition > 180
+if var.newPosition < 160.0 || var.newPosition > 180.0
   M98 P"0:/sys/led/fault.g"  ; activate red LEDs for error
   echo >>"0:/sys/eventlog.txt" "Error: homeXUPosition value "^var.newPosition^" is out of range (160-180)"
   M291 R"Error" P{"Value " ^ var.newPosition ^ " is out of range (160-180)"} S1 T10
