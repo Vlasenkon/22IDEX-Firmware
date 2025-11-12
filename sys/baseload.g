@@ -50,7 +50,19 @@ M83 ; Extruder to relative mode
 
 
 
-M291 R"Feed the filament, material will be extruded" P"Insert filament into extruder and press ""Start Extrusion"" to begin, or ""Cancel"" to abort." S4 K{"Start Extrusion"} J2
+M291 R"Feed the filament" P"Insert filament into the extruder now. Push it in until you feel resistance, then press ""Continue""." S3
+if result = -1
+  ; User cancelled - reset temperatures and abort
+  M568 P0 A0
+  M568 P1 A0
+  M140 S0
+  M141 S0
+  M84 E0:1
+  if move.axes[0].homed && move.axes[1].homed && move.axes[2].homed && move.axes[3].homed
+    G1 X-999 U999 F18000 Y150 Z100 F18000
+  abort "Filament loading cancelled by user"
+
+M291 R"Ready to extrude?" P"Is the filament inserted and ready? Press ""Start Extrusion"" to begin." S4 K{"Start Extrusion"} J2
 if result = -1
   ; User cancelled - reset temperatures and abort
   M568 P0 A0
