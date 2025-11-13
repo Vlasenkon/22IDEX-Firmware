@@ -6,7 +6,6 @@ G4 P500              ; Wait for Probe value to stabilize
 ; If probe is attached, warn user and try to place it
 if sensors.probes[0].value[0] < 500
     M42 P4 S0
-    M98 P"0:/sys/led/fault.g"
     M291 R"Probe Attached" P"Please detach the probe from the tool head and place it on the holder in the correct orientation.<br><br><b>Important:</b> Magnets down, lever up." S3
     M98 P"0:/sys/led/resetstatus.g"
 
