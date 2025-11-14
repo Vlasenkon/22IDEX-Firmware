@@ -170,7 +170,7 @@ else ; ===If delta is more than allowed value===
       G90
       G1 X-999 U999 F18000
     M98 P"0:/sys/led/resetstatus.g"
-    M98 P"0:/macros/System/Calibration/QC/AutoCal/Tool Height Auto Calibration" S1
+    M98 P"0:/macros/System/Calibration/QC/AutoCal/Tool Height Auto Calibration" A1
     M99
     abort
 
@@ -253,4 +253,4 @@ echo >>"0:/user/tooloffset.g" "G10 P1 U"^{global.uoffset}^" Y"^{global.yoffset}^
 ; Apply the offsets
 G10 P1 U{global.uoffset} Y{global.yoffset} Z{global.rtzoffset}
 
-M291 S1 T20 R"Tool Height Calibration Successful" P"Mirror Mode (edge deviation): "^{var.ddd}^" mm<br>Multi-Color Mode (T1 offset): "^{var.mid_dev}^" mm"
+M291 S1 T20 R"Tool Height Calibration Successful" P{"Mirror Mode (edge deviation): " ^ var.ddd ^ " mm<br>Multi-Color Mode (T1 offset): " ^ var.mid_dev ^ " mm"}
