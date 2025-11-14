@@ -48,7 +48,25 @@ G1 F18000 X-50 Y-150 Z125  ; Move tools to the cleaning position
 
 M568 P3 A0
 
-M291 S3 R"Please Clean Both Nozzles" P"Use a metal brush to clean both nozzles thoroughly to prevent machine damage.<br>Click ""OK"" when you are ready to proceed or ""Cancel"" to stop."
+M291 S4 K{"Nozzles are Clean","Cancel"} R"Please Clean Both Nozzles" P"Use a metal brush to clean both nozzles thoroughly to prevent machine damage."
+
+if input == 1
+  ; User cancelled
+  M568 P0 S0 R0
+  M568 P1 S0 R0
+  M568 P2 S0 R0
+  M568 P3 S0 R0
+  abort "Calibration cancelled by user"
+
+M291 S4 K{"Heat Breaks are All the Way Up","Cancel"} R"Verify Heat Breaks Position" P"Ensure both heat breaks are pushed all the way up into the heat sink.<br>They should NOT stick out more than 1mm from the heat sink."
+
+if input == 1
+  ; User cancelled
+  M568 P0 S0 R0
+  M568 P1 S0 R0
+  M568 P2 S0 R0
+  M568 P3 S0 R0
+  abort "Calibration cancelled by user"
 
 M568 P3 A2
 
@@ -80,9 +98,6 @@ else
   M98 P"0:/macros/System/Calibration/QC/AutoCal/Mesh Bed Calibration" A1
   M400
 
-M98 P"0:/macros/System/Calibration/QC/AutoCal/XY - Offset Calibration" A1
-M400
-
 if exists(global.xy_square_mode) && global.xy_square_mode == "manual"
   echo "Skipping XY Auto Squaring because mode is manual"
 else
@@ -90,6 +105,9 @@ else
   M400
   M98 P"0:/sys/xy_squaring.g"
   M400
+
+M98 P"0:/macros/System/Calibration/QC/AutoCal/XY - Offset Calibration" A1
+M400
 
 
 
