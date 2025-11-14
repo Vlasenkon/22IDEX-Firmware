@@ -26,9 +26,17 @@ if var.targetTool == 2
   set var.usedParkingSwap = true
   T3
 
-var brush_min = -87
-var brush_max = -59
-var y_center = (var.brush_max + var.brush_min) / 2
+; Brush parameters
+var brush_length = 20.0  ; Total length of brush in mm
+var y_center = -62       ; Default Y center position
+if exists(global.brushYPosition)
+  set var.y_center = global.brushYPosition
+
+; Calculate brush boundaries from center and length
+var brush_min = var.y_center - (var.brush_length / 2)
+var brush_max = var.y_center + (var.brush_length / 2)
+
+; Other parameters
 var x_center = -193
 var u_center = 193
 var xu_offset = 3
