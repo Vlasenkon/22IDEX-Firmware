@@ -51,6 +51,11 @@ if var.ip == "" || var.subnet == "" || var.gateway == ""
 	M291 S1 R"Error" P{"Invalid settings. IP: " ^ var.ip ^ "<br>Subnet: " ^ var.subnet ^ "<br>Gateway: " ^ var.gateway} T0
 	abort "Invalid network settings"
 
+; Create temp network configuration file for reuse
+echo >"0:/sys/temp-network.g" "M553 P" ^ var.subnet
+echo >>"0:/sys/temp-network.g" "M554 P" ^ var.gateway
+echo >>"0:/sys/temp-network.g" "M552 P" ^ var.ip ^ " I0 S1"
+
 ; Step 4: Show instructions and begin test
 var instructMsg1 = "Configure your computer's Ethernet settings:<br>"
 var instructMsg2 = "IP: 192.168.1.51 | Subnet: 255.255.255.0<br>"
@@ -76,9 +81,7 @@ M552 I0 S0                                  ; Turn off Ethernet
 G4 S2
 
 ; Apply configuration
-M553 P{var.subnet}                          ; Set subnet mask
-M554 P{var.gateway}                         ; Set gateway
-M552 P{var.ip} I0 S1                        ; Set IP and enable Ethernet
+M98 P"0:/sys/temp-network.g"
 
 ; Wait for connection
 while network.interfaces[0].actualIP != var.ip && iterations < 20
@@ -87,13 +90,75 @@ while network.interfaces[0].actualIP != var.ip && iterations < 20
 ; Check if connection was successful
 if network.interfaces[0].actualIP == var.ip
 	; Success - connection established
-	M98 P"0:/sys/led/end.g"                 ; Green LED for success
+	M98 P"0:/sys/led/end.g"                 ; Green LED for success - keep it on
 	
-	; Save configuration to networkmode.g using macro
-	M98 P"0:/macros/System/Settings/Network/Enable Ethernet to PC Mode" R1
+	; Show success message with options
+	M98 P"0:/user/APname.g"
+	var localName = global.APname ^ ".local"
+	var successMsg1 = "✅ Ethernet to PC Mode Connected Successfully!<br><br>"
+	var successMsg2 = "IP Address: " ^ var.ip ^ "<br>"
+	var successMsg3 = "Local Domain: " ^ var.localName ^ "<br><br>"
+	var successMsg4 = "Would you like to save this mode?"
+	M291 S4 R"Connection Successful" P{var.successMsg1 ^ var.successMsg2 ^ var.successMsg3 ^ var.successMsg4} K{"Save Mode","Revert to Previous","Cancel"} F0
 	
-	; Exit - stay in this mode
-	M99
+	if input == 0
+		; User chose "Save Mode" - save configuration
+		M98 P"0:/macros/System/Settings/Network/Enable Ethernet to PC Mode" R1
+		M291 S1 R"Mode Saved" P"Ethernet to PC mode has been saved and will remain active after restart." T5
+		M98 P"0:/sys/led/resetstatus.g"     ; Reset LEDs to white
+		M471 P"0:/sys/temp-network.g"      ; Clean up temp file
+		M99
+	elif input == 1
+		; User chose "Revert to Previous" - restore previous mode
+		; Turn off Ethernet
+		M552 I0 S0
+		G4 S2
+		
+		; Restore previous mode
+		if var.previousMode == "ETH"
+			M552 I0 S1                      ; Enable Ethernet
+		elif var.previousMode == "CLIENT"
+			M552 I1 S0                      ; Set WiFi to idle
+			G4 S5
+			M552 I1 S1                      ; Enable as client
+		elif var.previousMode == "AP"
+			M552 I1 S0                      ; Set WiFi to idle
+			G4 S5
+			M552 I1 S2                      ; Enable as access point
+		elif var.previousMode == "ETPC"
+			; Previous mode was ETPC, but revert means restore original network, not stay in ETPC
+			; This shouldn't happen in normal flow since we're already in ETPC-like mode
+			M552 I0 S1                      ; Just enable Ethernet (will use DHCP or stored settings)
+		else
+			M552 I1 S0                      ; Set WiFi to idle
+			G4 S5
+			M552 I1 S2                      ; Enable as access point (default)
+		
+		G4 S5
+		
+		; Wait for previous mode to reconnect and get IP
+		while iterations < 30
+			if var.previousMode == "ETH" || var.previousMode == "ETPC"
+				if network.interfaces[0].actualIP != "0.0.0.0"
+					break
+			else
+				if network.interfaces[1].actualIP != "0.0.0.0"
+					break
+			G4 S1
+			set var.waitCount = var.waitCount + 1
+		
+		; Get the restored IP address
+		var restoredIP = var.previousMode == "ETH" || var.previousMode == "ETPC" ? network.interfaces[0].actualIP : network.interfaces[1].actualIP
+		
+		M291 S1 R"Reverted to Previous Mode" P{"Successfully restored previous mode.<br>IP Address: " ^ var.restoredIP} T5
+		M98 P"0:/sys/led/resetstatus.g"     ; Reset LEDs to white
+		M471 P"0:/sys/temp-network.g"      ; Clean up temp file
+		M99
+	else
+		; User chose "Cancel" - stay in new mode but don't save
+		M98 P"0:/sys/led/resetstatus.g"     ; Reset LEDs to white
+		M471 P"0:/sys/temp-network.g"      ; Clean up temp file
+		M99
 
 ; Failed - restore previous network mode
 M98 P"0:/sys/led/fault.g"                   ; Red LED for failed connection
@@ -116,15 +181,33 @@ elif var.previousMode == "AP"
 	G4 S5
 	M552 I1 S2                              ; Enable as access point
 elif var.previousMode == "ETPC"
-	M552 P192.168.1.50 I0 S1
-	M553 P255.255.255.0
-	M554 P192.168.1.1
+	; Previous mode was ETPC with possibly different settings, just enable Ethernet
+	M552 I0 S1                              ; Enable Ethernet (will use DHCP or stored settings)
 else
 	M552 I1 S0                              ; Set WiFi to idle
 	G4 S5
 	M552 I1 S2                              ; Enable as access point (default)
 
 G4 S5
-M291 S2 R"Connection Failed" P{"Ethernet to PC connection failed. Restored previous mode: " ^ var.previousIP}
+
+; Wait for previous mode to reconnect and get active IP
+var waitCount = 0
+while var.waitCount < 30
+	if var.previousMode == "ETH" || var.previousMode == "ETPC"
+		if network.interfaces[0].actualIP != "0.0.0.0"
+			break
+	else
+		if network.interfaces[1].actualIP != "0.0.0.0"
+			break
+	G4 S1
+	set var.waitCount = var.waitCount + 1
+
+; Get the restored IP address
+var restoredIP = var.previousMode == "ETH" || var.previousMode == "ETPC" ? network.interfaces[0].actualIP : network.interfaces[1].actualIP
+if var.restoredIP == "0.0.0.0"
+	set var.restoredIP = var.previousIP     ; Fallback to stored IP if reconnection failed
+
+M291 S2 R"Connection Failed" P{"❌ Ethernet to PC connection failed.<br><br>Automatically reverted to previous mode.<br>IP Address: " ^ var.restoredIP}
 
 M98 P"0:/sys/led/resetstatus.g"             ; Reset LEDs to normal
+M471 P"0:/sys/temp-network.g"              ; Clean up temp file
