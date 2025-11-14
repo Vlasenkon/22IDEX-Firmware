@@ -168,6 +168,8 @@ if fileexists("0:/user/pickuppositiony.g")
   M98 P"0:/user/pickuppositiony.g"                               ; load global variables
 if fileexists("0:/user/homeXUPosition.g")
   M98 P"0:/user/homeXUPosition.g"                              ; load homing XU position value
+if fileexists("0:/user/brushYPosition.g")
+  M98 P"0:/user/brushYPosition.g"                              ; load brush Y center position value
 
 echo >"0:/sys/resetzbabystep.g" "                                ; do nothing"
 
