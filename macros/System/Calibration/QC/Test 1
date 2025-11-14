@@ -44,3 +44,6 @@ M98 P"0:/macros/System/Calibration/QC/Tests/Probe"
 
 ; Calibrate Z - Probe // Servo rotation test // Z-Probe Pickup Angle // Height // Z-Probe Pickup Position
 M98 P"0:/macros/System/Calibration/Z Probe/Probe Calibration"
+
+; Test completion notification
+M291 R"Test 1 Complete" P"Test 1 has finished successfully." S1 T20

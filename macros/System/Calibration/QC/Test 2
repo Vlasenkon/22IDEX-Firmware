@@ -19,3 +19,6 @@ M98 P"0:/macros/System/Troubleshooting/Z - Homing Test"
 
 ; XY - Movement Test // Add Timer // Add prompt to listen to Noises and watch temp graph
 M98 P"0:/macros/System/Calibration/QC/Tests/XY - Movement"
+
+; Test completion notification
+M291 R"Test 2 Complete" P"Test 2 has finished successfully." S1 T20
