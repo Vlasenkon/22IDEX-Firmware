@@ -42,6 +42,7 @@ var u_center = 193
 var xu_offset = 3
 var xu_step = 1
 var num_wipes = 2
+var randomY = 0
 
 M98 P"0:/sys/detachedcheck.g" ; Check if the probe is detached
 
@@ -107,7 +108,7 @@ if exists(param.E)
     M568 P1 A0
     M140 S0
     M141 S0
-    G1 X-999 U999 F18000 Y150 Z100 F18000
+    G1 X-999 U999 Y150 Z100 F18000
     M291 S1 R"Error" P"Heater fault detected"
     abort "Error: Heater fault detected"
   G1 E{(param.E)} F{60}*{3}                                       ; extrude filament
@@ -116,7 +117,8 @@ if exists(param.E)
 
 G90
 G1 F12000
-G1 Y{random(var.brush_max - var.brush_min + 1) + var.brush_min}     ; Go to random poit of the brush
+set var.randomY = random(floor(var.brush_max - var.brush_min + 1)) + var.brush_min
+G1 Y{var.randomY}     ; Go to random poit of the brush
 
 if var.ttt = 0
 
@@ -129,7 +131,8 @@ if var.ttt = 0
       G90
       G1 Y{var.brush_max + 5}
       G1 X-999
-      G1 Y{random(var.brush_max - var.brush_min + 1) + var.brush_min} ; Go to random poit of the brush
+      set var.randomY = random(floor(var.brush_max - var.brush_min + 1)) + var.brush_min
+      G1 Y{var.randomY} ; Go to random poit of the brush
       M400
 
   ; 2nd cleaning loop (Ramp Cleaning)
@@ -168,7 +171,8 @@ if var.ttt = 1
       G90
       G1 Y{var.brush_max + 5}
       G1 U999
-      G1 Y{random(var.brush_max - var.brush_min + 1) + var.brush_min} ; Go to random poit of the brush
+      set var.randomY = random(floor(var.brush_max - var.brush_min + 1)) + var.brush_min
+      G1 Y{var.randomY} ; Go to random poit of the brush
       M400
   
   ; 2nd cleaning loop (Ramp Cleaning)
