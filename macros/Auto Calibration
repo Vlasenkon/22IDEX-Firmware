@@ -68,9 +68,6 @@ M42 P4 S1                                              ; Turn on relay
 
 
 
-;=echo >"0:/sys/autocali_res.g" "; Auto Calibration Results"
-;=echo >>>"0:/sys/autocali_res.g" "M291 S2 R""Auto Calibration was Successfull"" P""Results:<br>"
-
 M98 P"0:/macros/System/Calibration/QC/AutoCal/Tool Height Auto Calibration" A1
 M400
 
@@ -79,7 +76,6 @@ M400
 
 if exists(global.xcomp_mode) && global.xcomp_mode == "manual"
   echo "Skipping Mesh Bed calibration because compensation mode is manual"
-  ;=echo >>>"0:/sys/autocali_res.g" "Mesh Bed calibration skipped (manual mode)<br>"
 else
   M98 P"0:/macros/System/Calibration/QC/AutoCal/Mesh Bed Calibration" A1
   M400
@@ -89,7 +85,6 @@ M400
 
 if exists(global.xy_square_mode) && global.xy_square_mode == "manual"
   echo "Skipping XY Auto Squaring because mode is manual"
-  ;=echo >>>"0:/sys/autocali_res.g" "XY Auto Squaring skipped (manual mode)<br>"
 else
   M98 P"0:/macros/System/Calibration/QC/AutoCal/XY Auto Squaring" A1
   M400
@@ -107,11 +102,10 @@ M208 Z0 S1
 M558 K0 P8 C"1.io4.in" H5 F300 T18000
 M98 P"0:/user/probeoffset.g"                       ; load global variables
 
+M98 P"0:/sys/detachedcheck.g"
+
 G90
 G1 X-999 U999 Y150 Z100 F18000
-
-
-;=M98 P"0:/sys/autocali_res.g"
 
 ; Build calibration results message
 var msg = "Auto Calibration Successful"

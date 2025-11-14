@@ -452,9 +452,3 @@ echo >>"0:/user/xy_square_auto.g" "  global xy_square_auto = " ^ var.CorrLengthS
 
 if global.xy_square_mode == "auto"
   M98 P"0:/sys/xy_squaring.g"
-
-
-;=  if var.CorrLengthSafety < 0
-;=    echo >>>"0:/sys/autocali_res.g" "XY Auto Squaring = "^take(""^{var.CorrLengthSafety}, 6)^"<br>"
-;=  else
-;=    echo >>>"0:/sys/autocali_res.g" "XY Auto Squaring = "^take(""^{var.CorrLengthSafety}, 5)^"<br>"
