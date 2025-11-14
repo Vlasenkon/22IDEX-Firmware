@@ -30,7 +30,7 @@ if !exists(param.F)
   M98 P"0:/user/ProbeOffset.g"
   M98 R1 P"0:/sys/attachedcheck.g" ; make sure probe is conected, pick if negative and leave relay active
   
-  G1 X{0-sensors.probes[0].offsets[0]} Y{0-sensors.probes[0].offsets[1]} F18000
+  G1 X{0-sensors.probes[0].offsets[0]} Y{10-sensors.probes[0].offsets[1]} F18000
   G30
   if result !=0
     M98 P"0:/sys/led/fault.g"
