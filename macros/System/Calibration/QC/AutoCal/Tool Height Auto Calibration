@@ -5,34 +5,42 @@ if !exists(param.A)
 
 
 var x_test_pos = -90
-var mid_y_test_pos = -101
+var y_test_pos = -101
+var tbl_pos_rear = 170
+var tbl_pos_front = var.y_test_pos
 var add_z_offset = -0.070
+var probing_safety_margin = 6  ; Safety margin in mm above Z datum for nozzle probing
 var max_nozzle_height_error = 0.05  ; Maximum allowed nozzle height deviation in mm
 
 ; ===== Test diviation =====
 M561 ; clear any bed transform
 G29 S2 ; Clear height map
 
+; Safety check: Ensure build plate is at or above Z50 before probe attachment
+if move.axes[2].machinePosition < 50
+  G90
+  G1 Z50 F6000
+
 M98 R1 P"0:/sys/attachedcheck.g" ; make sure probe is conected, pick if negative and leave relay active
 
 M204 T5000                                 ; set accelerations
 
-; Fast Bed Leveling
 
-M558 K0 P8 C"1.io4.in" H50 F18000 T18000
+; Precise Bed Leveling - using symmetrical positions for IDEX
+M558 K0 P8 C"1.io4.in" H5 F300 T18000 A3
 M98 P"0:/user/ProbeOffset.g"
 G1 U999 F18000 ; Move U - carriage off the way
-G30 P0 X0 Y-105 Z-99999    ; probe near an adjusting screw
+G30 P0 X0 Y{var.tbl_pos_rear} Z-99999    ; probe at rear center first
 if result !=0
   M98 P"0:/sys/led/fault.g"
   echo >>"0:/sys/eventlog.txt" "Error: G32 failed"
   abort "Error: G32 failed"
-G30 P1 X-105 Y0 Z-99999    ; probe near an adjusting screw
+G30 P1 X{-var.x_test_pos} Y{var.tbl_pos_front} Z-99999    ; probe at front right
 if result !=0
   M98 P"0:/sys/led/fault.g"
   echo >>"0:/sys/eventlog.txt" "Error: G32 failed"
   abort "Error: G32 failed"
-G30 P2 X105 Y0 Z-99999 S3 ; probe near an adjusting screw and report adjustments needed
+G30 P2 X{var.x_test_pos} Y{var.tbl_pos_front} Z-99999 S3 ; probe at front left and report adjustments needed
 if result !=0
   M98 P"0:/sys/led/fault.g"
   echo >>"0:/sys/eventlog.txt" "Error: G32 failed"
@@ -40,10 +48,13 @@ if result !=0
 
 M204 T10000                                 ; set accelerations
 
+; Measure Z datum at left test position with probe
 G90
-G1 X-105 Y0
+G1 X{var.x_test_pos + sensors.probes[0].offsets[0]} Y{var.y_test_pos - sensors.probes[0].offsets[1]}
 G38.2 K0 Z0
-var probe_heigh = move.axes[2].machinePosition
+G4 P260
+var z_datum = move.axes[2].machinePosition
+var probe_height = var.z_datum - global.zoffset + var.probing_safety_margin
 G91
 G1 Z10
 
@@ -52,224 +63,194 @@ M98 P"0:/user/ProbeOffset.g"
 
 M204 T5000                                 ; set accelerations
 
-M98 P"place.g"
+M98 P"0:/sys/detachedcheck.g"
 
 M98 P"0:/sys/nozzlewipe.g" T0
 
 M42 P4 S1                ; Turn on relay
 
+; ===== Measure at edge positions (left and right sides) =====
 G90
-G1 X{var.x_test_pos} Y0 Z5 F18000
+G1 X{var.x_test_pos} Y{var.tbl_pos_front} Z{var.probe_height} F18000
 
 G91
 M98 P"0:/sys/nozzleprobe.g" Z1
 var lll = move.axes[2].machinePosition
 G1 Z5
 
-echo "Left head pos = "^{var.lll}^" mm"
+echo "Left head pos at edge = "^{var.lll}^" mm"
 
-if {abs(var.probe_heigh - var.lll)} < 8 || {abs(var.probe_heigh - var.lll) + abs(global.rtzoffset)} < 8
-  M98 P"0:/sys/led/pause.g"
-  M291 S4 K{"Calibrate","Skip Calibration","Cancel Calibration"} R{"The nozzle is too low"} P"To avoid damaging your machine, callibrate the nozzle.<br>Please select an option to proceed"
-  if input = 0
-    M291 S2 R"Calibration Process" P"You will be asked to: Loosen heat break and raise it.<br>Click ""OK"" when ready to start."
-    G90
-    G1 X100 U999 Z200 F18000    
-    M400
+G90
+G1 X-999 F18000
 
-    M291 S2 R"Step 1: Loosen the Heatbreak" P"Use a 2mm hex screwdriver to loosen the heat break of the Left nozzle so the heat block can slide up and down.<br>Caution: HOT!"
-    G1S1
-    M291 S2 R"Step 2: Raise the Heatblock" P"Raise the heat block to the maximum(Push it with a screwdriver or pliers), and tighten it.<br>(Caution: HOT!)"
-    M291 S2 R"Confirm Tightening" P"Ensure the heat break is fully tightened to maintain alignment.<br>Click ""OK"" to confirm."
+M98 P"0:/sys/nozzlewipe.g" T1
 
-    G90
-    G1 U-100 X-999 Z200 F18000
-    M400
+G90
+G1 X-999 F18000
 
-    M291 S2 R"Step 1: Loosen the Heatbreak" P"Use a 2mm hex screwdriver to loosen the heat break of the Right nozzle so the heat block can slide up and down.<br>Caution: HOT!"
-    G1S1
-    M291 S2 R"Step 2: Raise the Heatblock" P"Raise the heat block to the maximum(Push it with a screwdriver or pliers), and tighten it.<br>(Caution: HOT!)"
-    M291 S2 R"Confirm Tightening" P"Ensure the heat break is fully tightened to maintain alignment.<br>Click ""OK"" to confirm."
+G1 U{abs(var.x_test_pos) - global.uoffset} Y{var.tbl_pos_front - global.yoffset}
+
+G90
+G1 Z{var.probe_height}
+M98 P"0:/sys/nozzleprobe.g" Z10
+var rrr = move.axes[2].machinePosition
+G1 Z10
+
+G90
+G1 X-999 U999 F18000
+
+var ddd = {var.lll - var.rrr}
+echo "Right head pos at edge = "^{var.rrr}^" mm"
+echo "Edge deviation = "^{var.ddd}^" mm"
+
+if abs(var.ddd) < var.max_nozzle_height_error ; ===If delta is less than allowed value===
+  echo "Good, edge deviation is within tolerance: "^{var.ddd}^" mm"
   
-    G90
-    G1 X-999 U999 F18000
+else ; ===If delta is more than allowed value===
+  M98 P"0:/sys/led/pause.g"
+  M291 S4 K{"Calibrate","Skip Calibration","Cancel Calibration"} R{"Nozzles are deviated by "^var.ddd^" mm"} P"Please select an option to proceed"
+
+  if input == 0 ; User chose "Calibrate"
+    M291 S2 R"Calibration Process" P"You will be asked to: Loosen heat break and lower it. The build plate will push the nozzle up to match the other nozzle's level.<br>Click ""OK"" when ready to start."
+    ;====Left is Lower====
+    if var.ddd > 0
+      G90
+      G1 U-100 X-999 Z150 F18000
+      M400
+
+  
+      M291 S2 R"Step 1: Loosen the Heatbreak" P"Use a 2mm hex screwdriver to loosen the heat break of the Right nozzle so the heat block can slide up and down.<br>Caution: HOT!"
+      G1S1
+      M291 S2 R"Step 2: Lower the Heatblock" P"Lower the heat block 2-3mm (Push it with a screwdriver or pliers)<br>(Caution: HOT!)"
+  
+      G1 X-999 U{abs(var.x_test_pos) - global.uoffset} Y{var.tbl_pos_front - global.yoffset} F18000
+
+      G90
+      G1 Z5 F18000
+      G1 Z{var.lll + var.add_z_offset} F240
+  
+      M400
+      M291 S2 R"Tighten Heat Break for Right Tool" P"Securely tighten the heat break after adjustment.<br>Click ""OK"" when done."
+  
+      G90
+      G1 U-100 Z150 F18000
+      M400
+
+      M291 S2 R"Confirm Tightening" P"Ensure the heat break is fully tightened to maintain alignment.<br>Click ""OK"" to confirm."
+
+      G90
+      G1 X-999 U999 F18000
+
+    ;====Right is Lower====
+    if var.ddd < 0
+      G90
+      G1 X100 U999 Z150 F18000    
+      M400
+
+      M291 S2 R"Step 1: Loosen the Heatbreak" P"Use a 2mm hex screwdriver to loosen the heat break of the Left nozzle so the heat block can slide up and down.<br>Caution: HOT!"
+      G1S1
+      M291 S2 R"Step 2: Lower the Heatblock" P"Lower the heat block 2-3mm (Push it with a screwdriver or pliers)<br>(Caution: HOT!)"
+  
+      G1 U999 X{var.x_test_pos} Y{var.tbl_pos_front} F18000
+
+      G90
+      G1 Z5 F18000
+      G1 Z{var.rrr + var.add_z_offset} F240
+  
+      M400
+      M291 S2 R"Tighten Heat Break for Left Tool" P"Securely tighten the heat break after adjustment.<br>Click ""OK"" when done."
+  
+      G90
+      G1 X100 Z150 F18000
+      M400
+
+
+      M291 S2 R"Confirm Tightening" P"Ensure the heat break is fully tightened to maintain alignment.<br>Click ""OK"" to confirm."
+
+      G90
+      G1 X-999 U999 F18000
     M98 P"0:/sys/led/resetstatus.g"
-    M98 P"0:/macros/System/Calibration/QC/AutoCal/Tool Height Auto Calibration" S1 C1 A1
+    M98 P"0:/macros/System/Calibration/QC/AutoCal/Tool Height Auto Calibration" S1
+    M99
+    abort
+
 
   elif input == 1 ; User chose "Skip Calibration"
     M98 P"0:/sys/led/resetstatus.g"
-    M98 P"place.g"
     echo "Skipping calibration as per user request."
-  
+
   elif input == 2 ; User chose "Cancel Calibration"
     M98 P"0:/sys/led/resetstatus.g"
-    M98 P"place.g"
+    M568 P0 S0 R0
+    M568 P1 S0 R0
+    M568 P2 S0 R0
+    M568 P3 S0 R0
     abort "Calibration cancelled by user."
 
+; ===== Step 2: Measure at center position for RTZ offset (ALWAYS happens) =====
+echo "Proceeding to center measurement for RTZ offset..."
+
+M42 P4 S1                ; Turn on relay
+
+M98 P"0:/sys/nozzlewipe.g" T0
+
+G90
+G1 X-999 U999 F18000
+
+G1 X0 Y{var.y_test_pos} Z{var.probe_height} F18000
+
+G91
+M98 P"0:/sys/nozzleprobe.g" Z1
+var mid_lll = move.axes[2].machinePosition
+G1 Z5
+
+echo "Left head pos at center = "^{var.mid_lll}^" mm"
+
+; Recalculate probe height based on left tool touchdown position
+set var.probe_height = var.mid_lll + var.probing_safety_margin
+
+G90
+G1 X-999 F18000
+
+M98 P"0:/sys/nozzlewipe.g" T1
+
+G90
+G1 X-999 F18000
+
+G1 U{0 - global.uoffset} Y{var.y_test_pos - global.yoffset} F18000
+
+G90
+G1 Z{var.probe_height}
+M98 P"0:/sys/nozzleprobe.g" Z10
+var mid_rrr = move.axes[2].machinePosition
+G1 Z10
+
+M42 P4 S0                ; Turn off relay
+
+G90
+G1 X-999 U999 F18000
+
+var mid_dev = {var.mid_lll - var.mid_rrr}
+
+echo "Right head pos at center = "^{var.mid_rrr}^" mm"
+echo "Center deviation (RTZ offset) = "^{var.mid_dev}^" mm"
+
+if exists(global.rtzoffset)
+  set global.rtzoffset = var.mid_dev
 else
-  G90
-  G1 X-999 F18000
+  global rtzoffset = var.mid_dev
 
-  M98 P"0:/sys/nozzlewipe.g" T1
+; Generate rtzoffset.g
+echo >"0:/user/rtzoffset.g" "if exists(global.rtzoffset)"
+echo >>"0:/user/rtzoffset.g" "  set global.rtzoffset = "^{var.mid_dev}
+echo >>"0:/user/rtzoffset.g" "else"
+echo >>"0:/user/rtzoffset.g" "  global rtzoffset = "^{var.mid_dev}
 
-  G90
-  G1 X-999 F18000
+; Generate tooloffset.g
+echo >"0:/user/tooloffset.g" "; Set tool offsets"
+echo >>"0:/user/tooloffset.g" "G10 P1 U"^{global.uoffset}^" Y"^{global.yoffset}^" Z"^{global.rtzoffset}
 
-  G1 U{abs(var.x_test_pos) - global.uoffset} Y{0 - global.yoffset}
+; Apply the offsets
+G10 P1 U{global.uoffset} Y{global.yoffset} Z{global.rtzoffset}
 
-  G90
-  G1 Z3
-  M98 P"0:/sys/nozzleprobe.g" Z10
-  var rrr = move.axes[2].machinePosition
-  G1 Z10
-
-  M42 P4 S0                ; Turn off relay
-
-  G90
-  G1 X-999 U999 F18000
-
-  var ddd = {var.lll - var.rrr}
-  echo "Right head pos = "^{var.rrr}^" mm"
-
-  if abs(var.ddd) < var.max_nozzle_height_error ; ===If delta is less than allowed value===
-    echo "Good, deviation is "^{var.ddd}^" mm"
-    ;=  if var.ddd < 0
-    ;=    echo >>>"0:/sys/autocali_res.g" "Nozzle deviation = "^take(""^{var.ddd},6)^"<br>"
-    ;=  else
-    ;=    echo >>>"0:/sys/autocali_res.g" "Nozzle deviation = "^take(""^{var.ddd},5)^"<br>"
-    M291 S1 T10 R"Tool Height calibration successful" P" "
-
-    if exists(param.C)
-      M98 P"0:/macros/System/Calibration/QC/AutoCal/Z - Offset Calibration" S1
-
-    M98 P"0:/sys/nozzlewipe.g" T0
-
-    G90
-    G1 X-999 U999 F18000
-
-    G1 X0 Y{var.mid_y_test_pos} F18000
-
-    G91
-    M98 P"0:/sys/nozzleprobe.g" Z1
-    var mid_lll = move.axes[2].machinePosition
-    G1 Z5
-
-    G90
-    G1 X-999 F18000
-
-    M98 P"0:/sys/nozzlewipe.g" T1
-
-    G90
-    G1 X-999 F18000
-
-    G1 U0 Y{var.mid_y_test_pos - global.yoffset} F18000
-
-    G90
-    G1 Z3
-    M98 P"0:/sys/nozzleprobe.g" Z10
-    var mid_rrr = move.axes[2].machinePosition
-    G1 Z10
-
-    M42 P4 S0                ; Turn off relay
-
-    G90
-    G1 X-999 U999 F18000
-
-    var mid_dev = {var.mid_lll - var.mid_rrr}
-
-    if exists(global.rtzoffset)
-      set global.rtzoffset = var.mid_dev
-    else
-      global rtzoffset = var.mid_dev
-
-    ;=  if var.mid_dev < 0
-    ;=    echo >>>"0:/sys/autocali_res.g" "Nozzle deviation in the midle = "^take(""^{var.mid_dev}, 6)^"<br>"
-    ;=  else
-    ;=    echo >>>"0:/sys/autocali_res.g" "Nozzle deviation in the midle = "^take(""^{var.mid_dev}, 5)^"<br>"
-    ; Generate rtzoffset.g
-    echo >"0:/user/rtzoffset.g" "if exists(global.rtzoffset)"
-    echo >>"0:/user/rtzoffset.g" "  set global.rtzoffset = "^{var.mid_dev}
-    echo >>"0:/user/rtzoffset.g" "else"
-    echo >>"0:/user/rtzoffset.g" "  global rtzoffset = "^{var.mid_dev}
-
-    ; Generate tooloffset.g
-    echo >"0:/user/tooloffset.g" "; Set tool offsets"
-    echo >>"0:/user/tooloffset.g" "G10 P1 U"^{global.uoffset}^" Y"^{global.yoffset}^" Z"^{global.rtzoffset}
-
-    echo "Heads deviation = "^{var.ddd}
-    echo "Middle deviation = "^{var.mid_dev}
-
-  else ; ===If delta is more than allowed value===
-    M98 P"0:/sys/led/pause.g"
-    M291 S4 K{"Calibrate","Skip Calibration","Cancel Calibration"} R{"Nozzles are deviated by "^var.ddd^" mm"} P"Please select an option to proceed"
-
-    if input == 0 ; User chose "Calibrate"
-      M291 S2 R"Calibration Process" P"You will be asked to: Loosen heat break and lower it. The build plate will push the nozzle up to match the other nozzle's level.<br>Click ""OK"" when ready to start."
-      ;====Left is Lower====
-      if var.ddd > 0
-        G90
-        G1 U-100 X-999 Z150 F18000
-        M400
-
-    
-        M291 S2 R"Step 1: Loosen the Heatbreak" P"Use a 2mm hex screwdriver to loosen the heat break of the Right nozzle so the heat block can slide up and down.<br>Caution: HOT!"
-        G1S1
-        M291 S2 R"Step 2: Lower the Heatblock" P"Lower the heat block 2-3mm (Push it with a screwdriver or pliers)<br>(Caution: HOT!)"
-    
-        G1 X-999 U{abs(var.x_test_pos) - global.uoffset} Y{0 - global.yoffset} F18000
-
-        G90
-        G1 Z5 F18000
-        G1 Z{var.lll} F240
-    
-        M400
-        M291 S2 R"Tighten Heat Break for Right Tool" P"Securely tighten the heat break after adjustment.<br>Click ""OK"" when done."
-    
-        G90
-        G1 U-100 Z150 F18000
-        M400
-
-        M291 S2 R"Confirm Tightening" P"Ensure the heat break is fully tightened to maintain alignment.<br>Click ""OK"" to confirm."
-  
-        G90
-        G1 X-999 U999 F18000
-  
-      ;====Right is Lower====
-      if var.ddd < 0
-        G90
-        G1 X100 U999 Z150 F18000    
-        M400
-
-        M291 S2 R"Step 1: Loosen the Heatbreak" P"Use a 2mm hex screwdriver to loosen the heat break of the Left nozzle so the heat block can slide up and down.<br>Caution: HOT!"
-        G1S1
-        M291 S2 R"Step 2: Lower the Heatblock" P"Lower the heat block 2-3mm (Push it with a screwdriver or pliers)<br>(Caution: HOT!)"
-    
-        G1 U999 X{var.x_test_pos} Y0 F18000
-
-        G90
-        G1 Z5 F18000
-        G1 Z{var.rrr} F240
-    
-        M400
-        M291 S2 R"Tighten Heat Break for Left Tool" P"Securely tighten the heat break after adjustment.<br>Click ""OK"" when done."
-    
-        G90
-        G1 X100 Z150 F18000
-        M400
-
-  
-        M291 S2 R"Confirm Tightening" P"Ensure the heat break is fully tightened to maintain alignment.<br>Click ""OK"" to confirm."
-  
-        G90
-        G1 X-999 U999 F18000
-      M98 P"0:/sys/led/resetstatus.g"
-      M98 P"0:/macros/System/Calibration/QC/AutoCal/Tool Height Auto Calibration" A1
-
-
-    elif input == 1 ; User chose "Skip Calibration"
-      M98 P"0:/sys/led/resetstatus.g"
-      echo "Skipping calibration as per user request."
-
-    elif input == 2 ; User chose "Cancel Calibration"
-      M98 P"0:/sys/led/resetstatus.g"
-      abort "Calibration cancelled by user."
+M291 S1 T10 R"Tool Height Calibration Successful" P"Mirror Mode (edge deviation): "^{var.ddd}^" mm<br>Multi-Color Mode (T1 offset): "^{var.mid_dev}^" mm"
