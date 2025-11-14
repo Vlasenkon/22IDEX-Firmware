@@ -8,7 +8,7 @@ var ll = input
 M291 S5 J1 F{var.ll} L0 H450 R"Set Right Tool Temperature" P"Please set the temperature for the filament previously loaded in the Right Tool.<br>If new machine, set to 250°C"
 var rr = input
 
-var delta = -40
+var delta = -50
 
 M568 P0 R{var.ll + var.delta} S{var.ll + var.delta}
 M568 P1 R{var.rr + var.delta} S{var.rr + var.delta}
@@ -70,7 +70,7 @@ if input == 1
 
 M568 P3 A2
 
-M98 P"0:/sys/homeall.g" S1
+M98 P"0:/sys/homeall.g" S1 L1
 
 G29 S2     ; disable Mesh Bed Leveling
 M290 R0 S0
