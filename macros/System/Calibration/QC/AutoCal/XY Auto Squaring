@@ -449,6 +449,3 @@ echo >"0:/user/xy_square_auto.g" "if exists(global.xy_square_auto)"
 echo >>"0:/user/xy_square_auto.g" "  set global.xy_square_auto = " ^ var.CorrLengthSafety
 echo >>"0:/user/xy_square_auto.g" "else"
 echo >>"0:/user/xy_square_auto.g" "  global xy_square_auto = " ^ var.CorrLengthSafety
-
-if global.xy_square_mode == "auto"
-  M98 P"0:/sys/xy_squaring.g"
