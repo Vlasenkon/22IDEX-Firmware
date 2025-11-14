@@ -149,9 +149,6 @@ M98 P"0:/user/probeoffset.g"                                     ; load global v
 M98 P"0:/user/rtzoffset.g"                                       ; load global variables
 M98 P"0:/user/pickupposition.g"                                  ; load global variables
 
-if fileexists("0:/user/pickuppositiony.g")
-  M98 P"0:/user/pickuppositiony.g"                               ; load global variables
-
 M98 P"0:/user/pickupangle.g"                                     ; load global variables
 M98 P"0:/user/eventlogging.g"                                    ; load global variables
 M98 P"0:/user/filamentbackup.g"                                  ; load filament runout tool swap variable
@@ -167,6 +164,8 @@ M98 P"0:/user/xy_square_manual.g"                                ; load XY squar
 M98 P"0:/user/xy_square_auto.g"                                ; load XY squaring auto value
 M98 P"0:/user/xy_square_mode.g"                                ; load XY squaring mode
 
+if fileexists("0:/user/pickuppositiony.g")
+  M98 P"0:/user/pickuppositiony.g"                               ; load global variables
 if fileexists("0:/user/homeXUPosition.g")
   M98 P"0:/user/homeXUPosition.g"                              ; load homing XU position value
 
