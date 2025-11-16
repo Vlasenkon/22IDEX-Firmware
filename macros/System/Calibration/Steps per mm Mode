@@ -1,0 +1,56 @@
+; ========================================================================
+; TOGGLE STEPS/MM CALIBRATION
+; ========================================================================
+; Purpose: Enable or disable automatic steps/mm calibration from XY Auto Squaring
+; This macro toggles the global.stepscal variable and updates user/stepscal.g
+; Parameter R: If present, force enable mode (sets initial state to false, then toggles to true)
+; ========================================================================
+
+; ===== Load global variables =====
+M98 P"0:/user/stepscal.g"                                   ; load current state
+
+; ===== Initialize global variable if it doesn't exist =====
+if !exists(global.stepscal)
+  global stepscal = false
+
+; ===== If parameter R exists, force initial state to false (will toggle to true) =====
+if exists(param.R)
+  set global.stepscal = false
+
+; ===== Toggle the calibration state =====
+var newState = !global.stepscal
+
+; ===== Write updated state to file =====
+echo >"0:/user/stepscal.g" "if exists(global.stepscal)"
+echo >>"0:/user/stepscal.g" "  set global.stepscal = " ^ var.newState
+echo >>"0:/user/stepscal.g" "else"
+echo >>"0:/user/stepscal.g" "  global stepscal = " ^ var.newState
+echo >>"0:/user/stepscal.g" ""
+echo >>"0:/user/stepscal.g" "; Steps/mm configuration"
+echo >>"0:/user/stepscal.g" "; Default values - will be overwritten by Auto Calibration if enabled"
+
+if var.newState == false
+  ; ===== Calibration DISABLED - Write default M92 command =====
+  echo >>"0:/user/stepscal.g" "M92 X80 Y80 U80 Z400 E400:400  ; default steps/mm (calibration disabled)"
+  set global.stepscal = false
+  
+  ; ===== Notify user that calibration is disabled (skip if parameter R) =====
+  if !exists(param.R)
+    M291 S1 T0 R"Steps/mm Calibration Disabled" P"Steps/mm calibration is now <b>DISABLED</b>.<br><br>Default values (X80 Y80 U80) will be used."
+else
+  ; ===== Calibration ENABLED - Write placeholder (will be updated by Auto Calibration) =====
+  echo >>"0:/user/stepscal.g" "M92 X80 Y80 U80 Z400 E400:400  ; default values - run Auto Calibration to update"
+  set global.stepscal = true
+  
+  ; ===== Prompt user to run Auto Calibration (skip if parameter R) =====
+  if !exists(param.R)
+    M291 S4 K{"Run Auto Calibration Now", "Skip for Now"} F0 R"Steps/mm Calibration Enabled" P"Steps/mm calibration is now <b>ENABLED</b>.<br><br>Run Auto Calibration to measure and apply corrected values."
+    
+    if input == 0
+      ; User chose to run Auto Calibration now
+      M98 P"0:/macros/Auto Calibration"
+
+; ===== Reload the updated file to apply changes immediately =====
+M98 P"0:/user/stepscal.g"
+
+echo "Steps/mm calibration is now " ^ {global.stepscal ? "ENABLED" : "DISABLED"}

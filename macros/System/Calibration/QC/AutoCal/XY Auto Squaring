@@ -1,27 +1,49 @@
+;===============================================================================
+; XY AUTO SQUARING CALIBRATION MACRO
+;===============================================================================
+; Purpose: Automatically measure bed hole positions and calculate axis scaling
+;          corrections and squareness compensation for IDEX printers
+;===============================================================================
+
+;=if !exists(param.A)
+;=  M291 S1 T0 R"Use Auto Calibration macro" P"Using separate calibration macros may cause issues.<br>Please use the Auto Calibration macro"
+;=  abort "Error: Auto Calibration macro required."
+
+
+;===============================================================================
+; SECTION 1: INITIAL CONFIGURATION
+;===============================================================================
+
 ; ===== Bed Hole Center Coordinates (adjust these to match your measured values) =====
-var LR = {-150.8437500, 159.2437}        ; U, Y  |  Left Rear Hole Center Coordinates
-var RR = {149.1125, 161.0938}            ; U, Y  |  Right Rear Hole Center Coordinates
-var RF = {145.7625, -158.5937500}        ; U, Y  |  Right Front Hole Center Coordinates
+var LR = {-150.1, 159.7}        ; U, Y  |  Left Rear Hole Center Coordinates
+var RR = {149.5, 161.2}         ; U, Y  |  Right Rear Hole Center Coordinates
+var RF = {150.7, -158.3}        ; U, Y  |  Right Front Hole Center Coordinates
 
-; ===== Other Variables =====
-var holecoor = {0, 0, 0, 0}              ; UL, UR, YF, YR,  |  Border Coordinates of the Hole
-var max_Travel = 15
+; ===== Probing Configuration Variables =====
+var holecoor = {0, 0, 0, 0}     ; UL, UR, YF, YR,  |  Border Coordinates of the Hole
+var hole_Z_Test_Offset = 15     ; Z Offset for safe probe dive test
+var max_Travel = 15             ; Maximum travel distance when searching for hole edges
+var old_xy_square_auto = 0.0    ; Store old auto squaring value
+var old_xy_square_manual = 0.0  ; Store old manual squaring value
+var Z_Tilt = 3                  ; Z lift for bed tilt compensation
+var Z_Clearance = 3             ; Safe Z clearance height
+var Z_Dive = 0.5                ; Depth to dive into hole for verification
 
+; ===== Load Global Variables =====
+M98 P"0:/user/probeoffset.g"   ; Load global probe offset variables
 
-if !exists(param.A)
-  M291 S1 T0 R"Use Auto Calibration macro" P"Using separate calibration macros may cause issues.<br>Please use the Auto Calibration macro"
-  abort "Error: Auto Calibration macro required."
-
-
-M98 P"0:/user/xy_square_manual.g"
-M98 P"0:/user/xy_square_auto.g"
-M98 P"0:/user/xy_square_mode.g"
-
+; ===== Initialize Squaring Variables =====
 if !exists(global.xy_square_manual)
+  set var.old_xy_square_manual = global.xy_square_manual
   global xy_square_manual = 0.0
+else
+  set global.xy_square_manual = 0.0
 
 if !exists(global.xy_square_auto)
+  set var.old_xy_square_auto = global.xy_square_auto
   global xy_square_auto = 0.0
+else
+  set global.xy_square_auto = 0.0
 
 if !exists(global.xy_square_mode)
   global xy_square_mode = "manual"
@@ -30,422 +52,549 @@ var xyActive = global.xy_square_manual
 if global.xy_square_mode != "manual"
   set var.xyActive = global.xy_square_auto
 
-if global.xy_square_mode == "manual"
-  echo "XY Auto Squaring skipped because mode is manual"
-  M99
+; ===== Safety Check - Verify Probe is Detached =====
+M98 P"0:/sys/detachedcheck.g"
+
+;=G28 Y   ; Home Y axis (optional - uncomment if needed)
+;=G28 X   ; Home X axis (optional - uncomment if needed)
+;=G28 U   ; Home U axis (optional - uncomment if needed)
 
 
-M98 P"0:/sys/detachedcheck.g" ; Check if the probe is detached
+;===============================================================================
+; SECTION 2: BED PREPARATION
+;===============================================================================
 
-;Start of Calculation
-M558 K0 P8 C"1.io4.in" H5 F600 T18000
-M98 P"0:/user/probeoffset.g"                                                                   ; load global variables
+; ===== Tilt Bed for Access =====
+M584 Z1.2                       ; Temporarily use only one Z motor for tilting
+G91                             ; Relative positioning
+G1 Z{var.Z_Tilt} F18000         ; Lift bed by tilt amount
+G90                             ; Absolute positioning
+M584 Z1.0:1.1:1.2               ; Restore all three Z motors
 
-M98 P"0:/sys/nozzlewipe.g" T1
-
-var Iter = 0
-if exists(param.I)
-  set var.Iter = param.I
-
-; Do if only Iter=1
-if var.Iter == 1
-  ; Go to Y0 
-  G90
-  G1 Y0 F6000
-  
-  G4 S2
-
-  ;M291 P"Right" S2
-  M584 Y0.4
-  G91
-  G1 Y{-var.xyActive} F150   ; Crossbar Alignment
-  M400
-  ;M291 P"Left" S2
-  M584 Y0.1
-  G1 Y{var.xyActive} F150   ; Crossbar Alignment
-  M400 
-  M584 Y0.1:0.4
-  G90
-
-  ;M584 Y0.4
+; ===== Configure Probe for Contact Detection =====
+M558 K0 P8 C"1.io4.in" H5 F600 T18000  ; Configure nozzle contact probe
+;=M98 P"0:/sys/nozzlewipe.g" T1         ; Optional: clean nozzle before probing
 
 
-; =====LR Bed Hole=====
 
-G1 U{var.LR[0]} Y{var.LR[1] - var.max_Travel} Z2 F6000
+
+;===============================================================================
+; SECTION 3: LEFT REAR HOLE PROBING
+;===============================================================================
+
+; ===== Step 3.1: Obtain Z Datum for Left Rear Hole =====
+G1 U{var.LR[0]} Y{var.LR[1] - var.hole_Z_Test_Offset} Z{var.Z_Clearance} F18000
 
 M98 P"0:/sys/nozzleprobe.g" Z10
+G4 P300
 var T1_Ref_Z = move.axes[2].userPosition
 
 G90                                                    ; Absolute
 
-G1 Z{var.T1_Ref_Z + 1}
-G1 Y{var.LR[1]} U{var.LR[0]} F12000                    ;Move to the Centre
+G1 Z{var.T1_Ref_Z + 1} F6000                           ; Lift 1mm above bed surface
+G1 Y{var.LR[1]} U{var.LR[0]} F6000                ; Move to the hole center position
 
-while iterations < 2000
-  M558 K0 P8 C"1.io4.in" H5 F60 T18000              ; Slow speed for safe diving
-  G38.4 K0 Z{var.T1_Ref_Z - 0.5} F60                ; Slowly dive down the hole
+; ===== Step 3.2: Left Rear Hole Center Positioning Test =====
+; Test if nozzle is positioned above hole by attempting to dive into it
+M558 K0 P8 C"1.io4.in" H5 F60 T18000               ; Configure probe: slow speed for safe diving
+G38.4 K0 Z{var.T1_Ref_Z - var.Z_Dive} F60                 ; Attempt to dive 0.5mm below bed surface into hole
+
+if result == 0  ; result==0 means probe did NOT trigger (hit bed surface, not in hole)
+  ; Nozzle hit bed surface outside hole - not positioned correctly
+  M98 P"0:/sys/led/pause.g"
+  G90
+  G1 Z{var.T1_Ref_Z + 1} F6000
+  M291 R"Position Nozzle Above Hole" P"Nozzle is not positioned above the hole. Manually position the nozzle directly above the rear left hole center using U/Y jog controls." S3 U1 Y1
+  
+  ; Verify user positioned correctly by testing dive again
+  M558 K0 P8 C"1.io4.in" H5 F60 T18000             ; Configure probe for verification
+  G38.4 K0 Z{var.T1_Ref_Z - 1.0} F60               ; Dive deeper (1mm below surface) to verify
   if result == 0
-    M98 P"0:/sys/led/pause.g"
-    G1 Z{var.T1_Ref_Z + 1}
-    M291 R"Position Nozzle Above Hole" P"Manually position the nozzle directly above the rear left hole center using XY jog controls." S3 U1 Y1
-    ; Verify user positioned correctly by slow diving again
-    M558 K0 P8 C"1.io4.in" H5 F60 T18000              ; Slow speed for verification
-    G38.4 K0 Z{var.T1_Ref_Z - 1.0} F60                ; Dive slightly deeper to verify positioning
-    if result == 0
-        M98 P"0:/sys/led/fault.g"
-        abort "Error: Nozzle still not positioned correctly above hole. Please check alignment."
-    else
-        M98 P"0:/sys/led/resetstatus.g"
-        set var.LR[0] = move.axes[3].userPosition
-        set var.LR[1] = move.axes[1].userPosition
-        break
+    ; Still hitting surface outside hole - abort
+    M98 P"0:/sys/led/fault.g"
+    abort "Error: Nozzle still not positioned correctly above hole. Please check alignment."
   else
+    ; Successfully positioned - update coordinates
     M98 P"0:/sys/led/resetstatus.g"
+    G4 P300
     set var.LR[0] = move.axes[3].userPosition
     set var.LR[1] = move.axes[1].userPosition
-    break
+else
+  ; Nozzle went into hole successfully - already positioned correctly
+  M98 P"0:/sys/led/resetstatus.g"
+  G4 P300
+  set var.LR[0] = move.axes[3].userPosition
+  set var.LR[1] = move.axes[1].userPosition
 
-; =====LR Hole Center Coordinates Searching=====
+
+; ===== Step 3.3: Left Rear Hole Center Searching (4-Direction Probing) =====
+; Probe all 4 edges of the hole (YF, YR, UL, UR) to find precise center
+; Repeats twice for accuracy refinement
 M558 K0 P8 C"1.io4.in" H5 F60 T18000              ; define Z probe parameters
 M98 P"0:/user/probeoffset.g"                       ; load global variables
 
-; 1st Probe
-G38.4 K0 Y{move.axes[1].userPosition - var.max_Travel} ; Probe YF - on LR hole
-M400
-G4 P260
-set var.holecoor[2] = move.axes[1].userPosition
-
-G1 Y{var.LR[1]}
-
-; 2nd Probe
-G38.4 K0 Y{move.axes[1].userPosition + var.max_Travel} ; Probe YR - on LR hole
-M400
-G4 P260
-set var.holecoor[3] = move.axes[1].userPosition
-
-set var.LR[1] = (var.holecoor[2] + var.holecoor[3]) / 2 ; LRy center coordinate
-
-G1 Y{var.LR[1]} 
-
-; 3rd Prode
-G38.4 K0 U{move.axes[3].userPosition - var.max_Travel} ; Probe UL - on LR hole
-M400
-G4 P260
-set var.holecoor[0] = move.axes[3].userPosition
-
-G1 U{var.LR[0]}
-
-; 4th Probe
-G38.4 K0 U{move.axes[3].userPosition + var.max_Travel} ; Probe UR - on LR hole
-M400
-G4 P260
-set var.holecoor[1] = move.axes[3].userPosition
-
-set var.LR[0] = (var.holecoor[0] + var.holecoor[1]) / 2 ; LRx center coordinate
-
-G1 U{var.LR[0]}
-
-; =====Final LR Hole Center Coordinates Searching=====
+var iteration = 0
+while var.iteration < 2
+  G90
+  G1 U{var.LR[0]} Y{var.LR[1]} F6000
+  
+  ; 1st Probe - YF (Y Front/Negative)
+  G38.4 K0 Y{move.axes[1].userPosition - var.max_Travel}
+  M400
+  G4 P300
+  set var.holecoor[2] = move.axes[1].userPosition
+  G1 Y{var.LR[1]} F6000
+  
+  ; 2nd Probe - YR (Y Rear/Positive)
+  G38.4 K0 Y{move.axes[1].userPosition + var.max_Travel}
+  M400
+  G4 P300
+  set var.holecoor[3] = move.axes[1].userPosition
+  
+  set var.LR[1] = {var.holecoor[2] + var.holecoor[3]} / 2 ; LRy center coordinate
+  G1 Y{var.LR[1]} F6000
+  
+  ; 3rd Probe - UL (U Left/Negative)
+  G38.4 K0 U{move.axes[3].userPosition - var.max_Travel}
+  M400
+  G4 P300
+  set var.holecoor[0] = move.axes[3].userPosition
+  G1 U{var.LR[0]} F6000
+  
+  ; 4th Probe - UR (U Right/Positive)
+  G38.4 K0 U{move.axes[3].userPosition + var.max_Travel}
+  M400
+  G4 P300
+  set var.holecoor[1] = move.axes[3].userPosition
+  
+  set var.LR[0] = {var.holecoor[0] + var.holecoor[1]} / 2 ; LRx center coordinate
+  
+  echo "=== Iteration " ^ {var.iteration + 1} ^ " Complete ==="
+  echo "  holecoor[0] (UL) = " ^ var.holecoor[0]
+  echo "  holecoor[1] (UR) = " ^ var.holecoor[1]
+  echo "  holecoor[2] (YF) = " ^ var.holecoor[2]
+  echo "  holecoor[3] (YR) = " ^ var.holecoor[3]
+  echo "  LR[0] (U center) = " ^ var.LR[0]
+  echo "  LR[1] (Y center) = " ^ var.LR[1]
+  echo ""
+  
+  set var.iteration = var.iteration + 1
 
 G90
-
-; 1st Probe
-G1 U{var.LR[0]} Y{var.LR[1]}
-G38.4 K0 Y{move.axes[1].userPosition - var.max_Travel}
-set var.holecoor[2] = move.axes[1].userPosition
-G1 Y{var.LR[1]}
-
-; 2nd Probe
-G38.4 K0 Y{move.axes[1].userPosition + var.max_Travel}
-set var.holecoor[3] = move.axes[1].userPosition
-
-set var.LR[1] = {var.holecoor[2] + var.holecoor[3]} / 2 ; LRy center coordinate
-G1 Y{var.LR[1]}
-
-; 3rd Probe
-G38.4 K0 U{move.axes[3].userPosition - var.max_Travel}
-set var.holecoor[0] = move.axes[3].userPosition
-G1 U{var.LR[0]}
-
-; 4th Probe
-G38.4 K0 U{move.axes[3].userPosition + var.max_Travel}
-set var.holecoor[1] = move.axes[3].userPosition
-
-set var.LR[0] = {var.holecoor[0] + var.holecoor[1]} / 2 ; LRx center coordinate
-G1 Y{var.LR[1]} U{var.LR[0]} Z5
 M400
+; ===== Step 3.4: Move Away from Left Rear Hole =====
+G90
+M400
+G1 Y{var.LR[1]} U{var.LR[0]} F18000                      ; Move to final calculated center
+G4 S1                                                      ; Wait 1 second
+G1 Z{var.T1_Ref_Z + var.Z_Tilt+var.Z_Clearance} F18000   ; Lift to safe height
 
-; =====RR Bed Hole=====
 
-G1 U{var.RR[0]} Y{var.RR[1] - var.max_Travel} Z2
+;===============================================================================
+; SECTION 4: RIGHT REAR HOLE PROBING
+;===============================================================================
+
+; ===== Step 4.1: Obtain Z Datum for Right Rear Hole =====
+G4 S1
+G1 Z{var.T1_Ref_Z + var.Z_Tilt+var.Z_Clearance} F18000
+
+; =====Right Rear Bed Hole=====
+
+; =====Obtain Z Datum=====
+G90
+G1 Z{var.T1_Ref_Z + var.Z_Tilt+var.Z_Clearance} F18000
+G1 U{var.RR[0]} Y{var.RR[1] - var.hole_Z_Test_Offset} F18000
 
 M98 P"0:/sys/nozzleprobe.g" Z10
+G4 P300
 set var.T1_Ref_Z = move.axes[2].userPosition
 
 G90                                                    ; Absolute
 
-G1 Z{var.T1_Ref_Z + 1}
-G1 Y{var.RR[1]} U{var.RR[0]} F12000                    ;Move to the Centre
+G1 Z{var.T1_Ref_Z + 1} F6000                           ; Lift 1mm above bed surface
+G1 Y{var.RR[1]} U{var.RR[0]} F6000                ; Move to the hole center position
 
-while iterations < 2000
-  M558 K0 P8 C"1.io4.in" H5 F60 T18000              ; Slow speed for safe diving
-  G38.4 K0 Z{var.T1_Ref_Z - 0.5} F60                ; Slowly dive down the hole
+; ===== Step 4.2: Right Rear Hole Center Positioning Test =====
+; Test if nozzle is positioned above hole by attempting to dive into it
+M558 K0 P8 C"1.io4.in" H5 F60 T18000               ; Configure probe: slow speed for safe diving
+G38.4 K0 Z{var.T1_Ref_Z - var.Z_Dive} F60                 ; Attempt to dive 0.5mm below bed surface into hole
+
+if result == 0  ; result==0 means probe did NOT trigger (hit bed surface, not in hole)
+  ; Nozzle hit bed surface outside hole - not positioned correctly
+  M98 P"0:/sys/led/pause.g"
+  G90
+  G1 Z{var.T1_Ref_Z + 1} F6000
+  M291 R"Position Nozzle Above Hole" P"Nozzle is not positioned above the hole. Manually position the nozzle directly above the rear right hole center using U/Y jog controls." S3 U1 Y1
+  
+  ; Verify user positioned correctly by testing dive again
+  M558 K0 P8 C"1.io4.in" H5 F60 T18000             ; Configure probe for verification
+  G38.4 K0 Z{var.T1_Ref_Z - 1.0} F60               ; Dive deeper (1mm below surface) to verify
   if result == 0
-    M98 P"0:/sys/led/pause.g"
-    G1 Z{var.T1_Ref_Z + 1}
-    M291 R"Position Nozzle Above Hole" P"Manually position the nozzle directly above the rear right hole center using XY jog controls." S3 U1 Y1
-    ; Verify user positioned correctly by slow diving again
-    M558 K0 P8 C"1.io4.in" H5 F60 T18000              ; Slow speed for verification
-    G38.4 K0 Z{var.T1_Ref_Z - 1.0} F60                ; Dive slightly deeper to verify positioning
-    if result == 0
-        M98 P"0:/sys/led/fault.g"
-        abort "Error: Nozzle still not positioned correctly above hole. Please check alignment."
-    else
-        M98 P"0:/sys/led/resetstatus.g"
-        set var.RR[0] = move.axes[3].userPosition
-        set var.RR[1] = move.axes[1].userPosition
-        break
+    ; Still hitting surface outside hole - abort
+    M98 P"0:/sys/led/fault.g"
+    abort "Error: Nozzle still not positioned correctly above hole. Please check alignment."
   else
+    ; Successfully positioned - update coordinates
     M98 P"0:/sys/led/resetstatus.g"
+    G4 P300
     set var.RR[0] = move.axes[3].userPosition
     set var.RR[1] = move.axes[1].userPosition
-    break
+else
+  ; Nozzle went into hole successfully - already positioned correctly
+  M98 P"0:/sys/led/resetstatus.g"
+  G4 P300
+  set var.RR[0] = move.axes[3].userPosition
+  set var.RR[1] = move.axes[1].userPosition
 
-; =====RR Hole Center Coordinates Searching=====
+
+; ===== Step 4.3: Right Rear Hole Center Searching (4-Direction Probing) =====
+; Probe all 4 edges of the hole (YF, YR, UL, UR) to find precise center
+; Repeats twice for accuracy refinement
 M558 K0 P8 C"1.io4.in" H5 F60 T18000              ; define Z probe parameters
 M98 P"0:/user/probeoffset.g"                       ; load global variables
 
-; 1st Probe
-G38.4 K0 Y{move.axes[1].userPosition - var.max_Travel} ; Probe YF - on RR hole
-M400
-G4 P260
-set var.holecoor[2] = move.axes[1].userPosition
+set var.iteration = 0
+while var.iteration < 2
+  G90
+  G1 U{var.RR[0]} Y{var.RR[1]} F6000
+  
+  ; 1st Probe - YF (Y Front/Negative)
+  G38.4 K0 Y{move.axes[1].userPosition - var.max_Travel}
+  M400
+  G4 P300
+  set var.holecoor[2] = move.axes[1].userPosition
+  G1 Y{var.RR[1]} F6000
+  
+  ; 2nd Probe - YR (Y Rear/Positive)
+  G38.4 K0 Y{move.axes[1].userPosition + var.max_Travel}
+  M400
+  G4 P300
+  set var.holecoor[3] = move.axes[1].userPosition
+  
+  set var.RR[1] = {var.holecoor[2] + var.holecoor[3]} / 2 ; RRy center coordinate
+  G1 Y{var.RR[1]} F6000
+  
+  ; 3rd Probe - UL (U Left/Negative)
+  G38.4 K0 U{move.axes[3].userPosition - var.max_Travel}
+  M400
+  G4 P300
+  set var.holecoor[0] = move.axes[3].userPosition
+  G1 U{var.RR[0]} F6000
+  
+  ; 4th Probe - UR (U Right/Positive)
+  G38.4 K0 U{move.axes[3].userPosition + var.max_Travel}
+  M400
+  G4 P300
+  set var.holecoor[1] = move.axes[3].userPosition
+  
+  set var.RR[0] = {var.holecoor[0] + var.holecoor[1]} / 2 ; RRx center coordinate
+  
+  echo "=== Iteration " ^ {var.iteration + 1} ^ " Complete ==="
+  echo "  holecoor[0] (UL) = " ^ var.holecoor[0]
+  echo "  holecoor[1] (UR) = " ^ var.holecoor[1]
+  echo "  holecoor[2] (YF) = " ^ var.holecoor[2]
+  echo "  holecoor[3] (YR) = " ^ var.holecoor[3]
+  echo "  RR[0] (U center) = " ^ var.RR[0]
+  echo "  RR[1] (Y center) = " ^ var.RR[1]
+  echo ""
+  
+  set var.iteration = var.iteration + 1
 
-G1 Y{var.RR[1]}
-
-; 2nd Probe
-G38.4 K0 Y{move.axes[1].userPosition + var.max_Travel} ; Probe YR - on RR hole
-M400
-G4 P260
-set var.holecoor[3] = move.axes[1].userPosition
-
-set var.RR[1] = (var.holecoor[2] + var.holecoor[3]) / 2 ; RRy center coordinate
-
-G1 Y{var.RR[1]} 
-
-; 3rd Prode
-G38.4 K0 U{move.axes[3].userPosition - var.max_Travel} ; Probe UL - on RR hole
-M400
-G4 P260
-set var.holecoor[0] = move.axes[3].userPosition
-
-G1 U{var.RR[0]}
-
-; 4th Probe
-G38.4 K0 U{move.axes[3].userPosition + var.max_Travel} ; Probe UR - on RR hole
-M400
-G4 P260
-set var.holecoor[1] = move.axes[3].userPosition
-
-set var.RR[0] = (var.holecoor[0] + var.holecoor[1]) / 2 ; RRx center coordinate
-
-G1 U{var.RR[0]}
-
-; =====Final RR Hole Center Coordinates Searching=====
-
-G90
-
-; 1st Probe
-G1 U{var.RR[0]} Y{var.RR[1]}
-G38.4 K0 Y{move.axes[1].userPosition - var.max_Travel}
-set var.holecoor[2] = move.axes[1].userPosition
-G1 Y{var.RR[1]}
-
-; 2nd Probe
-G38.4 K0 Y{move.axes[1].userPosition + var.max_Travel}
-set var.holecoor[3] = move.axes[1].userPosition
-
-set var.RR[1] = {var.holecoor[2] + var.holecoor[3]} / 2 ; RRy center coordinate
-G1 Y{var.RR[1]}
-
-; 3rd Probe
-G38.4 K0 U{move.axes[3].userPosition - var.max_Travel}
-set var.holecoor[0] = move.axes[3].userPosition
-G1 U{var.RR[0]}
-
-; 4th Probe
-G38.4 K0 U{move.axes[3].userPosition + var.max_Travel}
-set var.holecoor[1] = move.axes[3].userPosition
-
-set var.RR[0] = {var.holecoor[0] + var.holecoor[1]} / 2 ; RRx center coordinate
-G1 Y{var.RR[1]} U{var.RR[0]} Z5
+; ===== Step 4.4: Calculate Hole Diameter and Move Away =====
 var holeR = abs(var.holecoor[0] - var.holecoor[1])
-M400
+echo "Hole diameter (U axis) = " ^ var.holeR
 
-; =====RR Bed Hole=====
-
-G1 U{var.RF[0]} Y{var.RF[1] + var.max_Travel} Z2
-
-M584 Z1.2     ; define driver mapping
-G91
-G1 Z3
 G90
-M584 Z1.0:1.1:1.2 ; restore original driver mapping
+M400
+G1 Y{var.RR[1]} U{var.RR[0]} F18000                      ; Move to final calculated center
+G4 S1                                                      ; Wait 1 second
+G1 Z{var.T1_Ref_Z + var.Z_Tilt+var.Z_Clearance} F18000   ; Lift to safe height
+
+
+;===============================================================================
+; SECTION 5: RIGHT FRONT HOLE PROBING
+;===============================================================================
+
+; ===== Step 5.1: Obtain Z Datum for Right Front Hole =====
+G90
+G1 U{var.RF[0]} Y{var.RF[1] + var.hole_Z_Test_Offset} F18000
+G1 Z{var.T1_Ref_Z+var.Z_Clearance} F18000
 
 M98 P"0:/sys/nozzleprobe.g" Z10
+G4 P300
 set var.T1_Ref_Z = move.axes[2].userPosition
 
 G90                                                    ; Absolute
 
-G1 Z{var.T1_Ref_Z + 1}
-G1 Y{var.RF[1]} U{var.RF[0]} F12000                    ;Move to the Centre
+G1 Z{var.T1_Ref_Z + 1} F6000                           ; Lift 1mm above bed surface
+G1 Y{var.RF[1]} U{var.RF[0]} F6000                ; Move to the hole center position
 
-while iterations < 2000
-  M558 K0 P8 C"1.io4.in" H5 F60 T18000              ; Slow speed for safe diving
-  G38.4 K0 Z{var.T1_Ref_Z - 0.5} F60                ; Slowly dive down the hole
+; ===== Step 5.2: Right Front Hole Center Positioning Test =====
+; Test if nozzle is positioned above hole by attempting to dive into it
+M558 K0 P8 C"1.io4.in" H5 F60 T18000               ; Configure probe: slow speed for safe diving
+G38.4 K0 Z{var.T1_Ref_Z - var.Z_Dive} F60                 ; Attempt to dive 0.5mm below bed surface into hole
+
+if result == 0  ; result==0 means probe did NOT trigger (hit bed surface, not in hole)
+  ; Nozzle hit bed surface outside hole - not positioned correctly
+  M98 P"0:/sys/led/pause.g"
+  G90
+  G1 Z{var.T1_Ref_Z + 1} F6000
+  M291 R"Position Nozzle Above Hole" P"Nozzle is not positioned above the hole. Manually position the nozzle directly above the front right hole center using U/Y jog controls." S3 U1 Y1
+  
+  ; Verify user positioned correctly by testing dive again
+  M558 K0 P8 C"1.io4.in" H5 F60 T18000             ; Configure probe for verification
+  G38.4 K0 Z{var.T1_Ref_Z - 1.0} F60               ; Dive deeper (1mm below surface) to verify
   if result == 0
-    M98 P"0:/sys/led/pause.g"
-    G1 Z{var.T1_Ref_Z + 1}
-    M291 R"Position Nozzle Above Hole" P"Manually position the nozzle directly above the front right hole center using XY jog controls." S3 U1 Y1
-    ; Verify user positioned correctly by slow diving again
-    M558 K0 P8 C"1.io4.in" H5 F60 T18000              ; Slow speed for verification
-    G38.4 K0 Z{var.T1_Ref_Z - 1.0} F60                ; Dive slightly deeper to verify positioning
-    if result == 0
-        M98 P"0:/sys/led/fault.g"
-        abort "Error: Nozzle still not positioned correctly above hole. Please check alignment."
-    else
-        M98 P"0:/sys/led/resetstatus.g"
-        set var.RF[0] = move.axes[3].userPosition
-        set var.RF[1] = move.axes[1].userPosition
-        break
+    ; Still hitting surface outside hole - abort
+    M98 P"0:/sys/led/fault.g"
+    abort "Error: Nozzle still not positioned correctly above hole. Please check alignment."
   else
+    ; Successfully positioned - update coordinates
     M98 P"0:/sys/led/resetstatus.g"
+    G4 P300
     set var.RF[0] = move.axes[3].userPosition
     set var.RF[1] = move.axes[1].userPosition
-    break
+else
+  ; Nozzle went into hole successfully - already positioned correctly
+  M98 P"0:/sys/led/resetstatus.g"
+  G4 P300
+  set var.RF[0] = move.axes[3].userPosition
+  set var.RF[1] = move.axes[1].userPosition
 
-; =====RR Hole Center Coordinates Searching=====
+
+; ===== Step 5.3: Right Front Hole Center Searching (4-Direction Probing) =====
+; Probe all 4 edges of the hole (YF, YR, UL, UR) to find precise center
+; Repeats twice for accuracy refinement
 M558 K0 P8 C"1.io4.in" H5 F60 T18000              ; define Z probe parameters
 M98 P"0:/user/probeoffset.g"                       ; load global variables
 
-; 1st Probe
-G38.4 K0 Y{move.axes[1].userPosition - var.max_Travel} ; Probe YF - on RF hole
-M400
-G4 P260
-set var.holecoor[2] = move.axes[1].userPosition
+set var.iteration = 0
+while var.iteration < 2
+  G90
+  G1 U{var.RF[0]} Y{var.RF[1]} F6000
+  
+  ; 1st Probe - YF (Y Front/Negative)
+  G38.4 K0 Y{move.axes[1].userPosition - var.max_Travel}
+  M400
+  G4 P300
+  set var.holecoor[2] = move.axes[1].userPosition
+  G1 Y{var.RF[1]} F6000
+  
+  ; 2nd Probe - YR (Y Rear/Positive)
+  G38.4 K0 Y{move.axes[1].userPosition + var.max_Travel}
+  M400
+  G4 P300
+  set var.holecoor[3] = move.axes[1].userPosition
+  
+  set var.RF[1] = {var.holecoor[2] + var.holecoor[3]} / 2 ; RFy center coordinate
+  G1 Y{var.RF[1]} F6000
+  
+  ; 3rd Probe - UL (U Left/Negative)
+  G38.4 K0 U{move.axes[3].userPosition - var.max_Travel}
+  M400
+  G4 P300
+  set var.holecoor[0] = move.axes[3].userPosition
+  G1 U{var.RF[0]} F6000
+  
+  ; 4th Probe - UR (U Right/Positive)
+  G38.4 K0 U{move.axes[3].userPosition + var.max_Travel}
+  M400
+  G4 P300
+  set var.holecoor[1] = move.axes[3].userPosition
+  
+  set var.RF[0] = {var.holecoor[0] + var.holecoor[1]} / 2 ; RFx center coordinate
+  G1 U{var.RF[0]} F6000
+  
+  echo "=== Iteration " ^ {var.iteration + 1} ^ " Complete ==="
+  echo "  holecoor[0] (UL) = " ^ var.holecoor[0]
+  echo "  holecoor[1] (UR) = " ^ var.holecoor[1]
+  echo "  holecoor[2] (YF) = " ^ var.holecoor[2]
+  echo "  holecoor[3] (YR) = " ^ var.holecoor[3]
+  echo "  RF[0] (U center) = " ^ var.RF[0]
+  echo "  RF[1] (Y center) = " ^ var.RF[1]
+  echo ""
+  
+  set var.iteration = var.iteration + 1
 
-G1 Y{var.RF[1]}
-
-; 2nd Probe
-G38.4 K0 Y{move.axes[1].userPosition + var.max_Travel} ; Probe YR - on RF hole
-M400
-G4 P260
-set var.holecoor[3] = move.axes[1].userPosition
-
-set var.RF[1] = (var.holecoor[2] + var.holecoor[3]) / 2 ; RFy center coordinate
-
-G1 Y{var.RF[1]} 
-
-; 3rd Prode
-G38.4 K0 U{move.axes[3].userPosition + var.max_Travel} ; Probe UR - on RF hole
-M400
-G4 P260
-set var.holecoor[1] = move.axes[3].userPosition
-set var.holecoor[0] = {move.axes[3].userPosition - var.holeR}
-
-G1 U{var.RF[0]} 
-
-set var.RF[0] = (var.holecoor[0] + var.holecoor[1]) / 2 ; RFx center coordinate
-
-G1 U{var.RF[0]}
-
-; =====Final RF Hole Center Coordinates Searching=====
-
+; ===== Step 5.4: Move Away and Return Bed to Level =====
 G90
-
-; 1st Probe
-G1 U{var.RF[0]} Y{var.RF[1]}
-G38.4 K0 Y{move.axes[1].userPosition - var.max_Travel}
-set var.holecoor[2] = move.axes[1].userPosition
-G1 Y{var.RF[1]}
-
-; 2nd Probe
-G38.4 K0 Y{move.axes[1].userPosition + var.max_Travel}
-set var.holecoor[3] = move.axes[1].userPosition
-
-set var.RF[1] = {var.holecoor[2] + var.holecoor[3]} / 2 ; RFy center coordinate
-G1 Y{var.RF[1]}
-
-; 3rd Probe
-G38.4 K0 U{move.axes[3].userPosition + var.max_Travel}
-set var.holecoor[1] = move.axes[3].userPosition
-set var.holecoor[1] = {move.axes[3].userPosition - var.holeR}
-G1 U{var.RF[0]}
-
-set var.RF[0] = {var.holecoor[0] + var.holecoor[1]} / 2 ; RFx center coordinate
-G1 Y{var.RF[1]} U{var.RF[0]} Z50
 M400
-M584 Z1.2     ; define driver mapping
-G91
-G1 Z-3
-G90
-M584 Z1.0:1.1:1.2 ; restore original driver mapping
+G1 Y{var.RF[1]} U{var.RF[0]} F18000    ; Move to final calculated center
+G4 S1                                    ; Wait 1 second
+G1 Z50 F18000                            ; Lift to safe height
 
-; =====Calculation=====
 
-echo "Left Rear Hole Center Coordinates: U = "^{var.LR[0]}^", Y = "^{var.LR[1]}
-echo "Right Rear Hole Center Coordinates: U = "^{var.RR[0]}^", Y = "^{var.RR[1]}
-echo "Right Front Hole Center Coordinates: U = "^{var.RF[0]}^", Y = "^{var.RF[1]}
+;===============================================================================
+; SECTION 6: BED RESTORATION
+;===============================================================================
 
-; Nominal dimensions (for reference/recalculation in mm)
-var CrossBarLength = 479.1
-var VertSpac       = 319.896              ; Y
-var HorizSpac      = 300                  ; X
+; ===== Return Bed to Level Position =====
+M400                        ; Wait for all moves to complete
+M584 Z1.2                   ; Temporarily use only one Z motor
+G91                         ; Relative positioning
+G1 Z{-var.Z_Tilt} F18000    ; Lower bed by tilt amount (return to level)
+G90                         ; Absolute positioning
+M584 Z1.0:1.1:1.2           ; Restore all three Z motors
 
-; --- Measured Edge Lengths (for verification) ---
+
+;===============================================================================
+; SECTION 7: CALCULATIONS AND CORRECTIONS
+;===============================================================================
+
+; ===== Step 7.1: Define Expected Dimensions =====
+var CrossBarLength = 479.1      ; Distance for mechanical squaring correction calculation
+var VertSpac       = 319.896    ; Y - Expected vertical distance (RR to RF)
+var HorizSpac      = 300        ; X - Expected horizontal distance (LR to RR)
+
+; ===== Step 7.2: Calculate Measured Distances (Hypotenuse) =====
 var HorizMeasured = sqrt(pow(var.RR[0] - var.LR[0], 2) + pow(var.RR[1] - var.LR[1], 2))
 var VertMeasured  = sqrt(pow(var.RF[0] - var.RR[0], 2) + pow(var.RF[1] - var.RR[1], 2))
 
-; --- Rear (H) and Right (V) Edge Vectors ---
-var Hx = var.RR[0] - var.LR[0]
-var Hy = var.RR[1] - var.LR[1]
-var Vx = var.RF[0] - var.RR[0]
-var Vy = var.RF[1] - var.RR[1]
+; ===== Step 7.3: Extract X and Y Components from Measured Vectors =====
+; The measured distances are hypotenuses - we need to project onto machine axes
 
-var k = var.Vx / var.Vy
+; Horizontal edge (LR to RR) - primarily X-axis movement
+var HorizDeltaU = var.RR[0] - var.LR[0]   ; U component (X-axis)
+var HorizDeltaY = var.RR[1] - var.LR[1]   ; Y component
 
+; Vertical edge (RR to RF) - primarily Y-axis movement  
+var VertDeltaU = var.RF[0] - var.RR[0]    ; U component (X-axis)
+var VertDeltaY = var.RF[1] - var.RR[1]    ; Y component
+
+; ===== Step 7.4: Calculate Actual Axis Travel =====
+; Extract the primary axis component from each measurement
+var ActualXTravel = abs(var.HorizDeltaU)  ; X-axis travel from horizontal edge
+var ActualYTravel = abs(var.VertDeltaY)   ; Y-axis travel from vertical edge
+
+; ===== Step 7.5: Calculate Steps/mm Correction Factors =====
+; Correction factor = Expected / Actual
+var XStepsPerMmCorrection = var.HorizSpac / var.ActualXTravel
+var YStepsPerMmCorrection = var.VertSpac / var.ActualYTravel
+
+; ===== Step 7.6: Apply Corrections to Current Steps/mm =====
+var CurrentXSteps = 400.0       ; Current X steps/mm setting
+var CurrentYSteps = 400.0       ; Current Y steps/mm setting
+
+var NewXSteps = var.CurrentXSteps * var.XStepsPerMmCorrection
+var NewYSteps = var.CurrentYSteps * var.YStepsPerMmCorrection
+
+; ===== Step 7.7: Calculate Axis Scaling Errors in Millimeters =====
+var XErrorBefore = var.HorizSpac - var.ActualXTravel  ; How much X-axis is off
+var YErrorBefore = var.VertSpac - var.ActualYTravel   ; How much Y-axis is off
+var XErrorAfter = 0.0                                 ; After correction (theoretical)
+var YErrorAfter = 0.0                                 ; After correction (theoretical)
+
+; ===== Step 7.8: Calculate XY Squareness Error =====
+; Use vector dot product to find angle between horizontal and vertical edges
+
+; Edge vectors for squareness calculation
+var Hx = var.RR[0] - var.LR[0]  ; Horizontal vector X component
+var Hy = var.RR[1] - var.LR[1]  ; Horizontal vector Y component
+var Vx = var.RF[0] - var.RR[0]  ; Vertical vector X component
+var Vy = var.RF[1] - var.RR[1]  ; Vertical vector Y component
+
+; Calculate angle between vectors using dot product
 var dot = var.Hx * var.Vx + var.Hy * var.Vy
 var lenH = sqrt(pow(var.Hx, 2) + pow(var.Hy, 2))
 var lenV = sqrt(pow(var.Vx, 2) + pow(var.Vy, 2))
 var angle = acos(var.dot / (var.lenH * var.lenV))
-var alpha_deg = degrees(var.angle) - 90
+var alpha_deg = degrees(var.angle) - 90  ; Deviation from 90 degrees
 
+; ===== Step 7.9: Calculate Mechanical Squaring Correction =====
+; Calculate required crossbar adjustment using chord length formula
 var CorrLength = 2 * var.CrossBarLength * sin(radians(abs(var.alpha_deg) / 2))
-
 var mag = var.CorrLength/2
 
-; pick sign safely (no ternary)
-var s = 1                                           ; +1 by default
+; Determine sign of correction (safe method without ternary operator)
+var s = 1                       ; Default: +1
 if var.alpha_deg >= 0
-  set var.s = 0 - 1                                 ; -1 if alpha>=0
+  set var.s = 0 - 1             ; If angle >= 0, use -1
 
-var CorrLengthSafety = var.mag * var.s *0.36
+; Apply safety factor (36%) and deadband (±1mm)
+var CorrLengthSafety = var.mag * var.s * 0.36
 
 if var.CorrLengthSafety < 0
-  set var.CorrLengthSafety = var.CorrLengthSafety + 1
+  set var.CorrLengthSafety = var.CorrLengthSafety + 1  ; Add 1mm deadband
 elif var.CorrLengthSafety > 0
-  set var.CorrLengthSafety = var.CorrLengthSafety - 1
+  set var.CorrLengthSafety = var.CorrLengthSafety - 1  ; Subtract 1mm deadband
 
-; Echo suggestions
-echo "Correction Length = ", {var.CorrLengthSafety}
-
+; ===== Step 7.10: Save Squaring Correction to Global Variable =====
 if exists(global.xy_square_auto)
   set global.xy_square_auto = var.CorrLengthSafety
 else
   global xy_square_auto = var.CorrLengthSafety
 
+; ===== Step 7.11: Write Squaring Correction to File =====
 echo >"0:/user/xy_square_auto.g" "if exists(global.xy_square_auto)"
 echo >>"0:/user/xy_square_auto.g" "  set global.xy_square_auto = " ^ var.CorrLengthSafety
 echo >>"0:/user/xy_square_auto.g" "else"
 echo >>"0:/user/xy_square_auto.g" "  global xy_square_auto = " ^ var.CorrLengthSafety
+
+; ===== Step 7.12: Write Steps/mm Calibration to File (if enabled) =====
+; Load the steps/mm calibration state
+M98 P"0:/user/stepscal.g"
+
+; Check if steps/mm calibration is enabled
+if exists(global.stepscal) && global.stepscal == true
+  ; ===== Calibration is ENABLED - Write calculated M92 values =====
+  echo >"0:/user/stepscal.g" "if exists(global.stepscal)"
+  echo >>"0:/user/stepscal.g" "  set global.stepscal = true"
+  echo >>"0:/user/stepscal.g" "else"
+  echo >>"0:/user/stepscal.g" "  global stepscal = true"
+  echo >>"0:/user/stepscal.g" ""
+  echo >>"0:/user/stepscal.g" "; Steps/mm configuration - AUTO CALIBRATED"
+  echo >>"0:/user/stepscal.g" "; Last calibration: " ^ {state.time}
+  echo >>"0:/user/stepscal.g" "M92 X" ^ var.NewXSteps ^ " Y" ^ var.NewYSteps ^ " U" ^ var.NewXSteps ^ " Z400 E400:400  ; calibrated values"
+  
+  echo "Steps/mm calibration values written to user/stepscal.g"
+else
+  echo "Steps/mm calibration is DISABLED - values not saved"
+
+
+;===============================================================================
+; SECTION 8: RESULTS DISPLAY
+;===============================================================================
+
+; ===== Step 8.1: Build Dialog Message =====
+var msg1 = "<b>Axis Errors:</b><br>X: " ^ var.XErrorBefore ^ " mm → 0 mm"
+var msg2 = "<br>Y: " ^ var.YErrorBefore ^ " mm → 0 mm"
+var msg3 = "<br><br><b>Squareness:</b><br>" ^ var.alpha_deg ^ "° → 0°"
+var msgFull = var.msg1 ^ var.msg2 ^ var.msg3
+
+; ===== Step 8.2: Display Comprehensive Results to Console =====
+echo "===== XY AUTO SQUARING CALIBRATION RESULTS ====="
+echo "Hole Center Coordinates:"
+echo "  Left Rear:   U = " ^ var.LR[0] ^ ", Y = " ^ var.LR[1]
+echo "  Right Rear:  U = " ^ var.RR[0] ^ ", Y = " ^ var.RR[1]
+echo "  Right Front: U = " ^ var.RF[0] ^ ", Y = " ^ var.RF[1]
+echo ""
+echo "Measured Distances:"
+echo "  Horizontal (Rear edge): " ^ var.HorizMeasured ^ " mm"
+echo "  Vertical (Right edge): " ^ var.VertMeasured ^ " mm"
+echo ""
+echo "Axis Scaling Errors:"
+echo "  X-axis: Expected " ^ var.HorizSpac ^ " mm, Measured " ^ var.ActualXTravel ^ " mm"
+echo "    Error: " ^ var.XErrorBefore ^ " mm"
+echo "  Y-axis: Expected " ^ var.VertSpac ^ " mm, Measured " ^ var.ActualYTravel ^ " mm"
+echo "    Error: " ^ var.YErrorBefore ^ " mm"
+echo ""
+echo "Calculated Steps/mm Corrections:"
+echo "  X: " ^ var.CurrentXSteps ^ " → " ^ var.NewXSteps ^ " steps/mm"
+echo "  Y: " ^ var.CurrentYSteps ^ " → " ^ var.NewYSteps ^ " steps/mm"
+echo "  (Apply with: M92 X" ^ var.NewXSteps ^ " Y" ^ var.NewYSteps ^ ")"
+echo ""
+echo "Squareness Error:"
+echo "  Angle Deviation: " ^ var.alpha_deg ^ "°"
+echo ""
+echo "Correction Values:"
+echo "  Raw Correction: " ^ var.CorrLength ^ " mm"
+echo "  Applied Correction (with safety): " ^ var.CorrLengthSafety ^ " mm"
+echo "================================================"
+
+; ===== Step 8.3: Display Summary Dialog to User =====
+M291 S1 T0 R"XY Auto Squaring Complete" P{var.msgFull}
+
+
+;===============================================================================
+; END OF XY AUTO SQUARING CALIBRATION
+;===============================================================================
