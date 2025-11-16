@@ -1,3 +1,10 @@
+; ========================================================================
+; XY SQUARING MODE TOGGLE
+; ========================================================================
+; Purpose: Toggle between auto and manual XY squaring modes
+; Parameter R: If present, force enable auto mode (sets initial state to manual, then toggles to auto)
+; ========================================================================
+
 M98 P"0:/user/xy_square_manual.g"
 M98 P"0:/user/xy_square_auto.g"
 M98 P"0:/user/xy_square_mode.g"
@@ -8,6 +15,14 @@ if !exists(global.xy_square_manual)
 if !exists(global.xy_square_auto)
   global xy_square_auto = 0.0
 
+if !exists(global.xy_square_mode)
+  global xy_square_mode = "manual"
+
+; ===== If parameter R exists, force initial state to manual (will toggle to auto) =====
+if exists(param.R)
+  set global.xy_square_mode = "manual"
+
+; ===== Toggle the mode =====
 if exists(global.xy_square_mode)
   if global.xy_square_mode == "auto"
     set global.xy_square_mode = "manual"
@@ -29,8 +44,8 @@ echo >>"0:/user/xy_square_mode.g" "  global xy_square_mode = """^{global.xy_squa
 
 echo "XY squaring mode set to "^{global.xy_square_mode}^", active offset "^{var.active}^"mm."
 
-; Prompt user to run Auto Calibration when switching to auto mode
-if global.xy_square_mode == "auto"
+; Prompt user to run Auto Calibration when switching to auto mode (skip if parameter R)
+if global.xy_square_mode == "auto" && !exists(param.R)
   M291 S4 K{"Run Auto Calibration Now", "Skip for Now"} F0 R"Mode Changed to Auto" P"XY Squaring mode has been changed to Auto.<br>To get an accurate value, Auto Calibration is required."
   if input == 0
     M98 P"0:/macros/Auto Calibration"
