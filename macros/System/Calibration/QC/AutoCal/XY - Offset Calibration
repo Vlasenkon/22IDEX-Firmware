@@ -37,7 +37,7 @@ G1 Z{var.T0_Ref_Z - var.Z_Dive}                        ; Move down the Bed Hole
 
 
 ; ===== Single Probe with T0 =====
-M558 K0 P8 C"1.io4.in" H5 F100 T18000              ; define Z probe parameters
+M558 K0 P8 C"1.io4.in" H5 F60 T18000              ; define Z probe parameters
 M98 P"0:/user/probeoffset.g"                       ; load global variables
 
 ; 1st Probe
@@ -153,7 +153,7 @@ G1 Z{var.T1_Ref_Z - var.Z_Dive}                        ; Move down the Bed Hole
 
 
 ; ===== Single Probe with T1 =====
-M558 K0 P8 C"1.io4.in" H5 F100 T18000              ; define Z probe parameters
+M558 K0 P8 C"1.io4.in" H5 F60 T18000              ; define Z probe parameters
 M98 P"0:/user/probeoffset.g"                       ; load global variables
 
 ; 1st Probe
