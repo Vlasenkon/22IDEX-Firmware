@@ -5,9 +5,9 @@
 ;          corrections and squareness compensation for IDEX printers
 ;===============================================================================
 
-;=if !exists(param.A)
-;=  M291 S1 T0 R"Use Auto Calibration macro" P"Using separate calibration macros may cause issues.<br>Please use the Auto Calibration macro"
-;=  abort "Error: Auto Calibration macro required."
+if !exists(param.A)
+  M291 S1 T0 R"Use Auto Calibration macro" P"Using separate calibration macros may cause issues.<br>Please use the Auto Calibration macro"
+  abort "Error: Auto Calibration macro required."
 
 
 ;===============================================================================
@@ -55,9 +55,9 @@ if global.xy_square_mode != "manual"
 ; ===== Safety Check - Verify Probe is Detached =====
 M98 P"0:/sys/detachedcheck.g"
 
-;=G28 Y   ; Home Y axis (optional - uncomment if needed)
-;=G28 X   ; Home X axis (optional - uncomment if needed)
-;=G28 U   ; Home U axis (optional - uncomment if needed)
+G28 Y   ; Home Y axis
+G28 X   ; Home X axis
+G28 U   ; Home U axis
 
 
 ;===============================================================================
@@ -73,7 +73,7 @@ M584 Z1.0:1.1:1.2               ; Restore all three Z motors
 
 ; ===== Configure Probe for Contact Detection =====
 M558 K0 P8 C"1.io4.in" H5 F600 T18000  ; Configure nozzle contact probe
-;=M98 P"0:/sys/nozzlewipe.g" T1         ; Optional: clean nozzle before probing
+M98 P"0:/sys/nozzlewipe.g" T1         ; Optional: clean nozzle before probing
 
 
 
