@@ -98,6 +98,15 @@ if input == 1
 
 M98 P"0:/sys/led/pause.g"  ; Yellow LED - testing
 
+; Create temp network configuration file
+if var.subnet != "0.0.0.0"
+    echo >"0:/sys/temp-network.g" "M553 P" ^ var.subnet
+else
+    echo >"0:/sys/temp-network.g" "; No subnet specified"
+if var.gateway != "0.0.0.0"
+    echo >>"0:/sys/temp-network.g" "M554 P" ^ var.gateway
+echo >>"0:/sys/temp-network.g" "M552 P" ^ var.targetIP ^ " I0 S1"
+
 ; Step 6: Apply configuration and test
 if var.networkType == "ETHERNET"
     ; Turn off interfaces
@@ -106,11 +115,7 @@ if var.networkType == "ETHERNET"
     G4 S2
     
     ; Apply Ethernet configuration
-    if var.subnet != "0.0.0.0"
-        M553 P{var.subnet}
-    if var.gateway != "0.0.0.0"
-        M554 P{var.gateway}
-    M552 P{var.targetIP} I0 S1
+    M98 P"0:/sys/temp-network.g"
     G4 S5
     
     ; Wait for connection with target IP
@@ -135,15 +140,23 @@ if var.networkType == "ETHERNET"
         M291 S2 R"Success" P{var.successMsg1 ^ var.successMsg2 ^ var.successMsg3}
         
         M98 P"0:/sys/led/resetstatus.g"
+        M471 P"0:/sys/temp-network.g"  ; Clean up temp file
         M99
     else
         ; Failed
         M98 P"0:/sys/led/fault.g"  ; Red LED
         
-        ; Restore original connection
+        ; Restore original connection - recreate temp file with original IP
         M552 I0 S0
         G4 S2
-        M552 P{var.currentIP} I0 S1
+        if var.subnet != "0.0.0.0"
+            echo >"0:/sys/temp-network.g" "M553 P" ^ var.subnet
+        else
+            echo >"0:/sys/temp-network.g" "; No subnet specified"
+        if var.gateway != "0.0.0.0"
+            echo >>"0:/sys/temp-network.g" "M554 P" ^ var.gateway
+        echo >>"0:/sys/temp-network.g" "M552 P" ^ var.currentIP ^ " I0 S1"
+        M98 P"0:/sys/temp-network.g"
         
         var failMsg1 = "Static IP test failed. Unable to connect with IP: " ^ var.targetIP
         var failMsg2 = "<br>Your router is managing IP addresses and is not accepting the static IP request."
@@ -151,105 +164,42 @@ if var.networkType == "ETHERNET"
         var failMsg4 = "<br>Restored original IP: " ^ var.currentIP
         M291 S2 R"Test Failed" P{var.failMsg1 ^ var.failMsg2 ^ var.failMsg3 ^ var.failMsg4}
         M98 P"0:/sys/led/resetstatus.g"
+        M471 P"0:/sys/temp-network.g"  ; Clean up temp file
 
 elif var.networkType == "WIFI"
-    echo "=== WiFi Static IP Test Started ==="
-    echo >"0:/macros/System/Settings/Network/debug.txt" "WiFi Static IP Test Debug Log"
-    
     ; Save SSID before turning off WiFi (it becomes unavailable after)
     var wifiSSID = network.interfaces[1].ssid
-    echo "Step 1: SSID saved: " ^ var.wifiSSID
-    echo >>"0:/macros/System/Settings/Network/debug.txt" "SSID: " ^ var.wifiSSID
     
     ; Get WiFi password for reconfiguration
     M291 S7 J1 R{"WiFi Password for " ^ var.wifiSSID} P"Enter WiFi password (case sensitive)"
     var wifiPass = input
-    echo "Step 2: Password received (length: " ^ {#var.wifiPass} ^ " chars)"
-    echo >>"0:/macros/System/Settings/Network/debug.txt" "Password length: " ^ {#var.wifiPass}
-    echo >>"0:/macros/System/Settings/Network/debug.txt" "Target IP: " ^ var.targetIP
     
     ; Turn off interfaces
-    echo "Step 3: Turning off WiFi..."
     M552 I1 S-1
-    echo "WiFi disabled result: " ^ result
-    echo >>"0:/macros/System/Settings/Network/debug.txt" "M552 I1 S-1 result: " ^ result
     G4 S2
-    
-    echo "Step 4: Turning off Ethernet..."
     M552 I0 S0
-    echo "Ethernet disabled result: " ^ result
-    echo >>"0:/macros/System/Settings/Network/debug.txt" "M552 I0 S0 result: " ^ result
     G4 S2
     
     ; Configure WiFi with static IP
-    echo "Step 5: Setting WiFi to idle..."
-    echo >>"0:/macros/System/Settings/Network/debug.txt" "Step 5: Setting WiFi to idle"
     M552 I1 S0
-    echo "WiFi idle result: " ^ result
-    echo >>"0:/macros/System/Settings/Network/debug.txt" "M552 I1 S0 result: " ^ result
-    echo "TRACE: About to wait 5 seconds after M552 I1 S0"
-    echo >>"0:/macros/System/Settings/Network/debug.txt" "TRACE: About to G4 S5"
     G4 S5
-    echo "TRACE: Finished waiting 5 seconds"
-    echo >>"0:/macros/System/Settings/Network/debug.txt" "TRACE: Finished G4 S5"
-    
-    echo "Step 6: Clearing all WiFi networks..."
-    echo >>"0:/macros/System/Settings/Network/debug.txt" "Step 6: About to M588"
     M588 S"*"
-    echo "M588 clear result: " ^ result
-    echo >>"0:/macros/System/Settings/Network/debug.txt" "M588 result: " ^ result
-    echo "TRACE: About to wait 5 seconds after M588"
-    echo >>"0:/macros/System/Settings/Network/debug.txt" "TRACE: About to G4 S5 after M588"
     G4 S5
-    echo "TRACE: Finished waiting after M588"
-    echo >>"0:/macros/System/Settings/Network/debug.txt" "TRACE: Finished G4 S5 after M588"
-    
-    echo "Step 7: Adding WiFi network with static IP..."
-    echo >>"0:/macros/System/Settings/Network/debug.txt" "Step 7: About to M587"
     M587 S{var.wifiSSID} P{var.wifiPass} I{var.targetIP}
-    echo "M587 result: " ^ result
-    echo >>"0:/macros/System/Settings/Network/debug.txt" "M587 result: " ^ result
     
     ; Store result in a variable before comparison
-    echo "TRACE: Storing result in variable"
-    echo >>"0:/macros/System/Settings/Network/debug.txt" "TRACE: Storing result"
     var m587result = result
-    echo "TRACE: Stored result: " ^ var.m587result
-    echo >>"0:/macros/System/Settings/Network/debug.txt" "Stored result: " ^ var.m587result
-    
     G4 S5
-    echo "TRACE: Finished waiting after M587"
-    echo >>"0:/macros/System/Settings/Network/debug.txt" "TRACE: Finished G4 S5 after M587"
-    
-    echo "TRACE: About to check if m587result != 0"
-    echo >>"0:/macros/System/Settings/Network/debug.txt" "TRACE: About to check if"
     
     ; If M587 failed, try again after longer wait (result 2 can mean module not ready)
     if var.m587result != 0
-            echo "TRACE: Entered first if (m587result != 0), result is: " ^ var.m587result
-            echo >>"0:/macros/System/Settings/Network/debug.txt" "TRACE: Entered first if"
-            echo "M587 failed with code " ^ var.m587result ^ ", waiting 5 seconds and retrying..."
             G4 S5
             M587 S{var.wifiSSID} P{var.wifiPass} I{var.targetIP}
-            echo "M587 retry result: " ^ result
-            echo >>"0:/macros/System/Settings/Network/debug.txt" "M587 retry result: " ^ result
-            
-            echo "TRACE: Storing retry result in variable"
-            echo >>"0:/macros/System/Settings/Network/debug.txt" "TRACE: Storing retry result"
             var m587retryResult = result
-            echo "TRACE: Stored retry result: " ^ var.m587retryResult
-            echo >>"0:/macros/System/Settings/Network/debug.txt" "TRACE: Stored retry result: " ^ var.m587retryResult
-            
             G4 S5
-            echo "TRACE: About to check nested if m587retryResult != 0"
-            echo >>"0:/macros/System/Settings/Network/debug.txt" "TRACE: About to check nested if"
             
             ; If still failing, restore network WITHOUT static IP
             if var.m587retryResult != 0
-                    echo "TRACE: Entered nested if (retry still != 0)"
-                    echo >>"0:/macros/System/Settings/Network/debug.txt" "TRACE: Entered nested if"
-                    echo "ERROR: M587 failed twice with result code " ^ var.m587retryResult
-                    echo "Restoring network connection in DHCP mode..."
                     M98 P"0:/sys/led/fault.g"
                     
                     ; Clear networks again
@@ -258,7 +208,6 @@ elif var.networkType == "WIFI"
                     
                     ; Add network WITHOUT static IP (DHCP mode)
                     M587 S{var.wifiSSID} P{var.wifiPass}
-                    echo "M587 DHCP restore result: " ^ result
                     G4 S5
                     
                     ; Enable WiFi
@@ -276,25 +225,15 @@ elif var.networkType == "WIFI"
     
     G4 S5
     
-    echo "Step 8: Enabling WiFi client mode..."
+    ; Enable WiFi client mode
     M552 I1 S1
-    echo "WiFi enable result: " ^ result
-    echo >>"0:/macros/System/Settings/Network/debug.txt" "M552 I1 S1 result: " ^ result
     G4 S3
     
-    echo "Step 9: Waiting for connection (max 30 seconds)..."
     ; Wait for connection with target IP
     var iterations = 0
     while (network.interfaces[1].actualIP == "0.0.0.0" || network.interfaces[1].actualIP == "192.168.0.1") && var.iterations < 30
-        echo "Iteration " ^ var.iterations ^ ": IP = " ^ network.interfaces[1].actualIP
         set var.iterations = var.iterations + 1
         G4 S1
-    
-    echo "Step 10: Connection attempt finished"
-    echo "Final IP: " ^ network.interfaces[1].actualIP
-    echo "Target IP: " ^ var.targetIP
-    echo >>"0:/macros/System/Settings/Network/debug.txt" "Final IP: " ^ network.interfaces[1].actualIP
-    echo >>"0:/macros/System/Settings/Network/debug.txt" "Target IP: " ^ var.targetIP
     
     ; Check result - normalize strings before comparison
     var actualIP = network.interfaces[1].actualIP
@@ -307,30 +246,19 @@ elif var.networkType == "WIFI"
             M98 P"0:/sys/led/fault.g"  ; Red LED
             
             ; Restore original WiFi connection
-            echo "Step 11: Restoring original WiFi connection..."
-            echo >>"0:/macros/System/Settings/Network/debug.txt" "Attempting restoration..."
             M552 I1 S0
             G4 S5
             M588 S"*"
             G4 S3
-            echo "Step 12: Re-adding network WITHOUT static IP (DHCP mode)..."
             M587 S{var.wifiSSID} P{var.wifiPass}
-            echo "M587 restore result: " ^ result
-            echo >>"0:/macros/System/Settings/Network/debug.txt" "M587 restore result: " ^ result
             G4 S3
             M552 I1 S1
-            echo "WiFi enable result: " ^ result
             G4 S5
             
-            echo "Step 13: Waiting for restoration (max 30 seconds)..."
             set var.iterations = 0
             while (network.interfaces[1].actualIP == "0.0.0.0" || network.interfaces[1].actualIP == "192.168.0.1") && var.iterations < 30
-                    echo "Restore iteration " ^ var.iterations ^ ": IP = " ^ network.interfaces[1].actualIP
                     set var.iterations = var.iterations + 1
                     G4 S3
-            
-            echo "Restoration complete. Final IP: " ^ network.interfaces[1].actualIP
-            echo >>"0:/macros/System/Settings/Network/debug.txt" "Restored IP: " ^ network.interfaces[1].actualIP
             
             M291 S2 R"Test Failed" P{"Static IP test failed.<br>Unable to connect with IP: " ^ var.targetIP ^ "<br>Restored original connection."}
             M98 P"0:/sys/led/resetstatus.g"
