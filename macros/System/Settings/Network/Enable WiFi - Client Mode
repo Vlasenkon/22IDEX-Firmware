@@ -60,24 +60,74 @@ while (network.interfaces[1].actualIP == "0.0.0.0" || network.interfaces[1].actu
 ; Check if connection was successful
 if network.interfaces[1].actualIP != "0.0.0.0" && network.interfaces[1].actualIP != "192.168.0.1"
     ; Success - WiFi Client connected
-    M98 P"0:/sys/led/end.g"                 ; Green LED for success
+    M98 P"0:/sys/led/end.g"                 ; Green LED for success - keep it on
     
-    ; Save configuration to networkmode.g using macro
-    M98 P"0:/macros/System/Settings/Network/Enable WiFi - Client Mode" R1
-    
-    ; Show success message - blocking prompt
+    ; Show success message with options
     var clientIP = network.interfaces[1].actualIP
     var localName = global.APname ^ ".local"
-    var successMsg1 = "WiFi Client Mode Activated<br>"
-    var successMsg2 = "Configuration saved. This mode will remain active after restart.<br>"
-    var successMsg3 = "You can connect via IP address or local domain:<br>IP: " ^ var.clientIP ^ "<br>" ^ var.localName
-    M291 S2 R"Success" P{var.successMsg1 ^ var.successMsg2 ^ var.successMsg3}
+    var successMsg1 = "✅ WiFi Client Mode Connected Successfully!<br><br>"
+    var successMsg2 = "IP Address: " ^ var.clientIP ^ "<br>"
+    var successMsg3 = "Local Domain: " ^ var.localName ^ "<br><br>"
+    var successMsg4 = "Would you like to save this mode?"
+    M291 S4 R"Connection Successful" P{var.successMsg1 ^ var.successMsg2 ^ var.successMsg3 ^ var.successMsg4} K{"Save Mode","Revert to Previous","Cancel"} F0
     
-    ; Reset LEDs to white
-    M98 P"0:/sys/led/resetstatus.g"
-    
-    ; Exit - stay in this mode
-    M99
+    if input == 0
+        ; User chose "Save Mode" - save configuration
+        M98 P"0:/macros/System/Settings/Network/Enable WiFi - Client Mode" R1
+        M291 S1 R"Mode Saved" P"WiFi Client mode has been saved and will remain active after restart." T5
+        M98 P"0:/sys/led/resetstatus.g"     ; Reset LEDs to white
+        M99
+    elif input == 1
+        ; User chose "Revert to Previous" - restore previous mode
+        ; Turn off WiFi
+        M552 I1 S-1
+        M552 I0 S0
+        G4 S2
+        
+        ; Restore previous mode
+        if var.previousMode == "ETH"
+            M552 I0 S1                      ; Enable Ethernet
+        elif var.previousMode == "CLIENT"
+            M552 I1 S0                      ; Set WiFi to idle
+            G4 S5
+            M552 I1 S1                      ; Enable as client
+        elif var.previousMode == "AP"
+            M552 I1 S0                      ; Set WiFi to idle
+            G4 S5
+            M552 I1 S2                      ; Enable as access point
+        elif var.previousMode == "ETPC"
+            M552 P192.168.1.50 I0 S1
+            M553 P255.255.255.0
+            M554 P192.168.1.1
+        else
+            M552 I1 S0                      ; Set WiFi to idle
+            G4 S5
+            M552 I1 S2                      ; Enable as access point (default)
+        
+        G4 S5
+        
+        ; Wait for previous mode to reconnect and get IP
+        var waitCount = 0
+        while waitCount < 30
+            if var.previousMode == "ETH" || var.previousMode == "ETPC"
+                if network.interfaces[0].actualIP != "0.0.0.0"
+                    break
+            else
+                if network.interfaces[1].actualIP != "0.0.0.0"
+                    break
+            G4 S1
+            set var.waitCount = var.waitCount + 1
+        
+        ; Get the restored IP address
+        var restoredIP = var.previousMode == "ETH" || var.previousMode == "ETPC" ? network.interfaces[0].actualIP : network.interfaces[1].actualIP
+        
+        M291 S1 R"Reverted to Previous Mode" P{"Successfully restored previous mode.<br>IP Address: " ^ var.restoredIP} T5
+        M98 P"0:/sys/led/resetstatus.g"     ; Reset LEDs to white
+        M99
+    else
+        ; User chose "Cancel" - stay in new mode but don't save
+        M98 P"0:/sys/led/resetstatus.g"     ; Reset LEDs to white
+        M99
 
 ; Failed - restore previous network mode
 M98 P"0:/sys/led/fault.g"                   ; Red LED for failed connection
@@ -107,6 +157,25 @@ else
     G4 S5
     M552 I1 S2                              ; Enable as access point (default)
 
-M291 S2 R"Connection Failed" P{"WiFi Client mode failed. Restored previous mode: " ^ var.previousIP}
+G4 S5
+
+; Wait for previous mode to reconnect and get active IP
+var waitCount = 0
+while waitCount < 30
+    if var.previousMode == "ETH" || var.previousMode == "ETPC"
+        if network.interfaces[0].actualIP != "0.0.0.0"
+            break
+    else
+        if network.interfaces[1].actualIP != "0.0.0.0"
+            break
+    G4 S1
+    set var.waitCount = var.waitCount + 1
+
+; Get the restored IP address
+var restoredIP = var.previousMode == "ETH" || var.previousMode == "ETPC" ? network.interfaces[0].actualIP : network.interfaces[1].actualIP
+if var.restoredIP == "0.0.0.0"
+    set var.restoredIP = var.previousIP     ; Fallback to stored IP if reconnection failed
+
+M291 S2 R"Connection Failed" P{"❌ WiFi Client mode failed.<br><br>Automatically reverted to previous mode.<br>IP Address: " ^ var.restoredIP}
 
 M98 P"0:/sys/led/resetstatus.g"             ; Reset LEDs to normal
