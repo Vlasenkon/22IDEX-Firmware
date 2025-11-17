@@ -35,7 +35,10 @@ M669 K0 Y1:1:0:1                                                 ; set kinematic
 M671 X222.5:0:-222.5 Y-170.5:193.5:-170.5 S100                   ; leadscrews at Right, Rear, Left
 
 M350 X16 Y16 U16 Z16 E16:16 I1                                   ; configure microstepping
-M98 P"0:/user/stepscal.g"                                        ; load steps/mm from file (can be calibrated)
+if fileexists("0:/user/stepscal.g")
+    M98 P"0:/user/stepscal.g"                                    ; load steps/mm from file (can be calibrated)
+else
+    M92 X80 Y80 U80 Z400 E400:400                                ; default steps/mm (fallback if file missing)
 M566 X600 U600 Y600 Z200 E600:600                                ; set maximum jerk (mm/min)
 M203 X18000 U18000 Y18000 Z1200 E12000:12000                     ; set maximum speeds (mm/min)
 M201 X10000 U10000 Y10000 Z500 E5000:5000                        ; set accelerations (mm/s^2)
