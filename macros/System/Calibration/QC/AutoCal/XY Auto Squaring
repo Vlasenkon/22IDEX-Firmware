@@ -555,10 +555,30 @@ else
 ; SECTION 8: RESULTS DISPLAY
 ;===============================================================================
 
-; ===== Step 8.1: Build Dialog Message =====
-var msg1 = "<b>Axis Errors:</b><br>X: " ^ var.XErrorBefore ^ " mm → 0 mm"
-var msg2 = "<br>Y: " ^ var.YErrorBefore ^ " mm → 0 mm"
-var msg3 = "<br><br><b>Squareness:</b><br>" ^ var.alpha_deg ^ "° → 0°"
+; ===== Step 8.1: Build Dialog Message Based on Enabled Calibrations =====
+; Check if steps/mm calibration is enabled
+var stepsCalEnabled = exists(global.stepscal) && global.stepscal == true
+
+; Check if XY squaring is enabled (auto mode)
+var squaringEnabled = exists(global.xy_square_mode) && global.xy_square_mode == "auto"
+
+; Build Axis Errors section
+var msg1 = "<b>Axis Errors:</b>"
+var msg2 = ""
+if var.stepsCalEnabled
+  set var.msg1 = var.msg1 ^ "<br>X: " ^ var.XErrorBefore ^ " mm → 0 mm ✓"
+  set var.msg2 = "<br>Y: " ^ var.YErrorBefore ^ " mm → 0 mm ✓"
+else
+  set var.msg1 = var.msg1 ^ "<br>X: " ^ var.XErrorBefore ^ " mm (not saved - calibration disabled in settings)"
+  set var.msg2 = "<br>Y: " ^ var.YErrorBefore ^ " mm (not saved - calibration disabled in settings)"
+
+; Build Squareness section
+var msg3 = ""
+if var.squaringEnabled
+  set var.msg3 = "<br><br><b>Squareness:</b><br>" ^ var.alpha_deg ^ "° → 0° ✓"
+else
+  set var.msg3 = "<br><br><b>Squareness:</b><br>" ^ var.alpha_deg ^ "° (not saved - XY squaring disabled in settings)"
+
 var msgFull = var.msg1 ^ var.msg2 ^ var.msg3
 
 ; ===== Step 8.2: Display Comprehensive Results to Console =====
@@ -581,7 +601,6 @@ echo ""
 echo "Calculated Steps/mm Corrections:"
 echo "  X: " ^ var.CurrentXSteps ^ " → " ^ var.NewXSteps ^ " steps/mm"
 echo "  Y: " ^ var.CurrentYSteps ^ " → " ^ var.NewYSteps ^ " steps/mm"
-echo "  (Apply with: M92 X" ^ var.NewXSteps ^ " Y" ^ var.NewYSteps ^ ")"
 echo ""
 echo "Squareness Error:"
 echo "  Angle Deviation: " ^ var.alpha_deg ^ "°"
