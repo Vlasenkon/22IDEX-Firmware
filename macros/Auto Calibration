@@ -98,58 +98,23 @@ else
   M98 P"0:/macros/System/Calibration/QC/AutoCal/Mesh Bed Calibration" A1
   M400
 
-; ========================================================================
-; DETECT AND PROMPT FOR DISABLED CALIBRATIONS
-; ========================================================================
+; Check if either XY squaring or steps/mm calibration is enabled
+var runCalibration = false
 
-; Load current mode states
+; Load both mode states
 M98 P"0:/user/xy_square_mode.g"
-M98 P"0:/user/xy_square_auto.g"
-M98 P"0:/user/xy_square_manual.g"
 M98 P"0:/user/stepscal.g"
 
-; Initialize variables if they don't exist
-if !exists(global.xy_square_mode)
-  global xy_square_mode = "manual"
-if !exists(global.xy_square_auto)
-  global xy_square_auto = 0.0
-if !exists(global.xy_square_manual)
-  global xy_square_manual = 0.0
-if !exists(global.stepscal)
-  global stepscal = false
+; Check XY squaring mode (enabled if mode is "auto")
+if exists(global.xy_square_mode) && global.xy_square_mode == "auto"
+  set var.runCalibration = true
 
-; ===== Detect XY Squaring Status =====
-; Considered DISABLED if: mode="manual" AND manual value=0
-var xySquaringEnabled = true
-if global.xy_square_mode == "manual" && global.xy_square_manual == 0.0
-  set var.xySquaringEnabled = false
-; If mode="auto", it's enabled regardless of value
-; If mode="manual" but value != 0, it's enabled
+; Check steps/mm calibration mode (enabled if true)
+if exists(global.stepscal) && global.stepscal == true
+  set var.runCalibration = true
 
-; ===== Detect Steps/mm Calibration Status =====
-; Considered DISABLED if: stepscal=false
-var stepsCalEnabled = global.stepscal
-
-; ===== Prompt User for XY Squaring if Disabled =====
-if !var.xySquaringEnabled
-  M291 S4 K{"Enable and Calibrate", "Skip"} F0 R"XY Squaring is Disabled" P"XY Squaring calibration is currently disabled.<br><br>Would you like to enable it and run calibration?"
-  
-  if input == 0
-    ; User chose to enable - call toggle macro with parameter R
-    M98 P"0:/macros/System/Calibration/XY Squaring/Toggle Mode" R1
-    set var.xySquaringEnabled = true
-
-; ===== Prompt User for Steps/mm Calibration if Disabled =====
-if !var.stepsCalEnabled
-  M291 S4 K{"Enable and Calibrate", "Skip"} F0 R"Steps/mm Calibration is Disabled" P"Steps/mm calibration is currently disabled.<br><br>Would you like to enable it and run calibration?"
-  
-  if input == 0
-    ; User chose to enable - call toggle macro with parameter R
-    M98 P"0:/macros/System/Calibration/Steps per mm Mode" R1
-    set var.stepsCalEnabled = true
-
-; ===== Run XY Auto Squaring if at least one calibration is enabled =====
-if var.xySquaringEnabled || var.stepsCalEnabled
+; Run calibration only if at least one mode is enabled
+if var.runCalibration
   M98 P"0:/macros/System/Calibration/QC/AutoCal/XY Auto Squaring" A1
   M400
   M98 P"0:/sys/xy_squaring.g"
