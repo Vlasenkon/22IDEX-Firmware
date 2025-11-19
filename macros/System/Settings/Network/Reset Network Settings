@@ -23,6 +23,10 @@ M291 S0 T0 R"Resetting Network..." P"Processing network reset...<br>Please wait.
 M552 I0 S0                                  ; Disable Ethernet
 G4 S1                                       ; Wait
 
+M553 P0.0.0.0                               ; Clear subnet mask
+M554 P0.0.0.0                               ; Clear gateway
+G4 S1                                       ; Wait
+
 M552 I1 S-1                                 ; Turn off WiFi completely
 G4 S1                                       ; Wait
 
@@ -62,3 +66,9 @@ M98 P"0:/user/networkmode.g"
 G4 S5
 
 M98 P"0:/sys/networktest.g"
+
+; Check if machine is in Access Point mode and show appropriate notification
+if network.interfaces[1].actualIP == "192.168.0.1"
+    M98 P"0:/sys/led/end.g"               ; Red LED for Access Point mode
+    M291 S3 R"✅ Network Reset Complete" P{"Network settings have been reset successfully!<br><br>Machine is now in Access Point mode:<br>Network: " ^ global.APname ^ "<br>Password: 1234567890<br>IP: 192.168.0.1<br><br>Click OK to continue."}
+    M98 P"0:/sys/led/resetstatus.g"         ; Reset LEDs to white
