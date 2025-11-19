@@ -198,7 +198,7 @@ if var.connectionSuccess
         
         ; Wait for previous mode to reconnect and get IP
         var waitCount = 0
-        while waitCount < 30
+        while var.waitCount < 30
             if var.previousMode == "ETH" || var.previousMode == "ETPC"
                 if network.interfaces[0].actualIP != "0.0.0.0"
                     break
@@ -254,7 +254,7 @@ G4 S5
 
 ; Wait for previous mode to reconnect and get active IP
 var waitCount = 0
-while waitCount < 30
+while var.waitCount < 30
     if var.previousMode == "ETH" || var.previousMode == "ETPC"
         if network.interfaces[0].actualIP != "0.0.0.0"
             break
