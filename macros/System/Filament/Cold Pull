@@ -46,6 +46,10 @@ M568 P{var.tool} R{var.temp} S{var.temp}
 if !move.axes[0].homed || !move.axes[1].homed || !move.axes[2].homed || !move.axes[3].homed
     M98 P"0:/sys/homeall.g" S1
 
+; Lower build plate all the way down for easy filament spool removal
+G90                                                        ; Absolute positioning
+G1 Z420 F6000                                              ; Move to Z420 (max height, plate at bottom)
+
 G91
 if !exists(param.C)
   G1 Z100 F6000
@@ -153,8 +157,8 @@ M302 P0
 ; Set the tool temperature to 0
 M568 P{var.tool} R{0} S{0}
 
-M98 P"0:/sys/led/end.g"
+M98 P"0:/sys/led/end.g"                                    ; Green LED - success
 M702 P0
 ; Prompt the user to manually remove the filament
-M291 R"Manual Filament Removal" P"Pull out the filament manually now." S2
-M98 P"0:/sys/led/resetstatus.g"
+M291 S3 R"✅ Cold Pull Complete" P{"Cold Pull procedure completed successfully!<br><br>You can now pull out the filament manually.<br>Build plate has been lowered for easy spool removal.<br><br>Click OK when done."}
+M98 P"0:/sys/led/resetstatus.g"                            ; Reset LEDs to white
