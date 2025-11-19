@@ -16,6 +16,8 @@ else
 	M99
 	abort
 
+M98 P"0:/sys/led/pause.g"                   ; Yellow LED - processing
+M291 S0 T0 R"Resetting Network..." P"Processing network reset...<br>Please wait..."
 
 ; Erase values from WiFi Module
 M552 I0 S0                                  ; Disable Ethernet
@@ -27,11 +29,15 @@ G4 S1                                       ; Wait
 M552 I1 S0                                  ; Set WiFi to Idle state
 G4 S5                                       ; Wait for WiFi to stabilize
 
+M291 S0 T0 R"Resetting Network..." P"Erasing all stored networks...<br>Please wait..."
+
 M588 S"*"                                   ; Forget all WiFi networks
 G4 S1
 
 M589 S"*"                                   ; Clear Access Point configuration
 G4 S1
+
+M291 S0 T0 R"Resetting Network..." P"Reconfiguring Access Point...<br>Please wait..."
 
 M589 S{global.APname} P"1234567890" I192.168.0.1  ; Configure WiFi Access Point
 if result != 0
