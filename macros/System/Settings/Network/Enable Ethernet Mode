@@ -120,6 +120,9 @@ G4 S2
 if var.useStaticIP
     M98 P"0:/sys/temp-network.g"           ; Apply static IP configuration
 else
+    ; Clear any previous static IP settings before enabling DHCP
+    M553 P0.0.0.0                           ; Clear subnet mask
+    M554 P0.0.0.0                           ; Clear gateway
     M552 I0 S1                              ; Enable Ethernet mode with DHCP
 G4 S5
 
