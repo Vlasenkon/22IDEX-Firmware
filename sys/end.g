@@ -42,7 +42,17 @@ M98 P"0:/sys/resetzbabystep.g"
 G4 S1
 echo >"0:/sys/resetzbabystep.g" "; do nothing"
 
-; Reload tool change values for next job
+; Reset tool change globals to null (clears slicer overrides)
+if exists(global.tool0RetractDistance)
+  set global.tool0RetractDistance = null
+if exists(global.tool1RetractDistance)
+  set global.tool1RetractDistance = null
+if exists(global.tool0ExtrudeDistance)
+  set global.tool0ExtrudeDistance = null
+if exists(global.tool1ExtrudeDistance)
+  set global.tool1ExtrudeDistance = null
+
+; Reload tool change values for next job (restores machine overrides if any)
 M98 P"0:/user/tool0retract.g"
 M98 P"0:/user/tool1retract.g"
 M98 P"0:/user/tool0extrude.g"
