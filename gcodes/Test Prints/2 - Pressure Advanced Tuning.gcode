@@ -908,8 +908,8 @@ M140 S{var.BED_TEMP}
 
 
 ; Fan Speed
-;M291 P" " R"Enter Fan Speed in %:" S6 L0 H100 F50
-;var FAN_SPEED = input / 100
+M291 P" " R"Enter Fan Speed in %:" S6 L0 H100 F50
+var FAN_SPEED = input / 100
 
 M106 S0
 
