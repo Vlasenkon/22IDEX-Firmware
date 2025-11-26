@@ -67,13 +67,13 @@ if !exists(global.printerStatus) || global.printerStatus != "prt_starting"
   if (state.status == "processing" || state.status == "printing" || state.status == "pausing" || state.status == "resuming")
     M83
     if state.currentTool == 0
-      if exists(global.tool0ExtrudeDistance) && global.tool0ExtrudeDistance != null
-        G1 E{global.tool0ExtrudeDistance} F9000
+      if exists(global.t0_ext) && global.t0_ext != null
+        G1 E{global.t0_ext} F9000
       else
         G1 E10 F9000
     if state.currentTool == 1
-      if exists(global.tool1ExtrudeDistance) && global.tool1ExtrudeDistance != null
-        G1 E{global.tool1ExtrudeDistance} F9000
+      if exists(global.t1_ext) && global.t1_ext != null
+        G1 E{global.t1_ext} F9000
       else
         G1 E10 F9000
 
