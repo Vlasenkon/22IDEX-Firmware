@@ -2899,13 +2899,13 @@ if var.chamber > 0
 
 ; Tool temperatures (keep your M568s)
 M568 P{var.TOOL_ID} S{var.t0} R{var.t0}
-T{var.TOOL_ID}
+T{var.TOOL_ID} P0
 
 ; Fan
 M106 S{var.fan}
 
 
-M98 P"0:/sys/initial.g" E0 A-146.748 B146.748 D-26.7485 J26.7485
+M98 P"0:/sys/initial.g" E{var.TOOL_ID} A-146.748 B146.748 D-26.7485 J26.7485
 G21 ; set units to millimeters
 G90 ; use absolute coordinates
 M83 ; use relative distances for extrusion
