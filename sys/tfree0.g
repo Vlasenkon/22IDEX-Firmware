@@ -3,8 +3,8 @@ G90
 if !exists(global.printerStatus) || global.printerStatus != "prt_starting"
   if state.status == "processing" || state.status == "printing" || state.status == "resuming"
     M83
-    if exists(global.t0_ret) && global.t0_ret != null
-      G1 E{global.t0_ret} F3000
+    if exists(global.tool0RetractDistance) && global.tool0RetractDistance != null
+      G1 E{global.tool0RetractDistance} F3000
     else
       G1 E-5 F3000
 

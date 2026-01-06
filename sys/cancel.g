@@ -16,14 +16,14 @@ M140 S0 R0    ; Bed heater off
 M141 S0       ; turn off chamber heater
 
 ; Reset tool change globals to null (clears slicer overrides)
-if exists(global.t0_ret)
-  set global.t0_ret = null
-if exists(global.t1_ret)
-  set global.t1_ret = null
-if exists(global.t0_ext)
-  set global.t0_ext = null
-if exists(global.t1_ext)
-  set global.t1_ext = null
+if exists(global.tool0RetractDistance)
+  set global.tool0RetractDistance = null
+if exists(global.tool1RetractDistance)
+  set global.tool1RetractDistance = null
+if exists(global.tool0ExtrudeDistance)
+  set global.tool0ExtrudeDistance = null
+if exists(global.tool1ExtrudeDistance)
+  set global.tool1ExtrudeDistance = null
 
 ; Reload tool change values for next job
 M98 P"0:/user/tool0retract.g"

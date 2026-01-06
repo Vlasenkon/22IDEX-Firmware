@@ -22,9 +22,9 @@ if var.isRetraction
   set var.distance = -abs(input)
 
   if var.toolIndex == 0
-    set var.distanceGlobal = "t0_ret"
+    set var.distanceGlobal = "tool0RetractDistance"
   else
-    set var.distanceGlobal = "t1_ret"
+    set var.distanceGlobal = "tool1RetractDistance"
 else
   M291 R{var.toolLabel^" Extrusion"} P"Enter extrusion distance (mm, positive)" S5 L0 H50 J1
   if result = -1
@@ -32,9 +32,9 @@ else
   set var.distance = abs(input)
 
   if var.toolIndex == 0
-    set var.distanceGlobal = "t0_ext"
+    set var.distanceGlobal = "tool0ExtrudeDistance"
   else
-    set var.distanceGlobal = "t1_ext"
+    set var.distanceGlobal = "tool1ExtrudeDistance"
 
 var suffix = var.isRetraction ? "retract" : "extrude"
 var toolNumber = var.toolIndex == 0 ? "0" : "1"
