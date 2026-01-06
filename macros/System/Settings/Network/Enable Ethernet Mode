@@ -63,23 +63,23 @@ if var.useStaticIP
         
         ; If user wants custom values (input == 1), prompt for them
         if input == 1
-            M291 S7 F{var.ip} R"Network Setup" P"Enter Static IP Address or use default" J1
+            M291 S7 F{var.ip} R"Network Setup" P"Enter Static IP Address or use default" H15
             set var.ip = input
             
-            M291 S7 F{var.subnet} R"Network Setup" P"Enter Subnet Mask or use default (enter 0 to skip)" J1
+            M291 S7 F{var.subnet} R"Network Setup" P"Enter Subnet Mask or use default (enter 0 to skip)" H15
             set var.subnet = input
             
-            M291 S7 F{var.gateway} R"Network Setup" P"Enter Gateway or use default (enter 0 to skip)" J1
+            M291 S7 F{var.gateway} R"Network Setup" P"Enter Gateway or use default (enter 0 to skip)" H15
             set var.gateway = input
     else
         ; Regular static IP mode - always prompt
-        M291 S7 F{var.ip} R"Network Setup" P"Enter Static IP Address" J1
+        M291 S7 F{var.ip} R"Network Setup" P"Enter Static IP Address" H15
         set var.ip = input
         
-        M291 S7 F{var.subnet} R"Network Setup" P"Enter Subnet Mask (enter 0 to skip)" J1
+        M291 S7 F{var.subnet} R"Network Setup" P"Enter Subnet Mask (enter 0 to skip)" H15
         set var.subnet = input
         
-        M291 S7 F{var.gateway} R"Network Setup" P"Enter Gateway (enter 0 to skip)" J1
+        M291 S7 F{var.gateway} R"Network Setup" P"Enter Gateway (enter 0 to skip)" H15
         set var.gateway = input
     
     ; Validate inputs

@@ -51,7 +51,7 @@ if input == 1
     var warnMsg4 = "Proceed at your own risk."
     M291 R"Custom IP Warning" P{var.warnMsg1 ^ var.warnMsg2 ^ var.warnMsg3 ^ var.warnMsg4} S3
     
-    M291 S7 J1 R"Enter Static IP Address" P"Example: 192.168.1.100" F{var.currentIP}
+    M291 S7 H15 R"Enter Static IP Address" P"Example: 192.168.1.100" F{var.currentIP}
     set var.targetIP = input
 
 ; Step 5: Test or Skip Test option
@@ -78,7 +78,7 @@ if input == 1
         var wifiSSID = network.interfaces[1].ssid
         
         ; For WiFi, need to get password to reconfigure network with static IP
-        M291 S7 J1 R{"WiFi Password for " ^ var.wifiSSID} P"Enter WiFi password (case sensitive)"
+        M291 S7 H63 R{"WiFi Password for " ^ var.wifiSSID} P"Enter WiFi password (case sensitive)"
         var wifiPass = input
         
         ; Save WiFi configuration with static IP
@@ -171,7 +171,7 @@ elif var.networkType == "WIFI"
     var wifiSSID = network.interfaces[1].ssid
     
     ; Get WiFi password for reconfiguration
-    M291 S7 J1 R{"WiFi Password for " ^ var.wifiSSID} P"Enter WiFi password (case sensitive)"
+    M291 S7 H63 R{"WiFi Password for " ^ var.wifiSSID} P"Enter WiFi password (case sensitive)"
     var wifiPass = input
     
     ; Turn off interfaces
