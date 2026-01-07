@@ -338,3 +338,4 @@ G90
 G1 A100 B100 C100 F1800
 
 M584 P4
+M913 X100 Y100 Z100 E100  ; Restore all motor currents to 100%

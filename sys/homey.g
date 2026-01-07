@@ -74,6 +74,7 @@ if var.dis >= 0.5
 G92 Y-999                             ; Set the current Y axis position to -999
 M584 Y0.1:0.4                         ; Use both drivers for the Y axis
 M574 Y1 S1 P"io1.in+io2.in"           ; Configure endstops for both sides of the Y axis
+M913 Y100                             ; Restore Y motor current to 100%
 
 G90                                   ; Switch to absolute positioning
 G1 Y150 F18000                        ; Move the Y axis forward by 150 mm at 18000 mm/min

@@ -25,5 +25,6 @@ G90               ; set to relative positioning
 
 M569 P1.2 S0
 M584 Z1.0:1.1:1.2
+M913 Z100         ; Restore Z motor current to 100%
 
 echo "Mesh bed adjusted for "^{var.mm}^" mm in "^{global.xcomp_mode}^" mode"

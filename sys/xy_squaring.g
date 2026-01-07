@@ -27,4 +27,5 @@ M584 Y0.1
 G1 Y{var.active} F150   ; Crossbar Alignment
 M400
 M584 Y0.1:0.4
+M913 Y100         ; Restore Y motor current to 100%
 G90
