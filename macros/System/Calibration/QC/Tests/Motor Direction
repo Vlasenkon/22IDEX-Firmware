@@ -68,7 +68,7 @@ G90               ; set to absolute positioning
 
 M400
 M584 Z1.0:1.1:1.2 ; restore original driver mapping
-
+M906 X1800 U1800 Y1800:1800 Z850 E600:600 I35 T10
 M913 Z100 ; Reset Z-axis current to 100%
 
 M564 H1

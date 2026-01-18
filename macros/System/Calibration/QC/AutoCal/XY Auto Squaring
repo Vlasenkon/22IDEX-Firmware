@@ -70,6 +70,7 @@ G91                             ; Relative positioning
 G1 Z{var.Z_Tilt} F18000         ; Lift bed by tilt amount
 G90                             ; Absolute positioning
 M584 Z1.0:1.1:1.2               ; Restore all three Z motors
+M906 X1800 U1800 Y1800:1800 Z850 E600:600 I35 T10
 M913 Z100                       ; Restore Z motor current to 100%
 
 ; ===== Configure Probe for Contact Detection =====
@@ -436,6 +437,7 @@ G91                         ; Relative positioning
 G1 Z{-var.Z_Tilt} F18000    ; Lower bed by tilt amount (return to level)
 G90                         ; Absolute positioning
 M584 Z1.0:1.1:1.2           ; Restore all three Z motors
+M906 X1800 U1800 Y1800:1800 Z850 E600:600 I35 T10
 M913 Z100                   ; Restore Z motor current to 100%
 
 

@@ -12,6 +12,7 @@ G1 F240 Z{var.mm} ; move to compensate
 G90               ; set to relative positioning
 
 M584 Z1.0:1.1:1.2
+M906 X1800 U1800 Y1800:1800 Z850 E600:600 I35 T10
 M913 Z100         ; Restore Z motor current to 100%
 
 echo "Mesh bed adjusted for "^{var.mm}^" mm"
