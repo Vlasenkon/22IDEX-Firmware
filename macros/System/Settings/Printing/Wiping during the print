@@ -22,11 +22,7 @@ if input = 1
     abort
 
 ; User chose to configure - show frequency options
-var freq_msg = "How often should the nozzle be wiped?<br><br>"
-var freq_msg = var.freq_msg ^ "Every Layer = Most thorough, adds time<br>"
-var freq_msg = var.freq_msg ^ "Every 2nd = Good balance<br>"
-var freq_msg = var.freq_msg ^ "Every 5th = Minimal impact<br>"
-var freq_msg = var.freq_msg ^ "Custom = Specify your own interval"
+var freq_msg = "How often should the nozzle be wiped?<br><br>Every Layer = Most thorough, adds time<br>Every 2nd = Good balance<br>Every 5th = Minimal impact<br>Custom = Specify your own interval"
 
 M291 S4 R"Wipe Frequency" P{var.freq_msg} K{"Every Layer","Every 2nd Layer","Every 5th Layer","Custom"} F0
 
