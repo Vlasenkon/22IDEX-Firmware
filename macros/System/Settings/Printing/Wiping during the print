@@ -1,17 +1,68 @@
-var msg1 = "By enabling this option, the nozzle will be wiped during the print "
-var msg2 = "every 500 cubic millimeters of plastic extruded.<br>"
-var msg3 = "This will happen during layer changes.<br>"
-var msg4 = "This is helpful for very oozy materials like PEI-9085, or PPSU."
-var message = var.msg1 ^ var.msg2 ^ var.msg3 ^ var.msg4
+var msg1 = "Periodic nozzle wiping will automatically clean the nozzle during printing.<br>"
+var msg2 = "This happens at layer changes and is helpful for oozy materials<br>"
+var msg3 = "like ULTEM, PEI, PPSU, or long prints with any material."
+var message = var.msg1 ^ var.msg2 ^ var.msg3
 
-M291 S4 R"Nozzle wiping during printing" P{var.message} K{"Enable","Disable"} F0
+M291 S4 R"Periodic Nozzle Wiping" P{var.message} K{"Configure Frequency","Disable"} F0
+
+if input = 1
+    ; Disable periodic wiping
+    echo >"0:/user/periodic_wiping.g" "; Periodic wiping disabled"
+    echo >>"0:/user/periodic_wiping.g" "if exists(global.periodic_wiping)"
+    echo >>"0:/user/periodic_wiping.g" "  set global.periodic_wiping = 0"
+    echo >>"0:/user/periodic_wiping.g" "else"
+    echo >>"0:/user/periodic_wiping.g" "  global periodic_wiping = 0"
+    
+    ; Reset layer counter
+    if exists(global.periodic_wipe_layer_count)
+        set global.periodic_wipe_layer_count = 0
+    
+    echo "Periodic wiping is now disabled"
+    M291 S1 R"Disabled" P"Periodic nozzle wiping has been disabled." T5
+    abort
+
+; User chose to configure - show frequency options
+var freq_msg = "How often should the nozzle be wiped?<br><br>"
+var freq_msg = var.freq_msg ^ "Every Layer = Most thorough, adds time<br>"
+var freq_msg = var.freq_msg ^ "Every 2nd = Good balance<br>"
+var freq_msg = var.freq_msg ^ "Every 5th = Minimal impact<br>"
+var freq_msg = var.freq_msg ^ "Custom = Specify your own interval"
+
+M291 S4 R"Wipe Frequency" P{var.freq_msg} K{"Every Layer","Every 2nd Layer","Every 5th Layer","Custom"} F0
+
+var frequency = 1
 
 if input = 0
-    echo >"0:/user/periodic_wiping.g" "if exists(global.periodic_wiping)"
-    echo >>"0:/user/periodic_wiping.g" "  set global.periodic_wiping = 1"
-    echo >>"0:/user/periodic_wiping.g" "else"
-    echo >>"0:/user/periodic_wiping.g" "  global periodic_wiping = 1"
-    echo "Nozzle wiping during printing is enabled"
+    set var.frequency = 1
+elif input = 1
+    set var.frequency = 2
+elif input = 2
+    set var.frequency = 5
 else
-    echo >"0:/user/periodic_wiping.g" "; Nozzle wiping during printing is disabled"
-    echo "Nozzle wiping during printing is disabled"
+    ; Custom frequency
+    M291 S6 R"Custom Frequency" P"Enter the number of layers between each wipe:<br>(Recommended: 2-10 layers)" L1 H50 F5
+    set var.frequency = input
+
+; Save the configuration
+echo >"0:/user/periodic_wiping.g" "; Periodic wiping every " ^ var.frequency ^ " layer(s)"
+echo >>"0:/user/periodic_wiping.g" "if exists(global.periodic_wiping)"
+echo >>"0:/user/periodic_wiping.g" "  set global.periodic_wiping = " ^ var.frequency
+echo >>"0:/user/periodic_wiping.g" "else"
+echo >>"0:/user/periodic_wiping.g" "  global periodic_wiping = " ^ var.frequency
+
+; Reset layer counter
+echo >>"0:/user/periodic_wiping.g" ""
+echo >>"0:/user/periodic_wiping.g" "if exists(global.periodic_wipe_layer_count)"
+echo >>"0:/user/periodic_wiping.g" "  set global.periodic_wipe_layer_count = 0"
+echo >>"0:/user/periodic_wiping.g" "else"
+echo >>"0:/user/periodic_wiping.g" "  global periodic_wipe_layer_count = 0"
+
+; Load the new settings
+M98 P"0:/user/periodic_wiping.g"
+
+var freq_text = "every layer"
+if var.frequency > 1
+    set var.freq_text = "every " ^ var.frequency ^ " layers"
+
+echo "Periodic wiping enabled: " ^ var.freq_text
+M291 S1 R"Enabled" P{"Periodic nozzle wiping is now enabled<br>" ^ var.freq_text ^ "."} T5
