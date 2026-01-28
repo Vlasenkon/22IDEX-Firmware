@@ -1,0 +1,35 @@
+; Home All and Clean Nozzels (without calling compensatex)
+M98 P"0:/macros/System/Calibration/QC/AutoCal/Home All and Clean Nozzels" A1
+
+; Validate if Homing is complete, if not - it means that user cancelled the process and we have to exit
+if !move.axes[0].homed || !move.axes[1].homed || !move.axes[2].homed || !move.axes[3].homed
+  abort "Calibration cancelled by user. Axes are not homed."
+
+
+; Exit mirroring mode, use one tool:
+T0 ; select first tool
+G90 ; absolute positioning
+G1 U999 ; move U-carriage off the way (maybe add F18000 to move faster)
+
+
+; Run Z - Offset Calibration
+M98 P"0:/macros/System/Calibration/QC/AutoCal/Z - Offset Calibration" A1
+M400
+
+
+; Place the Probe
+M98 P"0:/sys/detachedcheck.g"
+
+
+; Cool down
+; TODO: this part of code is repeated at meany pace and should refactored bu moving out to a separate module
+M568 P0 S0 R0
+M568 P1 S0 R0
+M568 P2 S0 R0
+M568 P3 S0 R0
+
+
+; reset position
+; TODO: this tool can be moved to an individual file for further re-use
+G90 ; absolute positioning
+G1 X-999 U999 Y175 F18000 ; move heads to the corners

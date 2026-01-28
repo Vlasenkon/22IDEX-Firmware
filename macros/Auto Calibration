@@ -1,62 +1,9 @@
-if heat.heaters[0].state == "fault" || heat.heaters[1].state == "fault" || heat.heaters[2].state == "fault" || heat.heaters[3].state == "fault"
-  M291 S1 R"Error" P"Heater fault detected"
-  abort "Error: Heater fault detected"
-
-M291 S5 J1 F250 L0 H450 R"Set Left Tool Temperature" P"Please set the temperature for the filament previously loaded in the Left Tool.<br>If new machine, set to 250°C"
-var ll = input
-  
-M291 S5 J1 F{var.ll} L0 H450 R"Set Right Tool Temperature" P"Please set the temperature for the filament previously loaded in the Right Tool.<br>If new machine, set to 250°C"
-var rr = input
-
-var delta = -50
-
-M568 P0 R{var.ll + var.delta} S{var.ll + var.delta}
-M568 P1 R{var.rr + var.delta} S{var.rr + var.delta}
-M568 P2 R{var.ll + var.delta,var.rr + var.delta} S{var.ll + var.delta,var.rr + var.delta}
-M568 P3 R{var.ll + var.delta,var.rr + var.delta} S{var.ll + var.delta,var.rr + var.delta}
-
-M568 P0 A2
-M568 P1 A2
-
-
-M291 S2 R"Please Remove the Build Plate" P"To avoid damaging your machine, remove the build plate from the build platform.<br>Click ""OK"" when you are ready to proceed."
-
+; Home All and Clean Nozzels (WITH compensatex)
+M98 P"0:/macros/System/Calibration/QC/AutoCal/Home All and Clean Nozzels" A1 B1
+; Validate if Homing is complete, if not - it means that user cancelled the process and we have to exit
 if !move.axes[0].homed || !move.axes[1].homed || !move.axes[2].homed || !move.axes[3].homed
-  M291 S0 T15 R"Homing Axes" P"Axes are not homed. Homing now. Please wait..."
-  M98 P"0:/sys/homeall.g" S1
+  abort "Calibration cancelled by user. Axes are not homed."
 
-if state.currentTool != 0
-  T0
-
-G90
-G1 X-999 U999 Y-75 F18000
-
-M116 P0 S10
-M116 P1 S10
-
-T3
-M83                 ; relative extruder moves
-G1 E-50 F{60}*{10}   ; retract filament
-
-M98 P"0:/sys/nozzlewipe.g" C1
-M400
-while iterations < 2
-  M98 P"0:/sys/nozzlewipe.g" L1 C1
-  M400
-
-G1 F18000 X-50 Y-150 Z125  ; Move tools to the cleaning position
-
-M568 P3 A0
-
-M291 S4 K{"Nozzles are Clean","Cancel"} R"Please Clean Both Nozzles" P"Use a metal brush to clean both nozzles thoroughly to prevent machine damage."
-
-if input == 1
-  ; User cancelled
-  M568 P0 S0 R0
-  M568 P1 S0 R0
-  M568 P2 S0 R0
-  M568 P3 S0 R0
-  abort "Calibration cancelled by user"
 
 M291 S4 K{"Heat Breaks are All the Way Up","Cancel"} R"Verify Heat Breaks Position" P"Ensure both heat breaks are pushed all the way up into the heat sink.<br>They should NOT stick out more than 1mm from the heat sink."
 
