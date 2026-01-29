@@ -36,9 +36,6 @@ M42 P4 S1                                              ; Turn on relay
 M98 P"0:/macros/System/Calibration/QC/AutoCal/Tool Height Auto Calibration" A1
 M400
 
-M98 P"0:/macros/System/Calibration/QC/AutoCal/Z - Offset Calibration" A1
-M400
-
 if exists(global.xcomp_mode) && global.xcomp_mode == "manual"
   echo "Skipping Mesh Bed calibration because compensation mode is manual"
 else
