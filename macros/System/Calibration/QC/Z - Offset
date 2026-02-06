@@ -32,4 +32,4 @@ M568 P3 S0 R0
 ; reset position
 ; TODO: this tool can be moved to an individual file for further re-use
 G90 ; absolute positioning
-G1 X-999 U999 Y175 F18000 ; move heads to the corners
+G1 X-999 U999 Y150 F18000 ; move heads to the corners
