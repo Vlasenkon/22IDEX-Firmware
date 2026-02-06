@@ -1,0 +1,1 @@
+set global.is_qc_active = false

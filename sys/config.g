@@ -176,6 +176,12 @@ if fileexists("0:/user/brushYPosition.g")
 
 echo >"0:/sys/resetzbabystep.g" "                                ; do nothing"
 
+; Define the state of QC process
+; Set it to "true" only when QC is ongoing, after QC is completed you MUST set it back to "false"
+; START of the QC is in "Test 1" macro / END of the QC is in "Auto Calibration"
+global is_qc_active = false                                     ; Declare global variable with default value
+M98 P"0:/user/is_qc_active.g"                                   ; Load previously saved state
+
 ; Custom settings
 M280 P0 S0                                                       ; rotate servo to 0 deg
 T0 P0

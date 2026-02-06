@@ -36,6 +36,11 @@ M42 P4 S1                                              ; Turn on relay
 M98 P"0:/macros/System/Calibration/QC/AutoCal/Tool Height Auto Calibration" A1
 M400
 
+; Check if this is not a QC process and run Z - Offset Calibration
+if exists(global.is_qc_active) && global.is_qc_active == false
+  M98 P"0:/macros/System/Calibration/QC/AutoCal/Z - Offset Calibration" A1
+  M400
+
 if exists(global.xcomp_mode) && global.xcomp_mode == "manual"
   echo "Skipping Mesh Bed calibration because compensation mode is manual"
 else
@@ -93,3 +98,9 @@ set var.msg = var.msg ^ "<br>Tool 1 Y-Offset = " ^ global.yoffset ^ " mm"
 set var.msg = var.msg ^ "<br>Tool 1 U-Offset = " ^ global.uoffset ^ " mm"
 set var.msg = var.msg ^ "<br>XY Skew = " ^ global.xy_square_auto ^ " mm"
 M291 S2 R"Calibration Complete" P{var.msg}
+
+; Check if we run the QC process now and finish it
+if exists(global.is_qc_active) && global.is_qc_active == true
+  ; END of the QC process
+  set global.is_qc_active = false
+  echo >>"0:/user/is_qc_active.g" "set global.is_qc_active = "^{global.is_qc_active}
