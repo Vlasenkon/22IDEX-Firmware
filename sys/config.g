@@ -113,7 +113,7 @@ M106 P4 H4 T80 S1 B1                                             ; configure the
 
 M950 F7 C"!1.out5+out5.tach" Q500                                ; configure CrFan
 M98 P"0:/user/hepafan.g"
-M106 P7 H3 T50 X{global.hepafan}                                 ; configure thermostatic contron
+M106 P7 C"HEPA - Fan" H3 T50 X{global.hepafan}                   ; configure thermostatic contron
 
 ; LEDs
 M950 P1 C"1.out6" Q5000                                          ; Red LEDs
