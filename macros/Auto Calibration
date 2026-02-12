@@ -103,4 +103,4 @@ M291 S2 R"Calibration Complete" P{var.msg}
 if exists(global.is_qc_active) && global.is_qc_active == true
   ; END of the QC process
   set global.is_qc_active = false
-  echo >>"0:/user/is_qc_active.g" "set global.is_qc_active = "^{global.is_qc_active}
+  echo >"0:/user/is_qc_active.g" "set global.is_qc_active = "^{global.is_qc_active}

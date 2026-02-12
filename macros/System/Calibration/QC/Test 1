@@ -2,7 +2,7 @@ M98 P"0:/sys/led/resetstatus.g"
 
 ; START of the QC process
 set global.is_qc_active = true
-echo >>"0:/user/is_qc_active.g" "set global.is_qc_active = "^{global.is_qc_active}
+echo >"0:/user/is_qc_active.g" "set global.is_qc_active = "^{global.is_qc_active}
 
 ; Prompt user to confirm starting the test
 M291 R"Start Test 1" P"Do you want to start Test 1?" K{"Start Test","Cancel"} S4
