@@ -18,7 +18,7 @@ var error_title = "Heater Fault"
 
 ; If shutdown logic is not configured by user then we just show a warning message
 if !exists(global.heaterfault_timer)
-  M291 S1 R{var.error_title} P"Warning: Heater fault detected"
+  M291 S2 R{var.error_title} P"Warning: Heater fault detected"
 else
   ; Shutdown logic: user's timeout settings will be used to shut printer down completely
   if global.heaterfault_timer >= 0
