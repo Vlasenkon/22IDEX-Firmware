@@ -6,6 +6,6 @@ if input = 1
   M570 H2 P999999 T999999 R50
   echo "Fault Detection Disabled"
 else
-  echo >"0:/user/bedfaultdetection.g" "M570 H2 P30 T25 R3 ; Enable Bed Heater fault detection"
-  M570 H2 P30 T25 R3
+  echo >"0:/user/bedfaultdetection.g" "M570 H2 P30 T25 R5 ; Enable Bed Heater fault detection"
+  M570 H2 P30 T25 R5
   echo "Fault Detection Enabled"
