@@ -1,4 +1,19 @@
-M291 S3 J1 R"PID tune will be started" P"Click OK if ready to proceed, do not leave printer unattended"
+;========= CONFIGURABLE TEMPERATURE PARAMETERS =========
+var bedTargetTemp = 150      ; Default target bed temperature for PID tuning (°C)
+
+; ---- User confirmation and temperature selection ----
+M291 S4 K{"Start with 150°C","Custom temperature","Cancel"} R"Bed Heater PID Tuning" P"Do not leave printer unattended."
+
+if input == 0
+  ; Use default temperature (150°C)
+  echo "Starting bed PID tuning at default temperature: " ^ var.bedTargetTemp ^ "°C"
+elif input == 1
+  ; Ask for custom temperature
+  M291 J1 L120 H200 F{var.bedTargetTemp} P"Enter target bed temperature (120-200°C)" R"Custom PID Temperature" S5
+  set var.bedTargetTemp = input
+  echo "Starting bed PID tuning at custom temperature: " ^ var.bedTargetTemp ^ "°C"
+else
+  abort "PID tuning cancelled by user."
 
 
 
@@ -30,7 +45,7 @@ if var.ambient < 10 || var.ambient > 100
     M291 R"Chamber Temperature Out of Range" P{"Chamber air temperature "^var.ambient^"°C is outside 10-100°C. Adjust the chamber and rerun PID tuning."} S1
     abort "Error: Chamber air temperature is not within range to start."
 
-M303 H2 S150 A{var.ambient} Q1
+M303 H2 S{var.bedTargetTemp} A{var.ambient} Q1
 if result != 0
     M98 P"0:/sys/led/fault.g"
     M291 R"PID Tune Failed" P"PID tuning did not complete. Review heater status and retry." S1
