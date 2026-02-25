@@ -29,14 +29,25 @@ M568 P3 S0 R0
 
 
 
-if heat.heaters[2].current > 50
-    M291 R"Wait for Heater to Cool Down" P"All heater temperatures were set to 0°C." S1 T10
-    while heat.heaters[2].current > 50
-        G4 S5
+; Only wait for bed to cool down if target is 140°C or below (no chamber pre-heat)
+if var.bedTargetTemp <= 140
+    if heat.heaters[2].current > 50
+        M291 R"Wait for Heater to Cool Down" P"All heater temperatures were set to 0°C." S1 T10
+        while heat.heaters[2].current > 50
+            G4 S5
 
 
 M98 P"0:/sys/led/dimmwhite.g"
 M98 P"0:/sys/led/pause.g"
+
+; If bed target is above 140°C, pre-heat chamber to 100°C and wait for 60°C
+if var.bedTargetTemp > 140
+    echo "Bed target above 140°C - heating chamber to 100°C before PID tuning"
+    M141 S100
+    M291 R"Chamber Pre-Heat" P"Chamber heating to 100°C. Waiting for 60°C before starting PID tuning." S1 T10
+    while heat.heaters[3].current < 60
+        G4 S5
+    echo "Chamber reached " ^ heat.heaters[3].current ^ "°C - proceeding with PID tuning"
 
 ; Validate chamber air temperature before tuning
 var ambient = heat.heaters[3].current
@@ -65,5 +76,9 @@ var ee = heat.heaters[2].model.coolingExp
 var vv = heat.heaters[2].model.standardVoltage
 
 echo >"0:/user/PIDBedHead.g" "M307 H2 R"^{var.rr}^" K"^{var.kk1}^":"^{var.kk2}^" D"^{var.dd}^" E"^{var.ee}^" S1.00 B0"
+
+
+M141 S0
+echo "Chamber heater turned off after PID tuning"
 
 M291 R"PID Tune Complete" P"Bed PID values have been saved." S1
