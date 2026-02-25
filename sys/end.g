@@ -64,9 +64,9 @@ if move.axes[2].babystep != 0
 
 M98 P"0:/user/filamentbackup.g"                          ; load filament runout tool swap variable
 
-if exists(param.A)
-	if param.A > 10
-		echo "Warning: HEPA filter fan RPM difference detected - fan may be worn out"
-		echo >>"0:/sys/eventlog.txt" "Warning: HEPA filter fan RPM difference detected - fan may be worn out"
-		M98 P"0:/sys/led/fault.g"
-		M291 R"HEPA Filter Fan Warning" P"RPM difference detected on HEPA filter fan. The fan may be worn out and may require replacement." S1 T0
+;if exists(param.A)
+;	if param.A > 10
+;		echo "Warning: HEPA filter fan RPM difference detected - fan may be worn out"
+;		echo >>"0:/sys/eventlog.txt" "Warning: HEPA filter fan RPM difference detected - fan may be worn out"
+;		M98 P"0:/sys/led/fault.g"
+;		M291 R"HEPA Filter Fan Warning" P"RPM difference detected on HEPA filter fan. The fan may be worn out and may require replacement." S1 T0
