@@ -2,7 +2,7 @@ M204 P5000 T5000  ; reset accelerations
 M208 Z-1 S1       ; set axis minima to default
 
 M83               ; relative extruder moves
-G1 E-20 F3600     ; retract 20mm of filament
+G1 E-40 F3600     ; retract 40mm of filament
 
 G91
 G1 Z10
