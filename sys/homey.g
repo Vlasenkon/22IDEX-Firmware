@@ -14,7 +14,7 @@ var yMaxTravel = abs(move.axes[1].max) + abs(move.axes[1].min) + 10
 
 ;=== Move the X & U axes ===
 G91                                   ; Switch to relative positioning
-G1 H2 Z20 F18000                      ; Lift the Z axis by 20 mm at 18000 mm/min
+G1 H2 Z10 F18000                      ; Lift the Z axis by 10 mm at 18000 mm/min
 G1 H2 X10 U-10 F18000                 ; Move the X and U axes 10 mm in opposite directions at 18000 mm/min
 
 ;=== Home with Y End Stops ===
@@ -83,7 +83,7 @@ G1 Y150 F18000                        ; Move the Y axis forward by 150 mm at 180
 ; Lower the Z axis if parameter L does not exist
 if !exists(param.L)
   G91                                 ; Switch to relative positioning
-  G1 H2 Z-20 F18000                   ; Lower the Z axis by 20 mm at 18000 mm/min
+  G1 H2 Z-10 F18000                   ; Lower the Z axis by 10 mm at 18000 mm/min
   G90                                 ; Switch to absolute positioning
 
 ; Reset parameters and finish
