@@ -1,557 +1,3 @@
-if something is not clear before referring to codes search in instruction file to make sure you read the documentation correctly. 
-
-
-\" dont use, use "" instead
-
-The maximum length of a G-code command line for Duet3D, including the command itself and all parameters, is 256 characters. This limit applies to the entire line of text as processed by the Duet firmware. 
-
-
-M291 T0 - lets you keep notification indefinitely
-
-
-
-
-
-## LED Colors
-
-### **dimmwhite.g** - Dimming White LEDs
-- **Purpose**: Gradually dims white LEDs from current brightness to off
-- **Method**: Uses fan output P6 to control white LEDs, decreasing brightness in steps
-- **Effect**: Smooth fade-out of white chamber lighting
-
-### **end.g** - Green Status Light
-- **Purpose**: Print completion indicator - turns on green lights
-- **Sequence**: Turns off status LEDs → dims white LEDs → gradually brightens green (P2)
-- **Effect**: Solid green lighting to indicate successful print completion
-
-### **fault.g** - Red Error Light  
-- **Purpose**: Error/fault indicator - turns on red lights
-- **Sequence**: Turns off status LEDs → dims white LEDs → gradually brightens red (P1)
-- **Effect**: Solid red lighting to indicate system fault or error condition
-
-### **pause.g** - Yellow Warning Light
-- **Purpose**: Pause/attention indicator - creates yellow lights
-- **Method**: Combines red (P1) at full brightness + green (P2) at reduced brightness (÷2.5)
-- **Effect**: Yellow/amber lighting to indicate paused state or warning
-
-### **red.g** - Red Flash
-- **Purpose**: Basic red light activation (used for alerts/errors)
-- **Method**: Gradually brightens red LED (P1) from 0 to full brightness
-- **Effect**: Red lighting that ramps up smoothly
-
-### **resetstatus.g** - Reset to Normal
-- **Purpose**: Returns LEDs to normal white operational state
-- **Sequence**: Turns off all colored status LEDs → restores white lighting
-- **Effect**: Back to standard white chamber illumination
-
-### **restorewhite.g** - White Light Restoration
-- **Purpose**: Gradually brings white LEDs back to their previous brightness level
-- **Method**: Ramps up fan P6 (white LEDs) from current value to maximum
-- **Effect**: Smooth fade-in of white chamber lighting
-
-### **resume.g** - Resume Normal Operation
-- **Purpose**: Returns to normal state after pause/error
-- **Method**: Simply calls resetstatus.g
-- **Effect**: Restores standard white lighting (resume normal operation)
-
-### **start_cold.g** - Cold Start Blue Light
-- **Purpose**: Indicates heating phase - printer is cold, starting to heat
-- **Method**: Combines blue (P3) + reduced green (P2÷1.7) for cyan-blue effect
-- **Effect**: Light blue/cyan lighting during initial heating phase
-
-### **start_hot.g** - Hot Start Sequence
-- **Purpose**: Indicates transition from heating to ready state
-- **Sequence**: 
-  1. Dims blue lights (heating complete)
-  2. Flashes red briefly (temperature reached)  
-  3. Returns to white lighting (ready to print)
-- **Effect**: Visual sequence showing heating completion
-
-### **startup.g** - System Startup Sequence
-- **Purpose**: Boot-up light show
-- **Sequence**:
-  1. Red flash (system initializing)
-  2. Red fade out
-  3. White lights fade in (system ready)
-- **Effect**: Startup animation from red to white
-
-### **statusoff.g** - Turn Off Status LEDs
-- **Purpose**: Utility to turn off all colored status indicators
-- **Method**: Sets all status LEDs (P1=red, P2=green, P3=blue) to 0
-- **Effect**: Clears all colored status lighting
-
-### **stop.g** - Stop/Reset State
-- **Purpose**: Print stop indicator
-- **Method**: Calls resetstatus.g to return to normal white lighting
-- **Effect**: Returns to standard white lighting after print stop
-
-## **LED Port Mapping Summary:**
-- **P1** = Red LEDs
-- **P2** = Green LEDs  
-- **P3** = Blue LEDs
-- **P6** = White LEDs (fan-controlled)
-
-## **Color Combinations:**
-- **Red** = Error/Fault/Alert
-- **Green** = Success/Complete
-- **Yellow** (Red+Green) = Pause/Warning
-- **Blue/Cyan** = Heating/Cold Start
-- **White** = Normal Operation
-
-
-Introduction
-RepRapFirmware 3.01 introduced the concept of basic programming constructs (conditionals, loops and parameters) to GCode. This combined with the rich object model in RRF3 provides a powerful new layer of control customisation.
-RepRapFirmware 3.01 and later provide GCode programming constructs to allow conditional execution and iteration, and allow parameter values in GCode commands to be expressions instead of literals.
-Programming constructs
-Abort command
-abort <opt-expression>
-This causes all nested macros and the current print file (if any) to be terminated. The expression (if present) is converted to a string, which is included in the message presented to the user and written to the log file.
-Echo command
-echo <expression>, <expression>, ...
-At least one expression must be provided. The expressions are converted to strings and written to the console, with a space character between each pair. Example:
-echo move.axes[0].homed, move.axes[1].homed, move.axes[2].homed
-Starting with firmware 3.4 the output from an echo command can be redirected to a file. To create a file (deleting any existing file of the same name) containing the text resulting from the echo command, use this syntax:
-echo ><filename> <expression>, <expression>, ...
-where <filename> is either a quoted string or an expression enclosed in { } that evaluates to a string.
-To append a line to an existing file (or create a new file if it doesn't already exist), use:
-echo >><filename> <expression>, <expression>, ...
-To append to a file without adding a newline character at the end, so that multiple echo commands can be used to build a single long line, use the following (supported in firmware 3.5beta2 and later):
-echo >>><filename> <expression>, <expression>, ...
-There must be no spaces between the >,>> or >>> symbol and <filename>. The default folder for the file is /sys.
-Example:
-echo >"mymacro.g" "G1 F3000 X{move.axes[0].max-10}" ; move to 10mm below axis max when the macro was generated
-echo >>"mymacro.g" "G1 F3000 Y{move.axes[1].max-10}" ; move to 10mm below axis max when the macro is executed
-Example writing a single long line:
-(Note that the line is started with a ">>>" echo, subsquent elements are added with ">>>" and the final element in the line is added with a ">>" which appends the newline character)
-echo >>>"data.csv" move.axes[0].machinePosition^","^move.axes[1].machinePosition^","^move.axes[2].machinePosition
-echo >>>"data.csv" ","^heat.heaters[0].current^","^heat.heaters[2].current^","^heat.heaters[3].current
-echo >>"data.csv" ","^sensors.filamentMonitors[0].position^","^sensors.filamentMonitors[1].position^","^sensors.filamentMonitors[2].position
-If you needs to write a new file with multiple entries on a single line and the file may already exist, use M472 to delete it first. You can use the fileexists() condition to only delete the file if it exists.
-Note echo only echos back to the input its sent from, or to a file. To get information to a different input (e.g. echo to the HTTP UI from a macro called from a different input) use M118.
-Conditional construct
-The general form of the conditional block is:
-if <boolean-expression>
-  ...
-elif <boolean-expression>
-  ...
-else
-  ...
-where as usual the “elif” part can be omitted or repeated, and the “else” part can be omitted. The bodies of the if, elif and else parts may contain ordinary GCode commands and/or program elements. Each line in the body must be indented from the corresponding keyword to indicate the extent of the body. The body ends just before the first line that is not indented.
-Loop
-while <boolean-expression>
-  ...
-The body must be indented from the while keyword. The body ends just before the first line that is not indented.
-Within the while-part and the body, the named constant iterations is the number of loop iterations already completed. So it is zero during the first iteration, 1 during the second, and so on.
-A loop may contain one or more break statements, which would normally be inside if-constructs:
-while <boolean-expression>
-  ...
-  if <boolean-expression>
-    break
-  ...
-The break statement transfers control to the line following the end of the loop body.
-A loop may also contain one or more continue statements, which would normally be inside if-constructs:
-while <boolean-expression>
-  ...
-  if <boolean-expression>
-    continue
-  ...
-The continue statement increments the iteration counter and transfers control back to the start of the loop, ready to evaluate the while-condition again.
-If a while loop is used in a GCode job file (not in a macro), it should have M400 at the end, and immediately before any uses of 'continue' within the loop.
-Caution! If a loop iterates forever, you will not be able to break out of it except by resetting the machine. When writing a loop, we suggest that you always either ensure that the maxmum number of iterations is bounded and not too large, or there is a manual interaction in the loop (e.g. a M291 command) that provides a means to exit the loop.
-Nested loops
-Loops of this form
-while <boolean-expression>
-  ...
-  while <boolean-expression>
-    ...
-Have an iterations counter at each nested level of the loop. Only the iterations counter of the loop that is being executed is accessible within that loop. If you want to access the iterations counter for an enclosing loop within an inner loop, you need to use a variable to save and retrieve that counter. For example:
-var loopCounterOuter = 0
-while <boolean-expression>
-  ; outer loop
-  ...
-  set var.loopCounterOuter = iterations
-  while <boolean-expression>
-    ; inner loop
-    ...
-    echo iterations ; iterations for the inner loop
-    echo var.loopCounterOuter ; iterations for the outer loop
-Variables
-Supported from RRF 3.3.
-Local variable declaration
-var <new-variable-name> = <expression>
-This creates a new variable called var.<new-variable-name> and initializes it to <expression>. The name must not already be in use. The scope of a local name is the remainder of the block in which it is declared.
-Global variable declaration
-global <new-variable-name> = <expression>
-This creates a new variable called global.<new-variable-name> and initializes it to <expression>. The name must not already be in use.
-Example:
-global T1heat=0
-Variable assignment
-set var.<existing-local-variable-name> = <expression>
-set global.<existing-global-variable-name> = <expression>
-This re-assigns an existing variable (which must be of the form var.name or global.name) to have the value expression.
-Example:
-set global.T1heat=heat.heaters[1].active
-Variable naming
-Variables must conform to the following naming convention:
-The first character must be a letter
-The remaining characters must be letters, digits or the underscore character
-There is no specific limit on variable length, other than the total length of the expression that uses the variables must be <250 characters
-Use of expressions within GCode commands
-This form:
-{ <expression> }
-may be used in place of any numeric or quoted string operand within a GCode command. Example:
-G1 X{move.axes[0].max-10} Y{move.axes[1].min+10}
-Using an expression to replace a parameter letter, or to replace the command number after the initial G or M, is not supported. (so for example G1 {global.extruder_axis}^2 is not supported)
-If a parameter of a G- or M-command requires multiple values and you want to use expressions for some or all of them, then when using RRF 3.5 and later the whole parameter must be an array expression (see later); for example:
-M201 E{var.e0Accel, var.e1Accel}
-RRF 3.4 and earlier in standalone mode only supported this form instead:
-M201 E{var.e0Accel}:{var.e1Accel}
-Expressions
-General
-Tabs and space characters may be used freely between variable names, keywords, literals and other lexical elements to improve readability.
-Sub-expressions may be enclosed in { } or in ( ). However, standard CNC GCode uses ( ) to enclose comments. So in CNC mode, RepRapFirmware treats ( ) as enclosing subexpressions when they appear inside { } and as enclosing comments when they do not. Therefore, when RepRapFirmware is running in CNC mode, any use of ( ) to enclose a subexpression or function parameter list must be within an expression enclosed in { }.
-Types
-The available types of expressions and variables are: bool, int, float, string, DateTime, object and array. The only operations available on values of type object are comparison with null and taking a member. The only operations available on values of type array are taking the length (unary prefix operator #) and indexing (operator [ ] ).
-RepRapFirmware uses some additional types internally such as driverId, ipAddress and macAddress.
-Type conversions
-The following implicit type conversions will be performed when necessary:
-from type int to type float
-from any type to string
-Hint: to force an expression of any type to be converted to type string, concatenate it with the empty string using the ^ operator.
-Named constants
-The following named constants are provided:
-Name	Type	Meaning
-false	bool	Boolean false
-input	(variable)	The most recent input from a message box with mode 4, 5, 6 or 7 (see M291 command)
-iterations	int	The number of completed iterations of the innermost loop
-line	int	The current line number in the file being executed
-null	object	The null object
-pi	float	Pi (3.14159265...)
-result	int	0 if the last G-, M- or T-command on this input channel was successful, 1 if it returned a warning, 2 or greater if it returned an error, or -1 if it was a blocking M291 message box command that had a Cancel button and either the Cancel button was pressed or the message box timed out.1 Meta commands do not change 'result'.
-true	bool	Boolean true
-1 In RRF 3.5.0-rc3 and earlier, pressing 'Cancel' or M291 timing out will cancel the current job/macro, and any subsequent lines in the job/macro are not processed, rather than set result to -1. See this discussion on the Duet3D forums for a workaround. Note that DSF 3.5 and 3.6 do not update the result constant when a G-code is interpreted by DSF or third-party plugins.
-Literals
-Integer literals may be expressed in decimal format (e.g. 4321), hexadecimal format (e.g. 0x3f) or binary format (e.g. 0b1011).
-Floating point literals may be expressed in fixed-point simple format (e.g. 165.32) or scientific format (e.g. 6.2e6).
-String literals are surrounded by double quote characters (e.g. "Hello world"). To include a double-quote character in a string iteral, use two double-quote characters (e.g. "Here is some ""quoted text"""). String literals are limited to 100 characters.
-Character literals (supported in RRF 3.5.0 and later) are surrounded by single quote characters (e.g. 'a').
-There are no literals of other types, however named constants true, false and null are available.
-Object model properties
-Expressions may use the values of any properties in the RepRapFirmware Object Model (OM). See Object Model of RepRapFirmware to see what is available.
-Variables
-These are supported from RRF 3.3 in standalone mode and from 3.4 in SBC mode. Array-valued variables are supported from RRF 3.5.
-The values of global variables that have been created using the 'global' command can be retrieved using the syntax global.<variable name>. Example:
-global defaultSpeed=6000
-...
-G1 X0 Y0 F{global.defaultSpeed}
-Similarly, the values of local variables created using the var command can be retrieved using the syntax var.<variable name>
-Use exists(<variable>) to check if a variable is defined. e.g.
-exists(global.defaultSpeed)
-Array-valued variables
-Supported from RRF 3.5, Gcode commands that have a parameter that accepts multiple values separated by a colon (eg M93 E350:400) can accept expressions.
-In RRF 3.6 and later, the entire parameter must be an array expression enclosed in { }, e.g. M92 E{global.e0StepsPerMm, 400}.
-In RRF 3.5, each individual value can be an expression enclosed in { }, e.g. M92 E{global.e0StepsPerMm}:400
-Notes
-In CNC mode, round brackets in a line are treated as enclosing comments. This means that if you use expressions in GCode, if you use round brackets within expressions then the whole expression must be enclosed in { }. This would normally be the case anyway when using expressions as parameters to regular GCode commands, so this only affects the use of round brackets in GCode meta commands such as if, while, var, global, echo and so on. See here for more information.
-Macro parameters
-These are supported from RRF 3.3
-It is possible to add additional parameters when calling a macro using M98 or using a macro as a custom gcode.
-e.g.
-M98 P"macro.g" S100 Y"string"
-Within a macro file, parameters that were passed to the macro can be retrieved using the syntax param.<parameter letter> where <parameter letter> is a single uppercase letter.
-e.g. (using the macro call from above)
-;macro.g
-G1 X{param.S}
-echo {param.Y}
-If you need the macro to handle situations where parameters that are expected are not passed, use the 'exists' function. E.g.
-;macro.g
-if exists(param.S)
-    G1 X{param.S}
-else
-    echo "no move passed to macro.g"
-You cannot use P or R as a parameter (as P is already used to reference the gcode file that is being called by M98 and R is used by restartable macros).
-When using a macro as custom gcode, do not use G, M, N, or T as parameters in a custom 'G' gcode file. Do not use G, M, or N as parameter in a custom 'M' gcode file. There are no standard G or M commands that use these parameters and RRF will treat the parameter as being the start of the next command.
-Array expressions
-These are supported from RRF 3.5
-A sequence of expressions exclosed in { } and separated by commas is an array expression. A trailing comma before the closing } is required when constructing a 1-element array and optional when there are two or more elements. The types of the elements do not all need to be the same. Examples:
-{1,2,3} is an array of three elements
-{1,2,3,} is an array of three elements with the same value as the previous example
-{pi,} is an array of one element
-{pi} is not an array, it is a simple value
-{1,{2,3,4},5} is an array of three elements, whose second value is itself an array
-The unary prefix operator # can be applied to a value of array type to get the number of elements, and the indexing operator [ ] can be applied to extract a single element.
-Note, once created arrays are fixed length. An array variable must be reassigned to a new array to change its length.
-Unary prefix operators
-Operator	Signature	Meaning
-!	bool->bool	Boolean not
-+	int->int, float->float	Unary +
-+	DateTime->int	Converts a date & time value to a number of seconds since the datum. Available in RRF 3.4 and later.
--	int->int, float->float	Unary -
-#	X[ ]->int, string->int	Number of elements in array, or number of characters in string
-Binary infix operators
-Where an expression has multiple binary operators of the same precedence and parentheses are not used to specify the order of evaluation, the operators are evaluated from left to right.
-Operator	Precedence	Signature	Meaning
-*	6	(int,int)->int, (float,float)->float	Multiplication : See CAUTION note below
-/	6	(float,float)->float	Division
-+	5	(int,int)->int, (float,float)->float, (DateTime,int)->DateTime	Addition. When adding an int to a DateTime the second operand is in seconds.
--	5	(int,int)->int, (float,float)->float, (DateTime,DateTime)->int, (DateTime,int)->DateTime	Subtraction. When subtracting one DateTime from another the result is in seconds. When subtracting an int from a DateTime the second operand is in seconds.
-= or ==	4	(X,X)->bool	Equality (X stands for any type). Either the two operands must have the same type or one of them must be the constant null.
-!=	4	(X,X)->bool	Inequality (X stands for any type). Either the two operands must have the same type or one of them must be the constant null.
-<	4	(int,int)->bool, (float,float->bool	Less than
-<=	4	(int,int)->bool, (float,float)->bool	Less than or equal
->	4	(int,int)->bool, (float,float)->bool	Greater than
->=	4	(int,int)->bool, (float,float)->bool	Greater than or equal
-& or &&	3	(bool,bool)->bool	Boolean and
-| or ||	3	(bool,bool)->bool	Boolean or
-^	2	(string,string)->string	String concatenation
-Caution! The multiplication operator * will work when it is used anywhere inside an expression or subexpression enclosed in { } but not otherwise. This is because the * character in a line of GCode normally introduces an end-of-line checksum.
-Ternary operator
-The expression expr1 ? expr2 : expr3 evaluates expr2 if expr1 is true, otherwise expr3. expr1 must be Boolean. expr3 may be another ternary expression. The ternary operator has precedence 1.
-Functions
-The following functions are supported, with their conventional meanings:
-(Please check the changelog to determine when a particular function was implemented, some functions are implemented in RRF3.1, or 3.2, or later)
-Function name	Signature	Notes
-abs	float->float or int->int	Returns the absolute value of the operand
-acos	float->float	Result is in radians
-asin	float->float	Result is in radians
-atan	float->float	Result is in radians
-atan2	(float, float)->float	Result is in radians
-ceil	float->int or float->float	Result is int if it fits in a 32-bit signed integer, else float (available in RRF 3.5.0 and later).
-cos	float->float	Argument must be in radians
-datetime	int->DateTime or string->DateTime	Converts a number of seconds from the datum to a DateTime, or a string with format "yyyy-mm-ddThh:mm:ss" to a DateTime. Available in RRF 3.4.0 and later.
-degrees	float->float	Converts radians to degrees
-drop	(string, int)->string or (array, int)->array	Returns all but the first N elements of the first argument, where N is the smaller of the second argument and the length of the first argument (available in RRF 3.6.0 and later).
-exists	name -> bool	Yields true if name is a valid variable or object model element name and is not null (available in RRF 3.3.0 and later). Especially useful for testing whether a particular parameter has been provided when a file macro was called.
-exp	float->float	Returns e raised to the operand (supported in RRF 3.5.0 and later)
-fileexists	string->bool	Yields true if the string parameter is the name of a file in the file system (available in RRF 3.5.0 and later).
-fileread	(string, int, int, char)->array	Returns an array of elements read from a single-line CSV or similar file (available in RRF 3.5.0 and later). The string parameter is the name of the file to read. The first integer parameter is the number of elements to skip; the second is the maximum number of elements to read; and the character is the field separator, typically ','. See note at the end of this table.
-find	(string, char)->int or (string, string)->int	Returns the index of the first occurrence of the character in the string, or the index in the first string at which the first occurrence of the second string starts; or -1 if the second argument does not occur in the first argument (available in RRF 3.6.0 and later).
-floor	float->int or float->float	Result is int if it fits in a 32-bit signed integer, else float
-isnan	float->bool	Returns true if the operand is a NaN (Not-a-Number) e.g. sqrt(-1)
-log	float->float	Returns the natural logarithm of the operand (supported in RRF 3.5.0 and later)
-max	(float, ...)->float or (int, ...)->int	Accepts 1 or more arguments. If any argument is NaN then the result is NaN.
-min	(float, ...)->float or (int, ...)->int	Accepts 1 or more arguments. If any argument is NaN then the result is NaN.
-mod	(int, int)->int or (float, float)->float	Returns the remainder from dividing the first operand by the second operand
-pow	(float, float)->float or (int, int)->int	Returns the first operand to the power of the second operand (supported in RRF 3.5.0 and later). The result type is int if the operands are int, the second operand is non-negative, and the result fits in an int.
-radians	float->float	Converts degrees to radians
-random	int->int	Operand must >= 1. Returns a pseudo-random integer in the range 0 to one less than the operand.
-round	float->int or float->float	Rounds to nearest integer, or to nearest even integer if the fractional part of the operand is exactly one half. Result is int if it fits in a 32-bit signed integer, else float (available in RRF 3.6.0 and later).
-sin	float->float	Argument must be in radians
-sqrt	float->float	Returns the square root of the operand
-square	float->float	Returns the square of the operand (available in RRF 3.6.0 and later)
-take	(string, int)->string or (array, int)->array	Returns the first N elements of the first argument, where N is the smaller of the second argument and the length of the first argument (available in RRF 3.6.0 and later)
-tan	float->float	Argument must be in radians
-vector	(int, X) -> array	(RRF 3.5.0 and later) Returns an array with the number of elements equal to the first operand and each element a copy of the second operand
-Notes on the random function
-The random function uses the hardware true random number generator if the microcontroller provides one. If the microcontroller doesn't provide one then an algorithmic pseudo random number generator is seeded by the system tick counter the first time it is called. The Duet 3 6HC, 6XD and Mini 5+ boards all use microcontrollers that provide a true random number generator.
-Notes on the fileread function
-Each element (including each skipped element) must be one of the following:
-a string in double quotes
-a number in any of the usual integer or floating point formats
-a character in single quotes
-empty (in which case a corresponding null element is included in the array).
-Leading and trailing spaces and tabs around each element are ignored. If the file cannot be opened and read, or if any elements do not confirm to the above, then the command containing the fileread call will be aborted.
-If the element is a quoted string, then characters within it that match the separator character are not treated as separators, and each consecutive pair of double-quote characters is replaced by a one double quote character.
-The number of array elements returned will be one greater than the number of separator characters found; so an empty file will give rise to an array comprising a single null element.
-Notes
-Line Endings
-If you are writing macros in a windows OS, set the EOL to be Linux-style (LF only). Windows default (CR LF) written macros work, but in some versions of RRF error messages count the CR and LF as two lines, so all line numbers were multiplied by 2.
-Indentation of comments
-From RepRapFirmware 3.6.0, the indentation of comment lines in meta GCode is no longer significant. This could cause the meaning of a sequence of commands to change, if a comment line was indented less than the previous command and the macro relied on that signifying the end of a block.
-daemon.g
-The macro file /sys/daemon.g can be used to execute regular tasks. The firmware looks for the file, if the file exists it executes it and once the end of file is reached it waits. If the file is not found it waits for 10s and then looks for it again.
-It is recommended to use a while loop inside the daemon.g file if you are using it to prevent the firmware having to open it every 10 seconds. E.g if you want a shorter update time then put a while loop inside the daemon.g with G4 S1 in it for 1 second repeats.
-Caution must be taken not to start a loop that takes a long time to complete, without having a G4 P500 or similar command to hand control back to the main process every half a second or so.
-Meta Gcode evaluation in SBC mode
-In SBC mode only, DSF waits for pending codes to be executed before a meta code is evaluated. M576 S0 is likely to help, to reduce the delay between SPI transfers. This will be addressed in RRF 3.7, see this Github issue.
-Job information and custom Object Model keys
-RepRapFirmware extracts data from the currently-running Gcode job when it runs, and stores it in the Object Model. From RRF 3.6.0, user-defined Object Model keys and values can be embedded in the Gcode file, which will be created in the OM when the Gcode file is run. See Object Model documentation.
-Examples of use
-Some examples using meta Gcode are listed below. There are also many examples and discussions on the meta Gcode section of the forum.
-Using conditional GCode commands in bed.g to calibrate a delta printer
-Example bed.g file for calibrating a delta printer using conditional GCode. At the start, it homes the printer only if it hasn't already been homed. Then it calibrates the printer by probing a number of points, starting again if probing fails. if calibration yields a standard deviation that is above a limit (set at the end of the loop, in this case >0.03mm), it repeats the calibration process. If calibration fails 5 times for any reason, it quits.
-NOTE: If you use this method to iterate the levelling of a bed/gantry mounted on leadscrews (eg Cartesian, CoreXY etc), the maximum deviation corrected is still limited by the S parameter of M671 (default 1mm). If the maximum deviation exceeds this limit, the script will exit with "Error: Some computed corrections exceed configured limit of 1.00mm", as it would if G30 bed levelling was called manually.
-; Auto calibration routine for large delta printer
-M561                    ; clear any bed transform
-
-; If the printer hasn't been homed, home it
-if !move.axes[0].homed || !move.axes[1].homed || !move.axes[2].homed
-  G28
-
-; Probe the bed and do auto calibration
-G1 X0 Y140 Z10 F10000        ; go to just above the first probe point
-while true
-  if iterations = 5
-    abort "Too many auto calibration attempts"
-  G30 P0 X0.00 Y140.00 Z-99999
-  if result != 0
-    continue
-  G30 P1 X70.00 Y121.24 Z-99999
-  if result != 0
-    continue
-  G30 P2 X121.24 Y70.00 Z-99999
-  if result != 0
-    continue
-  G30 P3 X140.00 Y0.00 Z-99999
-  if result != 0
-    continue
-  G30 P4 X121.24 Y-70.00 Z-99999
-  if result != 0
-    continue
-  G30 P5 X70.00 Y-121.24 Z-99999
-  if result != 0
-    continue
-  G30 P6 X0.00 Y-134.85 Z-99999
-  if result != 0
-    continue
-  G30 P7 X-65.57 Y-113.57 Z-99999
-  if result != 0
-    continue
-  G30 P8 X-112.29 Y-64.83 Z-99999
-  if result != 0
-    continue
-  G30 P9 X-130.59 Y-0.00 Z-99999
-  if result != 0
-    continue
-  G30 P10 X-115.90 Y66.91 Z-99999
-  if result != 0
-    continue
-  G30 P11 X-69.45 Y120.29 Z-99999
-  if result != 0
-    continue
-  G30 P12 X0.00 Y70.00 Z-99999
-  if result != 0
-    continue
-  G30 P13 X60.62 Y-35.00 Z-99999
-  if result != 0
-    continue
-  G30 P14 X-52.28 Y-30.19 Z-99999
-  if result != 0
-    continue
-  G30 P15 X0 Y0 Z-99999 S8
-  if result != 0
-    continue
-  if move.calibration.initial.deviation <= 0.03
-    break
-  echo "Repeating calibration because deviation is too high (" ^ move.calibration.initial.deviation ^ "mm)"
-; end loop
-echo "Auto calibration successful, deviation", move.calibration.final.deviation ^ "mm"
-G1 X0 Y0 Z150 F10000                ; get the head out of the way
-Saving and restoring variables across a reset
-RepRapFirmware allows you to write variables to a files using the echo command (see above), that can then be read back at startup, or at a later time.
-This is a set of macros that creates a file for each persistant global variable, saved in a /globals directory. They can then be saved and reloaded as necessary.
-persistentGlobal.g
-var id = param.V                    ; name of the global variable
-var value = param.X                 ; value to save
-var filepath = "globals/"^{var.id}  ; internal file path where the global variable is saved
-
-; Save the global variable as a file so it is persistent
-echo >{var.filepath}  "if exists(global."^{var.id}^")"
-echo >>{var.filepath} "    set global."^{var.id}^" = "^{var.value}
-echo >>{var.filepath} "else"
-echo >>{var.filepath} "    global "^{var.id}^" = "^{var.value}
-
-M98 P{var.filepath} ; load the global variable
-loadPersistentGlobal.g
-var id = param.V            ; name of the global variable
-var defaultValue = param.X  ; value to save if the global variable does not exist
-
-; Create file if does not exist
-if (!fileexists({"/sys/globals/"^var.id}))
-    M98 P"scripts/persistentglobal.g" V{var.id} X{var.defaultValue}
-
-; Load persistant global variable
-M98 P{"globals/"^var.id}
-In config.g load any persistent globals that you want to use, ie...
-; Load persistant global variables
-M98 P"scripts/loadPersistentGlobal.g" V"lastTool" X-2
-M98 P"scripts/loadPersistentGlobal.g" V"nozzleDiameters" X{null, null}
-M98 P"scripts/loadPersistentGlobal.g" V"nozzleHF" X{false, false}
-Use case examples:
-Saving tool number for tool changers (call from your tpre/tpost/tfree scripts)
-if {param.T} == {global.lastTool}
-    pass
-else
-    M98 P"scripts/persistentglobal.g" V"lastTool" X{param.T}
-    echo "set tool num:", {param.T}
-Setting nozzle diameter and type
-var tool = exists(param.T) ? param.T : max(state.currentTool, 0)
-var newDiameters = global.nozzleDiameters
-set var.newDiameters[var.tool] = param.D
-
-var newHF = global.nozzleHF
-var highFlow = exists(param.H) ? param.H > 0 : global.nozzleHF[var.tool]
-set var.newHF[var.tool] = var.highFlow
-
-echo "Setting T"^{var.tool}^" nozzle to "^{var.highFlow ? "HF " : ""}^{var.newDiameters[var.tool]}^"mm"
-
-M98 P"scripts/persistentglobal.g" V"nozzleDiameters" X{var.newDiameters}
-M98 P"scripts/persistentglobal.g" V"nozzleHF" X{var.newHF}
-Create a new filament with user input for the name and temperature
-var name = ""
-if exists(param.F)
-    set var.name = param.F
-else
-    M291 R"Creating New Filament" P"Enter Filament Name" S7 H50 J1
-    set var.name = input
-
-var temperature = 0
-if exists(param.T)
-    set var.temperature = param.T
-else
-    M291 R"Creating New Filament" P{"Enter load/unload temperature for "^var.name} S5 L0 H350 J1
-    set var.temperature = input
-
-var dir = "/filaments/"^var.name^"/"
-var config = var.dir^"config.g"
-var load = var.dir^"load.g"
-var unload = var.dir^"unload.g"
-
-if (fileexists(var.config))
-    M291 R"Creating New Filament" P{"Filament "^var.name^" already exists, overwrite?"} S3
-
-echo "Creating directory "^var.dir
-M98 P"scripts/createDirectory.g" D{var.dir} ; Wraps M470 P{var.dir} because of a bug that stopped macro execution
-
-
-echo {"Creating filament "^var.name^" (un)loading at "^var.temperature^"C"}
-
-echo >var.load "M98 P""scripts/load.g"" F"""^{var.name}^""" T"^{var.temperature}
-echo >{var.unload} "M98 P""scripts/unload.g"" F"""^{var.name}^""" T"^{var.temperature}
-
-echo >{var.config} "var tool = state.currentTool"
-echo >>{var.config} "var nozzleDiameter = global.nozzleDiameters[var.tool]"
-echo >>{var.config} "var extruderDrive = tools[var.tool].filamentExtruder"
-echo >>{var.config} "set global.defaultFilamentTemperature = "^var.temperature
-echo >>{var.config} ""
-echo >>{var.config} "if (global.nozzleHF[var.tool])"
-echo >>{var.config} "    if (var.nozzleDiameter <= 0.25)"
-echo >>{var.config} "        M572 D{var.extruderDrive} S{global.defaultPA}"
-echo >>{var.config} "    elif (var.nozzleDiameter <= 0.4)"
-echo >>{var.config} "        M572 D{var.extruderDrive} S{global.defaultPA}"
-echo >>{var.config} "    elif (var.nozzleDiameter <= 0.6)"
-echo >>{var.config} "        M572 D{var.extruderDrive} S{global.defaultPA}"
-echo >>{var.config} "    elif (var.nozzleDiameter <= 0.8)"
-echo >>{var.config} "        M572 D{var.extruderDrive} S{global.defaultPA}"
-echo >>{var.config} "    else"
-echo >>{var.config} "        M572 D{var.extruderDrive} S{global.defaultPA}"
-echo >>{var.config} "else"
-echo >>{var.config} "    if (var.nozzleDiameter <= 0.25)"
-echo >>{var.config} "        M572 D{var.extruderDrive} S{global.defaultPA}"
-echo >>{var.config} "    elif (var.nozzleDiameter <= 0.4)"
-echo >>{var.config} "        M572 D{var.extruderDrive} S{global.defaultPA}"
-echo >>{var.config} "    elif (var.nozzleDiameter <= 0.6)"
-echo >>{var.config} "        M572 D{var.extruderDrive} S{global.defaultPA}"
-echo >>{var.config} "    elif (var.nozzleDiameter <= 0.8)"
-echo >>{var.config} "        M572 D{var.extruderDrive} S{global.defaultPA}"
-echo >>{var.config} "    else"
-echo >>{var.config} "        M572 D{var.extruderDrive} S{global.defaultPA}"
-
-
-
-
-
-
 Introduction
 GCodes are a widely used machine control language. They are human readable and editable. This page describes the RepRapFirmware supported GCodes. RepRapFirmware follows the philosophy of "GCode everywhere", in essence the users or external program's interaction with the firmware should be through GCodes. There are GCodes for all supported control and configuration inputs along with status and debugging information.
 RepRapFirmware GCodes were originally based on the information from the RepRap wiki GCode page. There are some GCodes listed on that page that are not implemented in RepRapFirmware. More details can be found on the GCodes not implemented page.
@@ -649,7 +95,19 @@ N: Line number
 Example: N123
 If present, the line number should be the first field in a line. For GCode stored in files on SD cards the line number is usually omitted.
 If checking is supported, the firmware expects line numbers to increase by 1 each line, and if that doesn't happen it is flagged as an error. But you can reset the count using M110 (see below).
+*: CRC
+From RRF version 3.4
+Example:
+
+N100 G0 X100 F6000 *51369
+If present, the CRC should be the last field in a line, but before a comment. For GCode stored in files on SD cards the CRC is usually omitted.
+The CRC is appened in decimal and it must always be 5 digits.
+If checking is supported, the RepRap firmware checks the CRC against a locally-computed value and, if they differ, requests a repeat transmission of the line of the given number.
+Method
+Compute a CRC16-CCITT with initial value zero. Polynomial is x16+x12+x^5+1.
+You can test your calculation using this online tool
 *: Checksum
+It is recommended to use a CRC, this is here only for legacy reasons.
 Example: *71
 If present, the checksum should be the last field in a line, but before a comment. For GCode stored in files on SD cards the checksum is usually omitted.
 If checking is supported, the RepRap firmware checks the checksum against a locally-computed value and, if they differ, requests a repeat transmission of the line of the given number.
@@ -878,6 +336,8 @@ Notes
 2It's usually a bad idea to put a non-zero Z value in as well unless the tools are loaded and unloaded by some sort of tool changer or are on independent carriages. When all the tools are in the machine at once they should all be positioned at the same Z height to avoid a lower tool colliding with the object while a higher tool is printing.
 Tool offsets are given as the offset of the nozzle relative to the print head reference point, so the signs are opposite to what you might expect because tool offsets are subtracted from the required printing locations during printing.
 Any parameter that you don't specify will automatically be set to the last value for that parameter. That usually means that you want explicitly to set Z0.0. RepRapFirmware will report the tool parameters if only the tool number is specified.
+The G10 workplace offsets of all workplaces are saved automatically to override-config.g using M500.
+The G10 tool offsets of any tool offsets that were established by probing are saved automatically to override-config.g using M500 P10.
 See also M585.
 Tool Offset Examples
 
@@ -1013,6 +473,7 @@ The first line must start with "RepRapFirmware probe points file v2" instead of 
 The fourth and subsequent lines have the value 1 at points that are to be probed if they are reachable and 0 in points that are to be omitted.
 Send an appropriate G29 S4 command, eg G29 S4 P"probePoints.csv".
 When G29 S0 is called subsequently, the grid definition defined in the probe points file is used instead of the grid defined by M557, and reachable points are probed or not as indicated in the file.
+If you have a probe that needs to be deployed and retracted (e.g. a BL touch) see the Controlling deployable probes documentation. NOTE If you have deployprobe.g or retractprobe.g in the /sys/ directory the firmware will attempt to use them, only have them if you need them.
 G30: Single Z-Probe
 Usage
 G30 [Pnnn] [Xnnn] [Ynnn] [Znnn] [Hnnn] [Snnn]
@@ -1055,11 +516,12 @@ The S parameter on the last G30 command in the sequence indicates that a complet
 Cartesian/CoreXY kinematics: S-1 will report the Z offset for each probed point, but no calibration is done. S0 specifies that the number of factors to be calibrated is the same as the number of points probed. Otherwise, the value indicates the number of factors to be calibrated, which must be no greater than the number of points probed, eg S3 in the above example with 3 points probed. See also: Bed levelling using multiple independent Z motors
 Linear delta kinematics: S-1 will report the Z offset for each probed point, but no calibration is done. S parameter values of 3, 4, 6, 7, 8 or 9 are for auto calibration. See Calibrating a Delta Printer, setting up the bed.g file for a more detailed explanation.
 Rotary delta kinematics: S-1 will report the Z offset for each probed point, but no calibration is done. S parameter values of 3, 4, 5, or 7 are for auto calibration (experimental).
-NOTE: From RepRapFirmware version 1.09 to 3.0, the number of factors may be 3, 4 or 5 when doing old-style auto bed compensation on a Cartesian or CoreXY printer. This form of bed compensation has been removed in RRF 3.01 and later.
+NOTE:
 If a "normal" Z parameter is given instead of -9999 or lower, then the bed is not probed, but instead that value is used as if the Z probe had triggered at that height.
 The H parameter is an optional height correction for that probe point. It allows for the Z probe having a trigger height that varies with XY position. The nominal trigger height of the Z probe (e.g. at bed centre) is declared in the Z parameter of the G31 command in the config.g file. When you probe using G30 and the probe triggers, the firmware will assume that the nozzle is at the nominal trigger height plus the value you have in the H parameter. For example, when doing delta calibration, it can account for the change in trigger height caused by effector tilt, if the vertical offset caused by the tilt has been measured.
 The K parameter is applicable to all G30 commands. It is the Z probe number, default 0. It is not remembered between G30 commands, it always defaults to 0.
 Using a Scanning Z Probes as a normal Z probe is supported in RRF 3.5.0 and later.
+If you have a probe that needs to be deployed and retracted (e.g. a BL touch) see the Controlling deployable probes documentation. NOTE If you have deployprobe.g or retractprobe.g in the /sys/ directory the firmware will attempt to use them, only have them if you need them.
 G31: Set or Report Current Probe status
 Usage
 G31 Knn Pnnn Znnn [Xnnn Ynnn ...] [Snnn Hnnn Tnnn:nnn] ; RRF v3.3 and later
@@ -1095,6 +557,7 @@ Notes
 When used on its own this reports whether the Z probe is triggered, or gives the Z probe value in some units if the probe generates height values. If combined with a Z and P field (example: G31 P312 Z0.7) this will set the Z height to 0.7mm when the Z-probe value reaches 312 when a G28 Z0 (zero Z axis) command is sent. The machine will then move a further -0.7mm in Z to place itself at Z = 0. This allows non-contact measuring probes to approach but not touch the bed, and for the gap left to be allowed for. If the probe is a touch probe and generates a simple 0/1 off/on signal, then G31 Z0.7 will tell the RepRap machine that it is at a height of 0.7mm (as configured by Z0.7 in this example) when the probe is triggered.
 If you are using the nozzle as a probe (for example with a peizo or switch that the hotend has a travel distance to trigger) then remember the Z offset may need to be negative (ie the probe triggers under Z0)
 Separate G31 parameters may be defined for different probe types (i.e. 0+4 for switches, 1+2 for IR probes and 3 for alternative sensors). To specify which probe you are setting parameters for, send a M558 command to select the probe type before sending the G31 command, or use the T parameter.
+The G31 parameters of each probe can be saved to override-config.g using M500 P31.
 G32: Run bed.g macro
 Parameters
 In RRF 3.3 and later any parameters will be passed to macro file bed.g.
@@ -1127,6 +590,7 @@ Notes
 For probing away the probe used does not have to be inverted. This command will take care of that.
 Feedrate used for this move is the configured feedrate of the used probe (see M558 Fnnn).
 In RRF 3.6.0 and later, the F parameter can set the feed rate. If no F parameter is specified, probing speed defaults to the speed set by M558 for the Z probe used.
+If you have a probe that needs to be deployed and retracted (e.g. a BL touch) see the Controlling deployable probes documentation. NOTE If you have deployprobe.g or retractprobe.g in the /sys/ directory the firmware will attempt to use them, only have them if you need them.
 G38.3: Straight Probe
 Probe toward workpiece, stop on contact Supported in RepRapFirmware 3 and later.
 See 'G38.2: Straight Probe' for usage.
@@ -1190,13 +654,16 @@ Xnnn, Ynnn... Centre coordinates to rotate about
 Annn first centre coordinate in the selected plane (e.g. equivalent to Xnnn if the selected plane is XY)
 Bnnn second centre coordinate in the selected plane (e.g. equivalent to Ynnn if the selected plane is XY)
 Rnnn angle to rotate in degrees. Positive angles rotate anticlockwise when viewing the selected plane from above.
+Description
 Rotates the coordinate system in the current plane as selected by G17, G18 or G19. You may either specify the coordinates of the two axes of the selected plan (e.g. X and Y if using the default XY plane or after G17) or you may specify A and B coordinates.
+Notes
 RepRapFirmware implements G68 for the XY plane only. Coordinate rotation is not applied if any of the following is true:
 The move is a G1 Hn or G0 Hn move with n != 0;
 The selected plane is not XY;
 G53 is in effect;
 A system macro (i.e. one that is invoked automatically, such as homing or tool change) is being run.
-Note: if G68 coordinate rotaton is in effect and you use one of G54 thru G59.3 to switch to a different workplace coordinate system, the rotation origin will move in line with the origin of the workplace coordinate system.
+If G68 coordinate rotaton is in effect and you use one of G54 thru G59.3 to switch to a different workplace coordinate system, the rotation origin will move in line with the origin of the workplace coordinate system.
+In RRF 3.6.1 and later, the current G68 rotation parameters can be saved to override-config.g using M500 P68.
 G69: Cancel coordinate rotation
 Parameters
 No additional parameters
@@ -1493,6 +960,7 @@ Examples
 M24
 The machine prints from the file selected with the M23 command. If the print was previously paused with M25, printing is resumed from that point. To restart a file from the beginning, use M23 to reset it, then M24.
 When this command is used to resume a print that was paused, the macro file resume.g is run prior to resuming the print.
+If an axis or axes are un-homed resume.g will not run (see the equivalent behaviour in the documentation for M25. This is to allow pausing and resuming early in a job file where a machine may not yet be homed. If axes were homed when pause.g is run and subsequently become unhomed then resuming will cancel the print without running resume.g, or if axis movement when axes are not homed is permitted via M564, the print resumes without resume.g being run.
 M25: Pause SD print
 Examples
 
@@ -1504,7 +972,8 @@ If it finds one it stops after that move without decelerating (because the jerk 
 If it can't find one it will plan and execute a deceleration. In this case the pause will occur 1 move + 2 seconds after M25 is sent.
 That means the longest it will take to pause is 1 move + 2 seconds. In most situations pause occurs much quicker than that.
 After movement is halted as described above but prior to the pause operation completing, the macro file pause.g is run. This allows the head to be moved away from the print, filament to be retracted, etc.
-Note that if a pause is commanded while a macro is being executed, the pause will be deferred until the macro has completed.
+If a pause is commanded while a macro is being executed, the pause will be deferred until the macro has completed.
+If an axis or axes are un-homed, pause.g will not run, but the machine will still be paused. This is to allow pausing and resuming early in a job file where a machine may not yet be homed. Also when a print is resumed with an axis un-homed, resume.g is not run, see M24.
 M26: Set SD position
 Parameters
 Snnn File position from start of file in bytes
@@ -1763,7 +1232,8 @@ Examples
 M92 X80 Y80 Z80
 M92 E420:500
 Notes
-Allows programming of steps per mm for motor drives. These values are reset to those set in config.g on power on, unless saved with M500. It will report the current steps/mm if you send M92 without any parameters.
+Allows programming of steps per mm for motor drives. These values are reset to those set in config.g on power on.
+Sending M92 without any parameters will report the current steps/mm for each axis.
 RepRapFirmware does not support individual motor settings where an axis has multiple motors connected to different stepper drivers. The first parameter specified will be used for all motors on the axis. You should use identical motors on any axis that has more than one motor to avoid unexpected behaviour.
 Example: If you have two motors on your Z axis, physically connected to Z and E0 stepper drivers, configured with M584 Z2:3, set M92 Z80, not M92 Z80:80
 RepRapFirmware uses floating point maths so it is possible to use floating point numbers for steps/mm.
@@ -1836,7 +1306,7 @@ Snnn Fan speed (0.0-1.0 or >1.0-255, 0 is off in both cases)
 Lnnn Set the minimum fan speed (0.0-1.0 or >1.0-255, 0 is off in both cases) when a non-zero fan speed is requested.
 Xnnn Set the maximum fan speed (0.0-1.0 or >1.0-255, 0 is off in both cases) when a non-zero fan speed is requested.
 Bnnn Blip time - fan will be run at full PWM for this number of seconds when started from standstill. Default is B0.1 which means that there is a 100ms burst after starting the fan.
-Hnn:nn:nn... Enable thermostatic mode and select sensor monitored. H-1 disables thermostatic mode. Relates to the sensor number(s) created by M308.
+Hnn:nn:nn... Enable thermostatic mode and select sensor(s) monitored. H-1 disables thermostatic mode. Relates to the sensor number(s) created by M308.
 Rnnn Restore fan speed to the value it has when the print was paused (R1) or the last time the fan speed was set and no P parameter was provided (R2).
 Tnnn or Tnn:nn Set thermostatic mode trigger temperature, or temperature control range
 C"name" Set custom name for this fan (supported in RRF >= 2.01)
@@ -1882,6 +1352,7 @@ Deprecated in RepRapFirmware. Use M106 S0 instead.
 Note that M107 will turn off the print cooling fan(s) associated with the current tool (see the F parameter in the M563 command).
 M108: Cancel Heating
 Description
+Cancel the wait for a temperature or temperatures to be reached on heating or cooling.
 Breaks out of an M109, M116, M190 or M191 wait-for-temperature loop, continuing the print job.
 Notes
 Use this command with caution! If cold extrusion prevention is enabled (see M302) and the extruder temperature is too low, this will start "printing" without extrusion. If cold extrusion prevention is disabled and the hot-end temperature is too low, the extruder may jam.
@@ -1961,7 +1432,7 @@ FIRMWARE_NAME: RepRapFirmware for Duet 2 WiFi/Ethernet FIRMWARE_VERSION: 2.04RC1
 M115 B1
 Board EXP3HC firmware 3.0beta1 2019-10-28b1
 Description
-Request the Firmware Version and Capabilities of the current microcontroller. See the M408 command for a more comprehensive report on machine capabilities.
+Request the Firmware Version and Capabilities of the current microcontroller. See the M409 command for a more comprehensive report on machine capabilities (M408 in RRF 3.2 and earlier).
 Notes
 The B parameter is used on Duet 3 only, in RRF v3.x and later. M115 can take an optional B (board number) parameter which is the CAN address of the board to be queried, default 0 (i.e. main board).
 The P parameter is no longer supported, and has been removed from RRF 3.5 and later, to save memory on Duet 2. It is used tell the firmware about the hardware on which it is running, if RRF can't identify it. Should only be used in config.g, if you're having problems. If the P parameter is present then the integer argument specifies the hardware being used.
@@ -2001,7 +1472,7 @@ Note: Due to the way M117 messages are communicated, messages sent in quick succ
 M118: Send Message to Specific Target
 Supported in RepRapFirmware 1.21 and later.
 Parameters
-Pnnn Message type (0 = Generic [default], 1 = USB, 2 = PanelDue/UART, 3 = HTTP, 4 = Telnet, 5 = second UART, 6 = MQTT Client [RRF 3.5 and later on WiFi-equipped Duet 3 boards only]) (optional)
+Pnnn Message type: 0 = Generic [default], 1 = USB, 2 = PanelDue/UART, 3 = HTTP, 4 = Telnet, 5 = second UART, 6 = MQTT Client [RRF 3.5 and later on WiFi-equipped Duet 3 boards, or RRF 3.6 on all Duet 3 boards], 7 = second USB channel [RRF 3.7 and later on Duet 3 boards] (optional)
 S"msg" Message to send , limit of 100 characters
 Lnnn Log level of this message (0 = do not log this line, 1 = log as WARN, 2 = log as INFO, 3 = log as DEBUG (default)) (RRF 3.2 and later)
 T"topic" The topic to publish the message under (only valid on MQTT Client message).
@@ -2083,16 +1554,30 @@ P1007 read/write 32-bit words: A = address, R = number of 32-bit words (optional
 The 'B' parameter is used in RepRapFirmware 3 on Duet 3 only, to report diagnostic information from connected boards. The B (board number) parameter is the CAN address of the board to be queried, default 0 (i.e. main board). Example:
 
 M122 B1
+
 Diagnostics for board 1:
-Board EXP3HC firmware 3.0beta1 2019-10-28b1
-Never used RAM 163.4Kb, max stack 376b
-HEAT 1284 CanAsync 1456 CanRecv 1424 TMC 168 AIN 532 MAIN 2220
-Driver 0: standstill, reads 26609, writes 11 timeouts 0, SG min/max 0/0
-Driver 1: standstill, reads 26611, writes 11 timeouts 0, SG min/max 0/0
-Driver 2: standstill, reads 26614, writes 11 timeouts 0, SG min/max 0/0
-Move hiccups: 0
-VIN: 24.4V, V12: 12.2V
-MCU temperature: min 43.8C, current 43.9C, max 44.1C
+Duet EXP3HC rev 1.01 or earlier firmware version 3.6.1 (2025-08-24 09:16:18)
+Bootloader ID: not available
+All averaging filters OK
+Never used RAM 169588, free system stack 164 words
+Tasks: Move(3,nWait 7,0.0%,122) TMC(2,nWait 6,7.8%,55) HEAT(2,nWait 6,0.0%,121) CanAsync(5,nWait 4,0.0%,70) CanRecv(3,nWait 1,0.0%,72) CanClock(5,nWait 1,0.0%,62) MAIN(1,running,90.9%,409) IDLE(0,ready,0.0%,39) AIN(2,delaying,1.2%,261), total 100.0%
+Owned mutexes:
+Last reset 00:07:25 ago, cause: software
+Last software reset data not available
+Moves scheduled 6213, hiccups 0 (0.00/0.23ms), segs 7, step errors 0 (types 0x0), maxLate 0 maxPrep 19, ebfmin 0.00 max 0.00
+Sync err accum 323, peak jitter -4/17, peak Rx delay 209, resyncs 0/0, no timer interrupt scheduled, next step interrupt due in 180 ticks, enabled
+VIN voltage: min 24.3, current 24.3, max 24.4
+V12 voltage: min 12.1, current 12.2, max 12.2
+MCU temperature: min 32.8C, current 33.0C, max 33.2C
+Driver 0: pos 356367, 423.7 steps/mm, ok, SG min 0, mspos 504, reads 5723, writes 18 timeouts 0
+Driver 1: pos 0, 80.0 steps/mm, standstill, SG min n/a, mspos 792, reads 5729, writes 12 timeouts 0
+Driver 2: pos 0, 80.0 steps/mm, standstill, SG min n/a, mspos 792, reads 5730, writes 12 timeouts 0
+Last sensors broadcast 0x00000000 found 0 53 ticks ago, 0 ordering errs, loop time 0
+CAN messages queued 4197, send timeouts 0, received 10122, lost 0, ignored 0, errs 0, boc 0, free buffers 38, min 38, error reg 0
+dup 0, oos 0/0/0/0, rxMotionDelay 299, adv 35425/71013
+=== Filament sensors ===
+Interrupt 1 to 4us, poll 2 to 146us
+Driver 0: pos 2160.0, errs: frame 0 parity 0 ovrun 0 pol 0 ovdue 0
 M135: Set PID sample interval
 Available only in RRF 2.02 and earlier. In RRF 2.03 and later the interval is fixed at 250ms.
 Parameters
@@ -2127,6 +1612,26 @@ Notes
 If a temperature close to absolute zero is set (strictly less than -273°C in RRF 3.3 and earlier, less than or equal to -273°C in RRF 3.4.0 and later), the bed heater will be switched off.
 The 'H' parameter sets the heated bed heater number(s). If no heated bed is present, a negative value may be specified to disable it. M140 commands with H parameters would normally be used only in the config.g file.
 See Firmware configuration limits for the number of bed heaters each Duet board and firmware version supports.
+From RRF 3.7: When neither P nor H is provided, the S and R parameters apply to all bed heater slots configured via M140.1. By default only slot 0 is controlled.
+M140.1: Configure Bed Heater Control List
+Supported from RRF 3.7
+Configures which bed heater slots are affected by an M140 S or M140 R command when no P parameter is given. By default only slot 0 is controlled.
+Parameters
+Snnn:nnn... Colon-separated list of bed heater slot indices to control. Use S-1 to clear the list so that no beds are controlled by a bare M140 S/M140 R.
+Examples
+
+M140.1 S0        ; only slot 0 responds to M140 S/R (default)
+M140.1 S0:1:2    ; slots 0, 1 and 2 all respond to M140 S/R
+M140.1 S-1       ; no slots respond to M140 S/R
+M140.1           ; report the currently configured slot list
+The first example restores the default behaviour where only bed heater slot 0 is controlled by a bare M140 S or M140 R command.
+The second example configures slots 0, 1 and 2 to all be set to the same temperature when M140 S or M140 R is issued without a P parameter.
+The third example clears the list, so a bare M140 S/M140 R has no effect on any bed heater.
+The fourth example (no parameters) reports the current list of controlled slots.
+Notes
+This command only affects the implicit (no-P) behaviour of M140 S and M140 R. You can still target individual slots explicitly with M140 Pn Stemp.
+The setting is exposed in the object model under heat.bedHeaterControlMask.
+Slot indices that are out of range are silently ignored, matching the behaviour of other multi-valued mapping commands such as M563 fan mapping.
 M141: Set Chamber Temperature (Fast) or Configure Chamber Heater
 Parameters
 Pnnn (RRF 2.03 and later only) Chamber heater slot, default 0
@@ -2316,6 +1821,11 @@ Notes
 Sets the maximum feedrates that your machine can do in mm/min
 RepRapFirmware does not support individual motor settings where an axis has multiple motors connected to different stepper drivers. The first parameter specified will be used for all motors on the axis. You should use identical motors on any axis that has more than one motor to avoid unexpected behaviour.
 Example: If you have two motors on your Z axis, physically connected to Z and E0 stepper drivers, configured with M584 Z2:3, set M203 Z300, not M203 Z300,300
+RepRapFirmware has a default minimum movement speed of 0.5mm/sec, or 30mm/minute. Gcode commands sent with a slower feedrate than this (e.g. drilling) will automatically run at this speed.
+In firmware 2.03 and later this can be changed using the I ('i') parameter of the M203 command. For example, for a 10mm/minute minimum speed, send:
+
+M203 I10 ; set minimum speed to 10mm/min 
+RRF also has an 'Absolute Minimum Feedrate' of 0.01mm/sec or 0.6mm/minute. Setting M203 I0 will use this as the minimum feedrate. If you need even lower feedrates, eg for micromachining, we recommend scaling (see Duet3D forum thread here for example).
 M204: Set printing and travel accelerations
 Parameters
 Pnnn Acceleration for printing moves
@@ -2390,6 +1900,7 @@ Notes
 The values specified set the software limits for axis travel in the specified direction. The axis limits you set are also the positions assumed when an endstop is triggered.
 The min/max axis positions are +/- (2^31 - 1) microsteps. Position accuracy will start to suffer when the positions are outside approx. +/- 2^24 microsteps, because it is held and calculated as a 32-bit float. See also this note on maximum length of moves in the G1 Gcode entry.
 The M208 minimum Z value applies to deltas. The M208 XY min/max and Z max values don't.
+M208 axis limits for any axis whose values were found by probing or endstops will be saved to config-override.g using M500. Applies to Z max for LinearDelta and RotaryDelta if auto calibration was used, and to any axis limits probed using G1 H3 (or G1 S3 in RRF 2.x and earlier) moves.
 M220: Set speed factor override percentage
 Parameters
 Snnn Speed factor override percentage (0..100 or higher)
@@ -2467,7 +1978,7 @@ M260.2 P1 B{0xFF01, 257}                              ; write 0x01:0x01 to UART 
 M260.2 P1 S"Hello world"                              ; write "Hello world" to UART
 M260.3: Write to Nordson Ultimus V
 Supported on Duet 3 boards from firmware version 3.6
-Write data to a Nordson Ultimus V via UART. https://www.manualslib.com/manual/2917329/Nordson-Ultimus-V.html?page=46#manual
+Write data to a Nordson Ultimus V via UART. See the Nordson Ultimus V manual here
 First the ENQ ACK handshake is completed.
 STX, number of bytes, the checksum, and ETX are automatically added to the data provided to create the full message.
 Reads the success or failure message from the device.
@@ -2634,6 +2145,7 @@ or
 M300 C"io5.out"
 See also Macros, sounds section
 M301: Set PID parameters
+This comand is deprecated and will be removed in a future version of RepRapFirmware
 Parameters
 Hnnn heater number
 Pnnn proportional (Kp)
@@ -2653,6 +2165,7 @@ I: Integral value
 D: Derivative value
 The P, I and D values must be provided scaled by a factor of 255, for compatibility with older firmwares.
 Note: PID parameters are computed automatically when the M307 command is used to define the heater model, or from the default heater model if no M307 command is provided. You can use M301 to override those computed PID parameters, but this is not recommended because it prevents RepRapFirmware from using different PID parameters depending on the heating phase.
+In RRF 1.19 and earlier, if you used M301 to override the auto tune PID settings, the M301 parameters will be saved to config-override.g using M500.
 M302: Allow cold extrudes
 Parameters
 This command can be used without any additional parameters.
@@ -2783,6 +2296,7 @@ RRF 3.x: The M307 command must come later in config.g than the M950 command that
 Notes
 Each heater and its corresponding load may be approximated as a first order process with dead time, which is characterised by the gain, time constant and dead time parameters. The model can used to calculate optimum PID parameters (including using different values for the heating or cooling phase and the steady state phase), to better detect heater faults, and to calculate feed-forward terms to better respond to changes in the load. Normally these model parameters are found by auto tuning - see M303 and Tuning heater temperature control.
 For those platforms that provide power voltage monitoring, the calibration voltage setting allows the heating controller to adjust the power automatically in response to changes in the power supply voltage. For example, if a bed or chamber heater is turned on or off, this may cause the power supply voltage to change a little, which if not corrected for would change the extruder heater power.
+M307 parameters for all heaters are saved to config-override.g using M500.
 M308: Set or report sensor parameters
 M308 is supported in RepRapFirmware 3. If running RRF2.x or earlier, use M305.
 Parameters
@@ -3024,7 +2538,7 @@ M409 K"#move.axes"     ; report the number of axes
 M409 F"v"          ; report the whole object model to the default depth
 Usage
 The key string is just the path to the object model variables wanted, with the following extensions:
-An element that is an array may be followed by either [number] to select just one element, or by to select all elements and report the results as an array
+An element that is an array may be followed by either [number] to select just one element, or by [] to select all elements and report the results as an array
 The path may be preceded by # in which case the path must refer to an array and just the number of array elements is returned
 An empty key string selects the entire object model. Note, the entire object model may be very large, so there is typically insufficient buffer space to construct a JSON response that represents the whole object model. For this reason, RepRapFirmware sets a default maximum depth of 1 if the key string is empty or not present and the 'f' flag is not included in the flags string.
 The flags string may include one or more of the following letters:
@@ -3189,7 +2703,7 @@ M486 P10               ; Cancel object with index 10 (the 11th object)
 M486 U2                ; Un-cancel object with index 2 (the 3rd object)
 M486 C                 ; Cancel the current object (use with care!)
 M486                   ; List the objects on the build plate
-Descripton
+Description
 This provides an interface to identify objects on the print bed and cancel them. Basic usage: Use M486 Tnn to tell the firmware how many objects there are, so it can provide an LCD interface. (Otherwise the firmware counts them up in the first layer.) In every layer of your GCode, preface each object's layer slice with M486 S[index] to indicate which object is being printed. The index should be zero-based. To cancel the first object, use M486 P0; to cancel the 5th object use M486 P4; and so on. The "current" object is canceled with M486 C.
 GCodes associated with the canceled objects are no longer printed. Firmware supports this feature by ignoring G0-G3/G5 moves in XYZ while updating F and keeping the E coordinate up-to-date without extruding.
 Slicers should number purge towers and other global features with a negative index (or other flag) to distinguish them from regular print objects, since it is important to preserve color changes, purge towers, and brims.
@@ -3208,12 +2722,14 @@ M500 P10
 M500 P10:31
 Description
 Save current parameters to the sys/config-override.g on the SD card, similar to other firmware's storing to EEPROM. The parameters stored are:
-M307 auto tune results
-PID parameters, if you used M301 to override the auto tune PID settings
-Delta printer M665 and M666 settings
-Any M208 axis limits that were determined using a G1 H3 (or S3 in RRF 2.x and earlier) move
-If the P31 parameter is used, the G31 trigger height, trigger value and X and Y offsets for each possible Z probe type (in older firmware versions the G31 parameters are stored even if the P31 parameter is not present)
-If the P10 parameter is present, the G10 tool offsets
+M665 and M666 kinematics calibration parameters, depending on selected kinematics. Calibration parameters for LinearDelta, RotaryDelta and Hangprinter are saved.
+M307 heater model parameters for all heaters.
+M208 axis limits for any axis whose values were found by probing or endstops. Applies to Z max for LinearDelta and RotaryDelta if auto calibration was used, and to any axis limits probed using G1 H3 (or G1 S3 in RRF 2.x and earlier) moves.
+G10 workplace offsets of all workplaces
+If parameter P10 is used, any tool offsets that were established by probing
+If parameter P31 is used, the G31 parameters of each Z probe (in older firmware versions the G31 parameters are stored even if the P31 parameter is not present)
+If parameter P68 is used, the current G68 rotation parameters (RRF 3.6.1 and later)
+M301 PID parameters, if you used M301 to override the auto tune PID settings (RRF 1.19 and earlier)
 Ensure that M501 is at the end of config.g in order for the values in config-override.g to be loaded on startup.
 M501: Read stored parameters
 Parameters
@@ -3588,7 +3104,7 @@ Xnnn Axis or axes to map X movement to (RepRapFirmware 1.16 and later)
 Ynnn Axis or axes to map Y movement to (RepRapFirmware 1.19 and later)
 Znnn Axis or axes to map Z movement to (RepRapFirmware 3.5 and later)
 Lnnn Drive to use for filament mapping. By default RRF will use the first and only extruder drive if this parameter is not specified (supported by RRF >= 2.02)
-Rnn Spindle number (RRF >= 3.3)
+Rnn Spindle number (RepRapFirmware 3.3 and later)
 Examples
 
 M563 P0 D0:2:3 H1:3 ; create a tool using extruder drives 0, 2 and 3 and heaters 1 and 3
@@ -3613,10 +3129,7 @@ R The spindle number mapped to this tool. (RRF >= 3.3)
 
 M563 P0 R0 ; assign spindle 0 to tool 0
 X, Y, Z The X, Y and Z mapping options are used to create tools on machines with multiple independent X, Y and/or Z carriages. The additional carriages are set up as axes U, V etc. (see M584) and the X/Y/Z mapping option in M563 defines which carriage or carriages are used. Axes are mapped in the order XYZUVWABC, where X=0, Y=1, Z=2, U=3 etc, not by driver number.
-S As shown in the example above the S parameter can be used to give a tool a name. RepRapFirmware supports an additional form of the M563 command. The command:
-
-M563 S1
-means add 1 (the value of the S parameter) to all tool numbers found in the remainder of the current input stream (e.g. the current file if the command is read from a file on the SD card), or until a new M563 command of this form is executed. The purpose of this is to provide compatibility between systems in which tool numbers start at 1, and programs such as slic3r that assume tools are numbered from zero.
+S As shown in the example above the S parameter can be used to give a tool a name.
 RepRapFirmware maps the loaded filament on a per-extruder basis so if you have a mixing tool (one with more than one extruder), the L parameter tells the web interface which filament to display. If there is more than one extruder and the L parameter is omitted, no filament is displayed at all.
 Notes
 In RepRapFirmware 3.x, in order to avoid the serialised object model getting very large, the P parameter (tool number) may not exceed 49.
@@ -3624,6 +3137,10 @@ M563 with just a P parameter just reports the existing configuration of the tool
 RepRapFirmware allows the deletion of existing tools if M563 is called in this way:
 
 M563 P1 D-1 H-1
+RepRapFirmware 3.0 and earlier supports an additional form of the M563 command. The command:
+
+M563 S1
+means add 1 (the value of the S parameter) to all tool numbers found in the remainder of the current input stream (e.g. the current file if the command is read from a file on the SD card), or until a new M563 command of this form is executed. The purpose of this is to provide compatibility between systems in which tool numbers start at 1, and programs such as slic3r that assume tools are numbered from zero. This functionality has been deprecated and removed from RRF 3.1.0 and later.
 M564: Limit axes
 Parameters
 Hnnn H1 = forbid movement of axes that have not been homed, H0 = allow movement of axes that have not been homed (firmware 1.21 and later)
@@ -3741,8 +3258,9 @@ In.n (optional) Integral constant
 Dn.n (optional) Derivative constant
 Vn.n (optional, RRF 3.5 and later only) Velocity feedforward constant
 An.n (optional, RRF 3.5 and later only) Acceleration feedforward constant
-Hn.n (optional) Minimum holding current as a percentage of the configured motor current when operating in closed loop mode
+Hn.n (optional, RRF 3.5 and earlier only) Minimum holding current as a percentage of the configured motor current when operating in closed loop mode
 Qn.n (optional, RRF 3.5 and later only) Motor torque in newton-metres per amp of peak motor current
+Y"type" (optional, RRF 3.6.2 and later only) Type of magnetic encoder used, only matters when using T1 or T3. Defaults to "as5047d" if not provided.
 Description
 Sets the configuration parameters of a closed loop driver. See the M569 D parameter for switching a driver to closed loop after it has been configured.
 For RRF 3.4, if you are using a quadrature encoder on the motor shaft, the encoder counts per full step (Cn.n) can be found from the datasheet of the encoder being used. If the value is stated as counts per revolution (CPR), divide by the steps per revolution of the stepper motor to get the count per step. For example, a 1000 CPR encoder attached to a 200 step/rev (1.8 deg/step) motor will have a count per step of 1000 ÷ 200 = 5.
@@ -3938,11 +3456,15 @@ P"pin-name" (RepRapFirmware 3.0 to 3.5.x) Name of the pin to use
 Pnnn (RepRapFirmware 1 and 2) Logical pin number (RepRapFirmware 1.17), defaults to the FAN0 output in firmware 1.19 and earlier until M571 with a P parameter has been seen
 Examples
 
-M571 P3 S0.5         ; turn on GpOut port 3 at 50% PWM while extrusion is commanded (RRF 3.6.0 and later)
-M571 P"heater3" S0.5 ; turn on heater 3 output at 50% PWM while extrusion is commanded (RRF 3 up to 3.5.x)
-M571 P3 F200 S1      ; turn on logical pin 3 while extrusion is commanded (RRF 2)
+; RRF 3.6.0 and later
+M950 P3 C"io4.out"       ; set io4.out pin (PWM capable on 6HC) to GPIO port 3
+M571 P3 S0.5             ; turn on GpOut port 3 at 50% PWM while extrusion is commanded
+; RRF 3 up to 3.5.x
+M571 P"exp.heater3" S0.5 ; turn on heater 3 output at 50% PWM while extrusion is commanded
+; RRF 2
+M571 P3 F200 S1          ; turn on logical pin 3 while extrusion is commanded
 Description
-This turns the controlled pin output on whenever extrusion is being done, and turns it off when the extrusion is finished. The output could control a fan or a stirrer or anything else that needs to work just when extrusion is happening. It also can be used to control a laser beam. The S parameter sets the value of the PWM to the output. 0.0 is off; 1.0 is fully on.
+This turns the controlled pin output on whenever forwad extrusion is being done by any extruder, and turns it off when no forward extrusion is taking place. The output could control a fan or a stirrer or anything else that needs to work just when extrusion is happening. The S parameter sets the value of the PWM to the output. 0.0 or a negative value means the output is off whether or notforward extrusion is taking place; 1.0 means the output is fully on when forward extrusion is taking place and off at other times.
 Notes
 In RepRapFirmware 3.6.0 and later you specify the GpOut port number using the P parameter. The port must previously have been created using the M950 command and must be on the main board.
 In RepRapFirmware 3.0 to 3.5.x you specify the pin name using the P parameter.
@@ -4017,13 +3539,28 @@ C"port_name" Port name for Transmit/Receive control of the RS485 transceiver whe
 Snnn Mode: 0 = PanelDue; 1 (default) = PanelDue mode, checksum or CRC required; 2 = raw mode; 3 = raw mode with checksum or CRC required; 4 = PanelDue mode, CRC required; 5 = disabled; 6 = raw mode, CRC required; 7 = Device, eg Modbus or UART (if supported).
 Examples
 
-M575 P1 B57600 S1
-Description
-P0 specifies the main serial interface (typically a USB port), while P1 specifies an auxiliary serial port (for example, the port used to connect a PanelDue) and P2 specifies a second auxiliary port if there is one. The B parameter is the required baud rate (this parameter is ignored if the port is a true USB port).
-Modes 2 and 3 are supported in RRF 3.01 and later. Modes 4 and 6 are supported in RRF 3.4 and later. Mode 5 is supported in RRF 3.6 and later. Mode 7 is supported by RRF 3.6 and later on some boards.
+M575 P1 B57600 S1 ; sets first auxiliary port (io0 on Duet 3) to PanelDue mode
+M575 P2 B9600 S7 ; sets second auxiliary port (io1 on Duet 3) to Device mode (eg for RS485)
 Notes
+P parameter
+P0 specifies the main serial interface, typically a USB port.
+P1 specifies an auxiliary serial port (for example, the port used to connect a PanelDue, usually io0 on Duet 3)
+P2 specifies a second auxiliary port if there is one (for example, the port used for RS485, usually io1 on Duet 3)
+The B parameter is the required baud rate (this parameter is ignored if the port is a true USB port).
+The S parameter defines the mode. Modes 2 and 3 are supported in RRF 3.01 and later. Modes 4 and 6 are supported in RRF 3.4 and later. Mode 5 is supported in RRF 3.6 and later. Mode 7 is supported by RRF 3.6 and later on some boards.
 In RRF 3.1 and later for Duet 3, the auxiliary serial port remains disabled until a M575 P1 command is received. This is to allow the IO_0 port to be used for other purposes. In RRF 3.2 and later on all boards, the auxilliary serial port(s) remain disabled until enabled using M575.
 In RRF 3.6.0 and later, the USB port can now be switched into PanelDue mode using M575.
+Details of the CRC calculation are outlined in the Gcode Structure section above
+PanelDue mode vs Raw mode
+PanelDue mode is more resistant to interference and lost data because of the JSON structure and associated field identifiers, and makes it easier to distinguish the responses to particular commands from other data.
+here is an example of the M114 command and response sent in PanelDue mode
+
+M114
+{"seq":6,"resp":"X:10.000 Y:50.000 Z:1.000 U:0.000 E:0.000 E0:0.0 E1:0.0 Count 4800 4000 400 4000 Machine 10.000 50.000 1.000 0.000 Bed comp 0.000\n"}
+here is an example of the same command in raw mode
+
+M114
+X:10.000 Y:50.000 Z:1.000 U:0.000 E:0.000 E0:0.0 E1:0.0 Count 4800 4000 400 4000 Machine 10.000 50.000 1.000 0.000 Bed comp 0.000
 M576: Set SPI comms parameters
 Supported in RRF 3.4 and later in SBC mode.
 This sets the communications parameters of the SPI channel.
@@ -4085,11 +3622,14 @@ The optional P string is sent to the Roland if R is 1. It is permissible to call
 M581: Configure external trigger on inputs and/or endstops
 Parameters
 Tnn Logical trigger number to associate the input(s) with, from zero up to a firmware-specific maximum
-R Enable condition: whether to trigger at any time (R0, default), only when printing a file from SD card (R1), or only when not printing a file from SD card (R2, supported in RRF 3.2 and later). R-1 temporarily disables the trigger.
+R Enable condition:
+R-1 (disable the trigger)
+R0 (trigger at any time, default for a newly-created trigger)
+R1 (trigger only when printing a file from SD card),
+R2 (only when not printing a file from SD card, supported in RRF 3.2 and later)
 P Specify one or more input pin numbers that you created using M950 with the J parameter, or -1 to delete the trigger
 X, Y, Z or any other axis letter(s): axes whose endstop switches are to cause the trigger
 S Whether trigger occurs on an inactive-to-active edge of the inputs specified by the P and axis letter parameters (S1, default), active-to-inactive edge (S0), or ignores that input (S-1).
-R Enable condition: whether to disable the trigger (R-1), trigger at any time (R0, default for a newly-created trigger), trigger only when printing a file from SD card (R1), or only when not printing a file from SD card (R2, supported in RRF 3.2 and later).
 Examples
 
 M581 T2 P0:3 S1 R1 ; invoke trigger 2 when an inactive-to-active edge is detected on input 0 or input 3 and a file is being printed from SD card
@@ -4103,6 +3643,7 @@ Otherwise, if the P-1 parameter is provided, the trigger is deleted and any addi
 Otherwise, any inputs specified by the P parameter and/or axis endstops specified by axis letter parameters are added to the conditions that cause that trigger with the polarity specified by the S parameter
 If the R parameter is provided then the trigger enable condition is updated.
 Trigger number 0 causes an emergency stop as if M112 had been received. Trigger number 1 causes the print to be paused as if M25 had been received. Any trigger number # greater than 1 causes the macro file sys/trigger#.g to be executed. Polling for further trigger conditions other than trigger 0 is suspended until the trigger macro file has been completed. RepRapFirmware does not wait for all queued moves to be completed before executing the macro, so you may wish to use the M400 command at the start of your macro file. If several triggers are pending, the one with the lowest trigger number takes priority.
+T0 and T1 cannot be overridden with trigger files. i.e. sys/trigger0.g will be ignored, and T0 will always cause an emergency stop.
 See Firmware configuration limits for the number of triggers each Duet board and firmware version supports.
 Warning: if executed during a job, and more than one line long the GCode within the trigger file may be executed between later commands from the job. Bounding the trigger file with M25 and M24 may help, but this will cause warnings if the trigger happens outside of a job. The use of M25/M24 will cause the execution of pause and resume system macros.
 For examples, see Using triggers to control the Duet and Connecting and emergency stop.
@@ -4111,7 +3652,7 @@ Supported in RRF 3.7 and later
 Parameters
 Tnn (required) Logical trigger number to associate the input(s) with, from zero up to a firmware-specific maximum
 P"expression" Specifies the object model expression to use, or use P-1 to delete the trigger
-R Enable condition: whether to trigger at any time (R0, default), only when printing a file from SD card (R1), or only when not printing a file from SD card (R2, supported in RRF 3.2 and later). R-1 temporarily disables the trigger.
+R Enable condition: whether to trigger at any time (R0, default), only when printing a file from SD card (R1), or only when not printing a file from SD card (R2). R-1 temporarily disables the trigger.
 Examples
 
 M581.1 T2 P"sensors.gpIn[0] = 1" R1 ; invoke trigger 2 when the digital input configures using M950 J0 changes from inactive to active
@@ -4574,6 +4115,7 @@ In RRF 2.03 and later, multiple L values can be provided, for example:
 
 L260.1:260.2:260.0
 The values are the lengths of the rods to the X, Y and Z towers respectively. If more than 3 values are provided, the firmware assumes that there are as many towers as L values up to the maximum supported (currently 6). The XY coordinates of the additional towers must be defined subsequently using the M669 command. If only one L value is provided, the machine is assumed to have 3 towers with all rods having the same length.
+M665 kinematics parameters are saved to config-override.g using M500, depending on selected kinematics. Calibration parameters for LinearDelta, RotaryDelta and Hangprinter are saved.
 M666: Set delta endstop adjustment
 Sets delta endstops adjustments.
 Parameters
@@ -4587,6 +4129,7 @@ Examples
 M666 X-0.1 Y+0.2 Z0
 Notes
 Positive endstop adjustments move the head closer to the bed when it is near the corresponding tower. Endstop corrections are expressed in mm.
+M666 parameters are saved to config-override.g using M500, depending on selected kinematics. Calibration parameters for LinearDelta, RotaryDelta and Hangprinter are saved.
 M667: Select CoreXY or related mode
 This command is deprecated from RRF 2.03, and removed from RRF 3.5 and later. Use M669 instead.
 Parameters
@@ -5056,23 +4599,26 @@ Fnn.n (optional) Sample and correction frequency (Hz), default 5Hz
 Znn.n:nn.n Minimum and maximum permitted Z values
 Notes
 If commanding the motors to increase Z causes the sensor value to increase, then all of P, I and D must be positive. If commanding the motors to increase Z causes the sensor value to decrease, then all of P, I and D must be negative.
-M952: Set CAN-FD expansion board address and/or normal data rate
-Some CAN-connected expansion boards are too small to carry address selection switches. Such boards default to a standard address, which can be changed using this command.
+M952: Set board CAN address and/or base data rate
+Some CAN-connected expansion boards are too small to carry address selection switches. Such boards default to a standard address, which can be changed using this command. This command can also be used to change the CAN bit rate.
 Parameters
-Bn Existing CAN address of expansion board to be changed, 1 to 125.
-An New CAN address of that expansion board, 1 to 125.
-Sn.n Requested bit rate in Kbits/second (1K = 1000) (optional, default 1000)
-T0.n Fraction of the bit time between the bit start and the sample point (optional)
-J0.n Maximum jump time as a fraction of the bit time (optional)
+Bn Existing CAN address of expansion board to be changed, 1 to 125; or 0 to change the CAN bit rate of the main board.
+An (optional) New CAN address of that board, 1 to 125. Ignored if the B parameter is 0.
+Sn.n (optional, default 1000) Requested CAN bit rate in Kbits/second (1K = 1000).
+T0.n (optional, default 0.54) Fraction of the bit time between the bit start and the sample point. Ignored if the S parameter is not present.
+J0.n (optional, default 0.17) Maximum jump time as a fraction of the bit time. Ignored if the S parameter is not present.
 Examples
 
 M952 B121 A20  ; change the CAN address of expansion board 121 to 20
 M952 B20 S500  ; change the CAN bit rate or expansion board 20 to 500kbps
 Notes
-The change of CAN address will not take place until the expansion board is restarted.
-This command can also be used to change the normal data rate, for example if the printer has CAN bus cables that are too long to support the standard data rate (1Mbits/sec in RepRapFirmware). All boards in the system on the same CAN bus must use the same CAN data rate. The procedure for changing the data rate is:
+This command serves two functions:
+To change the address of a CAN-connected expansion board that does not have address switches. The change of CAN address will not take place until the expansion board is restarted.
+To change the CAN bit rate, for example if the printer has CAN bus cables that are too long to support the standard data rate. All boards in the system on the same CAN bus must use the same CAN data rate. The default value of 1000 is suitable if the total length of the CAN bus is no greater than 40m. If the bus is longer than this, use 500 (for up to 80m) or 250 (for up to 160m). Values other than 1000, 500 or 250 are not recommended because these are the only standard values supported by the version 3 bootloader and the CANiap32 files (used to update main-as-expansion boards over CAN).
+The procedure for changing the data rate is:
 Use M952 to change the data rate on all the expansion boards, one at a time. After changing the data rate on each expansion board, you will no longer be able to communicate with it, and you may need to power it down or disconnect it from the CAN bus to prevent it interfering with subsequent CAN communications.
 Change the data rate of the main board last. Then the main board should be able to communicate with all the expansion boards again.
+An alternative procedure is being introduced and will become available in RRF 3.7 and later.
 M953: Set CAN-FD bus fast data rate
 Provisional specification - not yet implemented
 This command allows the bandwidth of the CAN bus to be optimised, by increasing the data rate during transmission of CAN-FD data packets by means of the BRS (bit rate switch) feature. The maximum speed supported by CAN-FD is 8Mbits/sec but the practical limit depends on the cable length, cable quality, number of devices on the bus and CAN interface hardware used. The rate specified will be rounded down to the nearest achievable rate.
@@ -5305,2403 +4851,3 @@ M36
 M408
 Slicer Start and End GCodes
 Slicers will optionally add GCode scripts to the beginning and end of their output file to perform specified actions before and/or after a print such as z-probing the build-area, heating/cooling the bed and hotend, performing ooze free "nozzle wipe" startup routine, switching system power on/off, and even "ejecting" parts. For general information and examples (not specific to RepRapFirmware) there is more info on the Start GCode routines and End GCode routines pages.
-
-
-
-
-
-Object Model Documentation
-
-Overview
-
-This page is auto-generated. If you find any errors, please report them on the forum and DO NOT EDIT this page! If you are capable of editing source code, it is encouraged to make pull requests for the original DSF API code instead.
-This page refers to version 3.6 of the Object Model.
-All Duet software projects share the same object model to store configuration and sensor data. This page provides documentation about the different object model keys and associated properties.
-Some fields may not be available in standalone mode because some fields are only maintained by DSF and/or DWC. It is advised to consider this when developing applications that address Duets in standalone and SBC mode.
-Certain fields have class names in braces (...) appended to the object model path. These class names are present for items where different item types may be configured. If a class inherits values from a base type, the inheritance is marked using a colon (:) followed by the base class name. So, for example, LaserFilamentMonitor : FilamentMonitor means that a LaserFilamentMonitor inherits all the properties from the FilamentMonitor base class.
-In standalone mode, each main key (like boards or heat) has its own sequence number in the seqs key which is not documented here. Whenever a non-live field is updated (see M409 F"f"), this sequence number is increased. For clients targeting standalone mode, it can be helpful to check these values to determine when it is time to request a full key from RRF again. There is an extra value seqs.reply as well which is used notify clients about new messages (see rr_reply). Note that these sequence numbers are not exposed in SBC mode.
-This page is preliminary and subject to further changes.
-Object Model Description
-
-boards[]
-
-List of connected boards
-Note: The first item represents the main board
-boards[].accelerometer
-
-Accelerometer of this board or null if unknown
-boards[].accelerometer.orientation
-
-Orientation of the accelerometer
-Note: See https://docs.duet3d.com/en/Duet3D_hardware/Accessories/Duet3D_Accelerometer#orientation for a list of orientations
-boards[].accelerometer.points
-
-Number of collected data points in the last run or 0 if it failed
-boards[].accelerometer.runs
-
-Number of completed sampling runs
-boards[].bootloaderFileName
-
-Filename of the bootloader binary or null if unknown
-boards[].canAddress
-
-CAN address of this board or null if not applicable
-boards[].closedLoop
-
-Closed loop data of this board or null if unknown
-boards[].closedLoop.points
-
-Number of collected data points in the last run or 0 if it failed
-boards[].closedLoop.runs
-
-Number of completed sampling runs
-boards[].directDisplay
-
-Details about a connected display or null if none is connected
-boards[].directDisplay.encoder
-
-Encoder of this screen or null if none
-boards[].directDisplay.encoder.pulsesPerClick
-
-Number of pulses per click of the rotary encoder
-boards[].directDisplay.screen
-
-Screen information
-boards[].directDisplay.screen.colourBits (DirectDisplayScreen)
-
-Number of colour bits
-boards[].directDisplay.screen.controller (DirectDisplayScreen)
-
-Display type
-This property may be one of the following:
-	•	ST7920: ST7920 controller
-	•	ST7567: ST7567 controller
-	•	ILI9488: ILI9488 controller
-boards[].directDisplay.screen.height (DirectDisplayScreen)
-
-Height of the display screen in pixels
-boards[].directDisplay.screen.spiFreq (DirectDisplayScreen)
-
-SPI frequency of the display (in Hz)
-boards[].directDisplay.screen.width (DirectDisplayScreen)
-
-Width of the display screen in pixels
-boards[].directDisplay.screen (DirectDisplayScreenST7567 : DirectDisplayScreen)
-
-Direct-connected display screen with a ST7567 controller
-boards[].directDisplay.screen.contrast (DirectDisplayScreenST7567 : DirectDisplayScreen)
-
-Configured contrast
-boards[].directDisplay.screen.resistorRatio (DirectDisplayScreenST7567 : DirectDisplayScreen)
-
-Configured resistor ratio
-boards[].drivers[]
-
-Drivers of this board
-boards[].drivers[].closedLoop
-
-Closed-loop settings (if applicable)
-boards[].drivers[].closedLoop.currentFraction
-
-Current fraction f the configured motor current used
-boards[].drivers[].closedLoop.currentFraction.avg
-
-Average fraction of the configured motor current used
-boards[].drivers[].closedLoop.currentFraction.max
-
-Maximum fraction of the configured motor current used
-boards[].drivers[].closedLoop.positionError
-
-Position error in full steps of the motor
-boards[].drivers[].closedLoop.positionError.max
-
-Maximum position error in full steps of the motor
-boards[].drivers[].closedLoop.positionError.rms
-
-RMS of the position error in full steps of the motor
-boards[].drivers[].status
-
-Driver status register value The lowest 8 bits of these have the same bit positions as in the TMC2209 DRV_STATUS register. The TMC5160 DRV_STATUS is different so the bits are translated to this. Similarly for TMC2660. Only the lowest 16 bits are passed in driver event messages
-boards[].firmwareDate
-
-Date of the firmware build
-boards[].firmwareFileName
-
-Filename of the firmware binary or null if unknown
-boards[].firmwareName
-
-Name of the firmware build
-boards[].firmwareVersion
-
-Version of the firmware build
-boards[].iapFileNameSBC
-
-Filename of the IAP binary that is used for updates from the SBC or null if unsupported
-Note: This is only available for the mainboard (first board item)
-boards[].freeRam
-
-Amount of free RAM on this board (in bytes or null if unknown)
-boards[].iapFileNameSD
-
-Filename of the IAP binary that is used for updates from the SD card or null if unsupported
-Note: This is only available for the mainboard (first board item)
-boards[].inductiveSensor
-
-Information about an inductive sensor or null if not present
-boards[].maxHeaters
-
-Maximum number of heaters this board can control
-boards[].maxMotors
-
-Maximum number of motors this board can drive
-boards[].mcuTemp
-
-Minimum, maximum, and current temperatures of the MCU or null if unknown
-boards[].mcuTemp.current
-
-Current value
-boards[].mcuTemp.min
-
-Minimum value
-boards[].mcuTemp.max
-
-Maximum value
-boards[].name
-
-Full name of the board
-boards[].shortName
-
-Short name of this board
-boards[].state
-
-State of this board
-This property may be one of the following:
-	•	unknown: Unknown state
-	•	flashing: Flashing new firmware
-	•	flashFailed: Failed to flash new firmware
-	•	resetting: Board is being reset
-	•	running: Board is up and running
-boards[].supports12864
-
-This field is obsolete and will be removed in the future: Replaced with SupportsDirectDisplay
-Indicates if this board supports external 12864 displays
-boards[].supportsDirectDisplay
-
-Indicates if this board supports external displays
-boards[].uniqueId
-
-Unique identifier of the board or null if unknown
-boards[].v12
-
-Minimum, maximum, and current voltages on the 12V rail or null if unknown
-boards[].v12.current
-
-Current value
-boards[].v12.min
-
-Minimum value
-boards[].v12.max
-
-Maximum value
-boards[].vIn
-
-Minimum, maximum, and current voltages on the input rail or null if unknown
-boards[].vIn.current
-
-Current value
-boards[].vIn.min
-
-Minimum value
-boards[].vIn.max
-
-Maximum value
-boards[].wifiFirmwareFileName
-
-Filename of the on-board WiFi chip or null if not present
-directories
-
-Information about the individual directories
-Note: This may not be available in RepRapFirmware if no mass storages are available
-directories.filaments
-
-Path to the filaments directory
-directories.firmware
-
-Path to the firmware directory
-directories.gCodes
-
-Path to the G-Codes directory
-directories.macros
-
-Path to the macros directory
-directories.menu
-
-Path to the menu directory
-Note: Intended for 12864 displays but currently unused in DSF. It is only needed for the Duet Maestro + DWC
-directories.system
-
-This field is maintained by DSF in SBC mode
-Path to the system directory
-directories.web
-
-Path to the web directory
-fans[]
-
-List of configured fans
-fans[].actualValue
-
-Value of this fan (0..1 or -1 if unknown)
-fans[].blip
-
-Blip value indicating how long the fan is supposed to run at 100% when turning it on to get it started (in s)
-fans[].frequency
-
-Configured frequency of this fan (in Hz)
-fans[].max
-
-Maximum value of this fan (0..1)
-fans[].min
-
-Minimum value of this fan (0..1)
-fans[].name
-
-Name of the fan
-fans[].requestedValue
-
-Requested value for this fan on a scale between 0 to 1
-fans[].rpm
-
-Current RPM of this fan or -1 if unknown/unset
-fans[].tachoPpr
-
-Pulses per tacho revolution
-fans[].thermostatic
-
-Thermostatic control parameters
-fans[].thermostatic.heaters[]
-
-This field is obsolete and will be removed in the future: Use Sensors instead
-List of heaters to monitor (indices)
-Note: This is a bitmap represented as an array
-fans[].thermostatic.highTemperature
-
-Upper temperature range required to turn on the fan (in C)
-fans[].thermostatic.lowTemperature
-
-Lower temperature range required to turn on the fan (in C)
-fans[].thermostatic.sensors[]
-
-List of sensors to monitor (indices)
-Note: This is a bitmap represented as an array
-global
-
-Dictionary of global variables vs JSON values
-Note: When DSF attempts to reconnect to RRF, this may be set to null to clear the contents
-heat
-
-Information about the heat subsystem
-heat.bedHeaters[]
-
-List of configured bed heaters (indices)
-Note: Items may be -1 if unconfigured
-heat.chamberHeaters[]
-
-List of configured chamber heaters (indices)
-Note: Items may be -1 if unconfigured
-heat.coldExtrudeTemperature
-
-Minimum required temperature for extrusion moves (in C)
-heat.coldRetractTemperature
-
-Minimum required temperature for retraction moves (in C)
-heat.heaters[]
-
-List of configured heaters
-heat.heaters[].active
-
-Active temperature of the heater (in C)
-heat.heaters[].avgPwm
-
-Average heater PWM value (0..1)
-heat.heaters[].current
-
-Current temperature of the heater (in C)
-heat.heaters[].extrPwmBoost
-
-Current feedforward PWM boost applied to the heater
-heat.heaters[].extrTempBoost
-
-Current temperature boost applied to the heater
-heat.heaters[].max
-
-Maximum temperature allowed for this heater (in C)
-Note: This is only temporary and should be replaced by a representation of the heater protection as in RRF
-heat.heaters[].min
-
-Minimum temperature allowed for this heater (in C)
-Note: This is only temporary and should be replaced by a representation of the heater protection as in RRF
-heat.heaters[].maxBadReadings
-
-Maximum number of consecutive temperature reading failures before a heater fault is raised
-heat.heaters[].maxHeatingFaultTime
-
-Time for which a temperature anomaly must persist on this heater before raising a heater fault (in s)
-heat.heaters[].maxTempExcursion
-
-Permitted temperature excursion from the setpoint for this heater (in K)
-heat.heaters[].model
-
-Information about the heater model
-heat.heaters[].model.coolingExp
-
-Cooling rate exponent
-heat.heaters[].model.coolingRate
-
-Cooling rate (in K/s)
-heat.heaters[].model.deadTime
-
-Dead time (in s)
-heat.heaters[].model.enabled
-
-Indicates if this heater is enabled
-heat.heaters[].model.fanCoolingRate
-
-Cooling rate with the fan on (in K/s)
-heat.heaters[].model.heatingRate
-
-Heating rate (in K/s)
-heat.heaters[].model.inverted
-
-Indicates if the heater PWM signal is inverted
-heat.heaters[].model.maxPwm
-
-Maximum PWM value
-heat.heaters[].model.pid
-
-Details about the PID controller
-heat.heaters[].model.pid.d
-
-Derivative value of the PID regulator
-heat.heaters[].model.pid.i
-
-Integral value of the PID regulator
-heat.heaters[].model.pid.overridden
-
-Indicates if custom PID values are used
-heat.heaters[].model.pid.p
-
-Proportional value of the PID regulator
-heat.heaters[].model.pid.used
-
-Indicates if PID control is being used
-heat.heaters[].model.standardVoltage
-
-Standard voltage or null if unknown
-heat.heaters[].monitors[]
-
-Monitors of this heater
-heat.heaters[].monitors[].action
-
-Action to perform when the trigger condition is met
-This property may be one of the following:
-	•	0: Generate a heater fault
-	•	1: Permanently switch off the heater
-	•	2: Temporarily switch off the heater until the condition is no longer met
-	•	3: Shut down the printer
-heat.heaters[].monitors[].condition
-
-Condition to meet to perform an action
-This property may be one of the following:
-	•	disabled: Heater monitor is disabled
-	•	tooHigh: Limit temperature has been exceeded
-	•	tooLow: Limit temperature is too low
-heat.heaters[].monitors[].limit
-
-Limit threshold for this heater monitor
-heat.heaters[].monitors[].sensor
-
-Sensor number to monitor
-heat.heaters[].sensor
-
-Sensor number of this heater or -1 if not configured
-heat.heaters[].standby
-
-Standby temperature of the heater (in C)
-heat.heaters[].state
-
-State of the heater
-This property may be one of the following:
-	•	off: Heater is turned off
-	•	standby: Heater is in standby mode
-	•	active: Heater is active
-	•	fault: Heater faulted
-	•	tuning: Heater is being tuned
-	•	offline: Heater is offline
-inputs[]
-
-Information about every available G/M/T-code channel
-inputs[].active
-
-True if the input is is in active mode i.e. executing commands for its assigned motion system, false if it is assigned to a motion system other than the current one
-Note: This will always be true except for the File and File2 inputs
-inputs[].axesRelative
-
-Whether relative positioning is being used
-inputs[].compatibility
-
-Emulation used on this channel
-This property may be one of the following:
-	•	Default: No emulation (same as RepRapFirmware)
-	•	RepRapFirmware: Emulating RepRapFirmware
-	•	Marlin: Emulating Marlin
-	•	Teacup: Emulating Teacup
-	•	Sprinter: Emulating Sprinter
-	•	Repetier: Emulating Repetier
-	•	NanoDLP: Special emulation for NanoDLP
-inputs[].distanceUnit
-
-Whether inches are being used instead of mm
-This property may be one of the following:
-	•	mm: Millimeters
-	•	in: Inches
-inputs[].drivesRelative
-
-Whether relative extrusion is being used
-inputs[].feedRate
-
-Current feedrate in mm/s
-inputs[].inMacro
-
-Whether a macro file is being processed
-inputs[].inverseTimeMode
-
-Indicates if inverse time mode (G73) is active
-inputs[].lineNumber
-
-Number of the current line
-inputs[].macroRestartable
-
-Indicates if the current macro file can be restarted after a pause
-inputs[].motionSystem
-
-Active motion system index
-inputs[].name
-
-Name of this channel
-This property may be one of the following:
-	•	HTTP: Code channel for HTTP requests
-	•	Telnet: Code channel for Telnet requests
-	•	File: Code channel for primary file prints
-	•	USB: Code channel for USB requests
-	•	Aux: Code channel for serial devices (e.g. PanelDue)
-	•	Trigger: Code channel for running triggers or config.g
-	•	Queue: Code channel for the code queue that executes a couple of codes in-sync with moves of the primary print file
-	•	LCD: Code channel for auxiliary LCD devices (e.g. PanelOne)
-	•	SBC: Default code channel for requests over SPI
-	•	Daemon: Code channel that executes the daemon process
-	•	Aux2: Code channel for the second UART port
-	•	Autopause: Code channel that executes macros on power fail, heater faults and filament out
-	•	File2: Code channel for secondary file prints
-	•	Queue2: Code channel for the code queue that executes a couple of codes in-sync with moves of the primary print file
-	•	Unknown: Unknown code channel
-inputs[].selectedPlane
-
-Index of the selected plane
-inputs[].stackDepth
-
-Depth of the stack
-inputs[].state
-
-State of this input channel
-This property may be one of the following:
-	•	awaitingAcknowledgement: Awaiting message acknowledgement
-	•	idle: Channel is idle
-	•	executing: Channel is executing a G/M/T-code
-	•	waiting: Channel is waiting for more data
-	•	reading: Channel is reading a G/M/T-code
-inputs[].volumetric
-
-Whether volumetric extrusion is being used
-job
-
-Information about the current job
-job.build
-
-Information about the current build or null if not available
-job.build.currentObject
-
-Index of the current object being printed or -1 if unknown
-Note: This value may now be greater than the length of the job.build.objects array. This is because the size of job.build.objects is limited to conserve memory (to 20 on Duet 2 or 40 on Duet 3), whereas when M486 labelling is used, many more objects can be numbered and the first 64 can be cancelled individually
-job.build.m486Names
-
-Whether M486 names are being used
-job.build.m486Numbers
-
-Whether M486 numbers are being used
-job.build.objects[]
-
-List of detected build objects
-job.build.objects[].cancelled
-
-Indicates if this build object is cancelled
-job.build.objects[].name
-
-Name of the build object (if any)
-job.build.objects[].x[]
-
-X coordinates of the build object (in mm or null if not found)
-job.build.objects[].y[]
-
-Y coordinates of the build object (in mm or null if not found)
-job.duration
-
-Total active duration of the current job file (in s or null)
-job.file
-
-Information about the file being processed
-job.file.customInfo
-
-This field is maintained by DSF in SBC mode
-User-defined key-value pairs
-job.file.filament[]
-
-Filament consumption per extruder drive (in mm)
-job.file.fileName
-
-The filename of the G-code file
-job.file.generatedBy
-
-Name of the application that generated this file
-job.file.height
-
-Build height of the G-code job or 0 if not found (in mm)
-job.file.lastModified
-
-Value indicating when the file was last modified or null if unknown
-job.file.layerHeight
-
-Height of each other layer or 0 if not found (in mm)
-job.file.numLayers
-
-Number of total layers or 0 if unknown
-job.file.printTime
-
-Estimated print time (in s)
-job.file.simulatedTime
-
-Estimated print time from G-code simulation (in s)
-job.file.size
-
-Size of the file
-job.file.thumbnails[]
-
-This field is maintained by DSF in SBC mode
-Collection of thumbnails parsed from Gcode
-job.file.thumbnails[].data
-
-Base64-encoded thumbnail or null if invalid or not requested
-Note: This property is not provided by RepRapFirmware fileinfo results and it may be null if no thumbnail content is requested
-job.file.thumbnails[].format
-
-Format of this thumbnail
-This property may be one of the following:
-	•	jpeg: Joint Photographic Experts Group
-	•	png: Portable Network Graphics
-	•	qoi: Quite OK Image
-job.file.thumbnails[].height
-
-Height of this thumbnail
-job.file.thumbnails[].offset
-
-File offset of this thumbnail
-job.file.thumbnails[].size
-
-Size of this thumbnail
-job.file.thumbnails[].width
-
-Width of this thumbnail
-job.filePosition
-
-Current position in the file being processed (in bytes or null)
-job.lastDuration
-
-Total duration of the last job (in s or null)
-job.lastFileName
-
-Name of the last file processed or null if none
-job.lastFileAborted
-
-This field is exclusively maintained by DSF in SBC mode and/or by DWC. It is not available in standalone mode
-Indicates if the last file was aborted (unexpected cancellation)
-job.lastFileCancelled
-
-This field is exclusively maintained by DSF in SBC mode and/or by DWC. It is not available in standalone mode
-Indicates if the last file was cancelled (user cancelled)
-job.lastFileSimulated
-
-This field is exclusively maintained by DSF in SBC mode and/or by DWC. It is not available in standalone mode
-Indicates if the last file processed was simulated
-Note: This is not set if the file was aborted or cancelled
-job.lastWarmUpDuration
-
-Warm-up duration of the last print or null if not available (in s)
-job.layer
-
-Number of the current layer or null not available
-job.layers[]
-
-This field is exclusively maintained by DSF in SBC mode and/or by DWC. It is not available in standalone mode
-Information about the past layers
-Note: In previous API versions this was a but it has been changed to to allow past layers to be modified again when needed. Note that previous plugins subscribing to this property will not receive any more updates about this property to avoid memory leaks
-job.layers[].duration
-
-Duration of the layer (in s)
-job.layers[].filament[]
-
-Actual amount of filament extruded during this layer (in mm)
-job.layers[].fractionPrinted
-
-Fraction of the file printed during this layer (0..1)
-job.layers[].height
-
-Height of the layer (in mm or 0 if unknown)
-job.layers[].temperatures[]
-
-Last heater temperatures (in C or null if unknown)
-job.layerTime
-
-Time elapsed since the last layer change (in s or null)
-job.pauseDuration
-
-Total pause time since the job started
-job.rawExtrusion
-
-Total extrusion amount without extrusion factors applied (in mm)
-job.timesLeft
-
-Estimated times left
-job.timesLeft.filament
-
-Time left based on filament consumption (in s or null)
-job.timesLeft.file
-
-Time left based on file progress (in s or null)
-job.timesLeft.layer
-
-This field is obsolete and will be removed in the future: No longer used, will always return null
-Time left based on the layer progress (in s or null)
-job.timesLeft.slicer
-
-Time left based on the slicer reports (see M73 R, in s or null)
-job.timesLeft.toPause
-
-Time left before the next colour change is expected (see M73 C, in s or null)
-job.warmUpDuration
-
-Time needed to heat up the heaters (in s or null)
-ledStrips[]
-
-List of configured LED strips
-ledStrips[].board
-
-Board address of the corresponding pin
-ledStrips[].pin
-
-Name of the pin this LED strip is connected to
-ledStrips[].stopMovement
-
-Indicates if this strip is bit-banged and therefore requires motion to be stopped before sending a command
-ledStrips[].type
-
-Type of this LED strip
-This property may be one of the following:
-	•	DotStar: DotStar LED strip
-	•	NeoPixel_RGB: NeoPixel LED strip with only RGB capability
-	•	NeoPixel_RGBW: NeoPixel RGB LED strip with additional white output
-limits
-
-Machine configuration limits
-limits.axes
-
-Maximum number of axes or null if unknown
-limits.axesPlusExtruders
-
-Maximum number of axes + extruders or null if unknown
-limits.bedHeaters
-
-Maximum number of bed heaters or null if unknown
-limits.boards
-
-Maximum number of boards or null if unknown
-limits.chamberHeaters
-
-Maximum number of chamber heaters or null if unknown
-limits.drivers
-
-Maximum number of drivers or null if unknown
-limits.driversPerAxis
-
-Maximum number of drivers per axis or null if unknown
-limits.extruders
-
-Maximum number of extruders or null if unknown
-limits.extrudersPerTool
-
-Maximum number of extruders per tool or null if unknown
-limits.fans
-
-Maximum number of fans or null if unknown
-limits.gpInPorts
-
-Maximum number of general-purpose input ports or null if unknown
-limits.gpOutPorts
-
-Maximum number of general-purpose output ports or null if unknown
-limits.heaters
-
-Maximum number of heaters or null if unknown
-limits.heatersPerTool
-
-Maximum number of heaters per tool or null if unknown
-limits.ledStrips
-
-Maximum number of configured LED strips or null if unknown
-limits.monitorsPerHeater
-
-Maximum number of monitors per heater or null if unknown
-limits.portsPerHeater
-
-Maximum number of output ports per heater or null if unknown
-limits.reportedAxes
-
-Maximum number of axes reported when the move key is requested. If the number of reported axes is greater than or equal to this value, a client may need to request move.axes explicitly in order to get the full move.axes array
-limits.restorePoints
-
-Maximum number of restore points or null if unknown
-limits.sensors
-
-Maximum number of sensors or null if unknown
-limits.spindles
-
-Maximum number of spindles or null if unknown
-limits.tools
-
-Maximum number of tools or null if unknown
-limits.trackedObjects
-
-Maximum number of tracked objects or null if unknown
-limits.triggers
-
-Maximum number of triggers or null if unknown
-limits.volumes
-
-Maximum number of volumes or null if unknown
-limits.workplaces
-
-Maximum number of workplaces or null if unknown
-limits.zProbeProgramBytes
-
-Maximum number of Z-probe programming bytes or null if unknown
-limits.zProbes
-
-Maximum number of Z-probes or null if unknown
-messages[]
-
-This field is exclusively maintained by DSF in SBC mode and/or by DWC. It is not available in standalone mode
-Generic messages that do not belong explicitly to codes being executed. This includes status messages, generic errors and outputs generated by M118
-move
-
-Information about the move subsystem
-move.accelerationTime
-
-Value of the M201 T parameter. Only present in builds that support S-curve acceleration
-move.axes[]
-
-Standard model responses return up to 9 elements of this field. It may be necessary to request more of this field using the 'a' flag.
-List of the configured axes
-move.axes[].acceleration
-
-Acceleration of this axis (in mm/s^2)
-move.axes[].babystep
-
-Babystep amount (in mm)
-move.axes[].backlash
-
-Configured backlash of this axis (in mm)
-move.axes[].current
-
-Motor current (in mA)
-move.axes[].drivers[]
-
-List of the assigned drivers
-move.axes[].homed
-
-Whether or not the axis is homed
-move.axes[].jerk
-
-Motor jerk (in mm/min)
-move.axes[].letter
-
-Letter of this axis
-move.axes[].machinePosition
-
-Current machine position (in mm) or null if unknown/unset
-Note: This value reflects the machine position of the move being performed or of the last one if the machine is not moving
-move.axes[].max
-
-Maximum travel of this axis (in mm)
-move.axes[].maxProbed
-
-Whether the axis maximum was probed
-move.axes[].microstepping
-
-Microstepping configuration
-move.axes[].microstepping.interpolated
-
-Indicates if the stepper driver uses interpolation
-move.axes[].microstepping.value
-
-Microsteps per full step
-move.axes[].min
-
-Minimum travel of this axis (in mm)
-move.axes[].minProbed
-
-Whether the axis minimum was probed
-move.axes[].percentCurrent
-
-Percentage applied to the motor current (0..100)
-move.axes[].percentStstCurrent
-
-Percentage applied to the motor current during standstill (0..100 or null if not supported)
-move.axes[].phaseStep
-
-Whether or not this axis uses phase stepping
-move.axes[].printingJerk
-
-Motor jerk during the current print only (in mm/s)
-move.axes[].reducedAcceleration
-
-Reduced accelerations used by Z probing and stall homing moves (in mm/s^2)
-move.axes[].speed
-
-Maximum speed (in mm/min)
-move.axes[].stepsPerMm
-
-Number of microsteps per mm
-move.axes[].stepPos
-
-Current step position of the axis (in steps)
-move.axes[].userPosition
-
-Current user position (in mm) or null if unknown
-Note: This value reflects the target position of the last move fed into the look-ahead buffer
-move.axes[].visible
-
-Whether or not the axis is visible
-move.axes[].workplaceOffsets[]
-
-Offsets of this axis for each workplace (in mm)
-move.backlashFactor
-
-Backlash distance multiplier
-move.calibration
-
-Information about the automatic calibration
-move.calibration.final
-
-Final calibration results (for Delta calibration)
-move.calibration.final.deviation
-
-RMS deviation (in mm)
-move.calibration.final.mean
-
-Mean deviation (in mm)
-move.calibration.initial
-
-Initial calibration results (for Delta calibration)
-move.calibration.initial.deviation
-
-RMS deviation (in mm)
-move.calibration.initial.mean
-
-Mean deviation (in mm)
-move.calibration.numFactors
-
-Number of factors used (for Delta calibration)
-move.compensation
-
-Information about the currently configured compensation options
-move.compensation.fadeHeight
-
-Effective height before the bed compensation is turned off (in mm) or null if not configured
-move.compensation.file
-
-Full path to the currently used height map file or null if none is in use
-move.compensation.liveGrid
-
-Grid settings of the loaded heightmap or null if no heightmap is loaded
-move.compensation.liveGrid.axes[]
-
-Axis letters of this heightmap
-move.compensation.liveGrid.maxs[]
-
-End coordinates of the heightmap
-move.compensation.liveGrid.mins[]
-
-Start coordinates of the heightmap
-move.compensation.liveGrid.radius
-
-Probing radius for delta kinematics
-move.compensation.liveGrid.spacings[]
-
-Spacings between the coordinates
-move.compensation.meshDeviation
-
-Deviations of the mesh grid or null if not applicable
-move.compensation.meshDeviation.deviation
-
-RMS deviation (in mm)
-move.compensation.meshDeviation.mean
-
-Mean deviation (in mm)
-move.compensation.probeGrid
-
-Probe grid settings as defined by M557
-move.compensation.probeGrid.axes[]
-
-Axis letters of this heightmap
-move.compensation.probeGrid.maxs[]
-
-End coordinates of the heightmap
-move.compensation.probeGrid.mins[]
-
-Start coordinates of the heightmap
-move.compensation.probeGrid.radius
-
-Probing radius for delta kinematics
-move.compensation.probeGrid.spacings[]
-
-Spacings between the coordinates
-move.compensation.skew
-
-Information about the configured orthogonal axis parameters
-move.compensation.skew.compensateXY
-
-Indicates if the TanXY value is used to compensate X when Y moves (else Y when X moves)
-move.compensation.skew.tanXY
-
-Tangent of the skew angle for the XY or YX axes
-move.compensation.skew.tanXZ
-
-Tangent of the skew angle for the XZ axes
-move.compensation.skew.tanYZ
-
-Tangent of the skew angle for the YZ axes
-move.compensation.type
-
-Type of the compensation in use
-This property may be one of the following:
-	•	none: No compensation
-	•	mesh: Mesh compensation
-move.currentMove
-
-Information about the current move
-move.currentMove.acceleration
-
-Acceleration of the current move (in mm/s^2)
-move.currentMove.deceleration
-
-Deceleration of the current move (in mm/s^2)
-move.currentMove.extrusionRate
-
-Current extrusion rate (in mm/s)
-move.currentMove.laserPwm
-
-Laser PWM of the current move (0..1) or null if not applicable
-move.currentMove.requestedSpeed
-
-Requested speed of the current move (in mm/s)
-move.currentMove.topSpeed
-
-Top speed of the current move (in mm/s)
-move.extruders[]
-
-List of configured extruders
-move.extruders[].acceleration
-
-Acceleration of this extruder (in mm/s^2)
-move.extruders[].current
-
-Motor current (in mA)
-move.extruders[].driver
-
-Assigned driver
-move.extruders[].filament
-
-Name of the currently loaded filament
-move.extruders[].filamentDiameter
-
-Diameter of the corresponding filament (in mm)
-move.extruders[].factor
-
-Extrusion factor to use (0..1 or greater)
-move.extruders[].jerk
-
-Motor jerk (in mm/s)
-move.extruders[].microstepping
-
-Microstepping configuration
-move.extruders[].microstepping.interpolated
-
-Indicates if the stepper driver uses interpolation
-move.extruders[].microstepping.value
-
-Microsteps per full step
-move.extruders[].nonlinear
-
-Nonlinear extrusion parameters (see M592)
-move.extruders[].nonlinear.a
-
-A coefficient in the extrusion formula
-move.extruders[].nonlinear.b
-
-B coefficient in the extrusion formula
-move.extruders[].nonlinear.upperLimit
-
-Upper limit of the nonlinear extrusion compensation
-move.extruders[].percentCurrent
-
-Percentage applied to the motor current (0..100)
-move.extruders[].percentStstCurrent
-
-Percentage applied to the motor current during standstill (0..100 or null if not supported)
-move.extruders[].phaseStep
-
-Whether or not this axis uses phase stepping
-move.extruders[].position
-
-Extruder position (in mm)
-move.extruders[].pressureAdvance
-
-Pressure advance
-move.extruders[].printingJerk
-
-Motor jerk during the current print only (in mm/s)
-move.extruders[].rawPosition
-
-Raw extruder position as commanded by the slicer without extrusion factor applied (in mm)
-move.extruders[].speed
-
-Maximum speed (in mm/s)
-move.extruders[].stepsPerMm
-
-Number of microsteps per mm
-move.idle
-
-Idle current reduction parameters
-move.idle.factor
-
-Motor current reduction factor (0..1)
-move.idle.timeout
-
-Idle timeout after which the stepper motor currents are reduced (in s)
-move.keepout[]
-
-List of configured keep-out zones
-move.keepout[].active
-
-Indicates if this keep-out zone is enabled
-move.keepout[].coords[]
-
-Minimum and maximum coordinates of this zone
-move.keepout[].coords[].min
-
-Minimum axis coordinate
-move.keepout[].coords[].max
-
-Maximum axis coordinate
-move.kinematics
-
-Configured kinematics options
-move.kinematics (CoreKinematics : ZLeadscrewKinematics)
-
-Information about core kinematics
-move.kinematics.forwardMatrix[] (CoreKinematics : ZLeadscrewKinematics)
-
-Forward matrix
-move.kinematics.inverseMatrix[] (CoreKinematics : ZLeadscrewKinematics)
-
-Inverse matrix
-move.kinematics (DeltaKinematics : Kinematics)
-
-Delta kinematics
-move.kinematics.deltaRadius (DeltaKinematics : Kinematics)
-
-Delta radius (in mm)
-move.kinematics.homedHeight (DeltaKinematics : Kinematics)
-
-Homed height of a delta printer in mm
-move.kinematics.printRadius (DeltaKinematics : Kinematics)
-
-Print radius for Hangprinter and Delta geometries (in mm)
-move.kinematics.towers[] (DeltaKinematics : Kinematics)
-
-Delta tower properties
-move.kinematics.towers[].angleCorrection (DeltaKinematics : Kinematics)
-
-Tower position corrections (in degrees)
-move.kinematics.towers[].diagonal (DeltaKinematics : Kinematics)
-
-Diagonal rod length (in mm)
-move.kinematics.towers[].endstopAdjustment (DeltaKinematics : Kinematics)
-
-Deviation of the ideal endstop position (in mm)
-move.kinematics.towers[].xPos (DeltaKinematics : Kinematics)
-
-X coordinate of this tower (in mm)
-move.kinematics.towers[].yPos (DeltaKinematics : Kinematics)
-
-Y coordinate of this tower (in mm)
-move.kinematics.xTilt (DeltaKinematics : Kinematics)
-
-How much Z needs to be raised for each unit of movement in the +X direction
-move.kinematics.yTilt (DeltaKinematics : Kinematics)
-
-How much Z needs to be raised for each unit of movement in the +Y direction
-move.kinematics (HangprinterKinematics : Kinematics)
-
-Information about hangprinter kinematics
-move.kinematics.anchors[] (HangprinterKinematics : Kinematics)
-
-Anchor configurations for A, B, C, Dz
-move.kinematics.printRadius (HangprinterKinematics : Kinematics)
-
-Print radius (in mm)
-move.kinematics.name (Kinematics)
-
-Name of the configured kinematics
-This property may be one of the following:
-	•	cartesian: Cartesian
-	•	coreXY: CoreXY
-	•	coreXYU: CoreXY with extra U axis
-	•	coreXYUV: CoreXY with extra UV axes
-	•	coreXZ: CoreXZ
-	•	markForged: MarkForged
-	•	FiveBarScara: Five-bar SCARA
-	•	Hangprinter: Hangprinter
-	•	delta: Linear Delta
-	•	Polar: Polar
-	•	Rotary delta: Rotary delta
-	•	Scara: SCARA
-	•	unknown: Unknown
-move.kinematics.segmentation (Kinematics)
-
-Segmentation parameters or null if not configured
-move.kinematics.segmentation.segmentsPerSec (Kinematics)
-
-Number of segments per second
-move.kinematics.segmentation.minSegmentLength (Kinematics)
-
-Minimum length of a segment (in mm)
-move.kinematics (PolarKinematics : Kinematics)
-
-Kinematics class for polar kinematics
-move.kinematics.radiusHomed (PolarKinematics : Kinematics)
-
-Homed radius (in mm)
-move.kinematics.radiusMax (PolarKinematics : Kinematics)
-
-Maximum radius (in mm)
-move.kinematics.radiusMin (PolarKinematics : Kinematics)
-
-Minimum radius (in mm)
-move.kinematics.ttAccMax (PolarKinematics : Kinematics)
-
-Maximum turntable acceleration (in mm/s^2)
-move.kinematics.ttSpeedMax (PolarKinematics : Kinematics)
-
-Maximum turntable speed (in mm/s)
-move.kinematics (ScaraKinematics : ZLeadscrewKinematics)
-
-Kinematics class for SCARA kinematics
-move.kinematics.distalLength (ScaraKinematics : ZLeadscrewKinematics)
-
-Distal arm length (in mm)
-move.kinematics.minRadius (ScaraKinematics : ZLeadscrewKinematics)
-
-Requested minimum radius (in mm)
-move.kinematics.proximalLength (ScaraKinematics : ZLeadscrewKinematics)
-
-Proximal arm length (in mm)
-move.kinematics.xOffset (ScaraKinematics : ZLeadscrewKinematics)
-
-X offset (in mm)
-move.kinematics.yOffset (ScaraKinematics : ZLeadscrewKinematics)
-
-Y offset (in mm)
-move.kinematics (ZLeadscrewKinematics : Kinematics)
-
-Base kinematics class that provides the ability to level the bed using Z leadscrews
-move.kinematics.tiltCorrection (ZLeadscrewKinematics : Kinematics)
-
-Parameters describing the tilt correction
-move.kinematics.tiltCorrection.correctionFactor (ZLeadscrewKinematics : Kinematics)
-
-Correction factor
-move.kinematics.tiltCorrection.lastCorrections[] (ZLeadscrewKinematics : Kinematics)
-
-Last corrections (in mm)
-move.kinematics.tiltCorrection.maxCorrection (ZLeadscrewKinematics : Kinematics)
-
-Maximum Z correction (in mm)
-move.kinematics.tiltCorrection.screwPitch (ZLeadscrewKinematics : Kinematics)
-
-Pitch of the Z leadscrews (in mm)
-move.kinematics.tiltCorrection.screwX[] (ZLeadscrewKinematics : Kinematics)
-
-X positions of the leadscrews (in mm)
-move.kinematics.tiltCorrection.screwY[] (ZLeadscrewKinematics : Kinematics)
-
-Y positions of the leadscrews (in mm)
-move.limitAxes
-
-Limit axis positions by their minima and maxima
-move.noMovesBeforeHoming
-
-Indicates if standard moves are forbidden if the corresponding axis is not homed
-move.printingAcceleration
-
-Maximum acceleration allowed while printing (in mm/s^2)
-move.queue[]
-
-List of move queue items (DDA rings)
-move.queue[].gracePeriod
-
-The minimum idle time before we should start a move (in s)
-move.queue[].length
-
-Maximum number of moves that can be accomodated in the DDA ring
-move.rotation
-
-Parameters for centre rotation
-move.rotation.angle
-
-Angle of the centre rotatation (in deg)
-move.rotation.centre[]
-
-XY coordinates of the centre rotation
-move.shaping
-
-Parameters for input shaping
-move.shaping.amplitudes[]
-
-Amplitudes of the input shaper
-move.shaping.damping
-
-Damping factor
-move.shaping.delays[]
-
-Input shaper delays (in s)
-move.shaping.frequency
-
-Frequency (in Hz)
-move.shaping.type
-
-Configured input shaping type
-This property may be one of the following:
-	•	none: None
-	•	mzv: MZV
-	•	zvd: ZVD
-	•	zvdd: ZVDD
-	•	zvddd: ZVDDD
-	•	eI2: EI2 (2-hump)
-	•	eI3: EI3 (3-hump)
-	•	custom: Custom
-move.speedFactor
-
-Speed factor applied to every regular move (0.01..1 or greater)
-move.travelAcceleration
-
-Maximum acceleration allowed while travelling (in mm/s^2)
-move.usingSCurve
-
-Indicates if S-curve acceleration is used. Only present in builds that support it
-move.virtualEPos
-
-Virtual total extruder position
-move.workplaceNumber
-
-Index of the currently selected workplace
-network
-
-Information about connected network adapters
-network.corsSite
-
-This field is maintained by DSF in SBC mode
-If this is set, the web server will allow cross-origin requests via the Access-Control-Allow-Origin header
-network.hostname
-
-Hostname of the machine
-network.interfaces[]
-
-This field is maintained by DSF in SBC mode
-List of available network interfaces
-network.interfaces[].activeProtocols[]
-
-This field is exclusively maintained by DSF in SBC mode and/or by DWC. It is not available in standalone mode
-List of active protocols
-This property may be one of the following:
-	•	http: HTTP protocol
-	•	https: HTTPS protocol
-	•	ftp: FTP protocol
-	•	sftp: SFTP protocol
-	•	telnet: Telnet protocol
-	•	ssh: SSH protocol
-network.interfaces[].actualIP
-
-Actual IPv4 address of the network adapter or null if unknown
-network.interfaces[].configuredIP
-
-This field is exclusively maintained by DSF in SBC mode and/or by DWC. It is not available in standalone mode
-Configured IPv4 address of the network adapter or null if unknown
-network.interfaces[].dnsServer
-
-This field is exclusively maintained by DSF in SBC mode and/or by DWC. It is not available in standalone mode
-Configured IPv4 DNS server of the network adapter or null if unknown
-network.interfaces[].firmwareVersion
-
-Version of the network interface or null if unknown. This is only reported by ESP-based boards in standalone mode
-network.interfaces[].gateway
-
-IPv4 gateway of the network adapter or null if unknown
-network.interfaces[].mac
-
-Physical address of the network adapter or null if unknown
-network.interfaces[].numReconnects
-
-Number of reconnect attempts or null if unknown. This is only reported by ESP-based boards in standalone mode
-network.interfaces[].rssi
-
-This field is maintained by DSF in SBC mode
-Received signal strength indicator of the WiFi adapter (only WiFi, in dBm, or null if unknown)
-network.interfaces[].signal
-
-This field is obsolete and will be removed in the future: Use RSSI instead This field is exclusively maintained by DSF in SBC mode and/or by DWC. It is not available in standalone mode
-Signal of the WiFi adapter (only WiFi, in dBm, or null if unknown)
-network.interfaces[].speed
-
-This field is exclusively maintained by DSF in SBC mode and/or by DWC. It is not available in standalone mode
-Speed of the network interface (in MBit, null if unknown, 0 if not connected)
-network.interfaces[].ssid
-
-This field is maintained by DSF in SBC mode
-SSID of the WiFi network or null if not applicable
-network.interfaces[].state
-
-State of this network interface or null if unknown
-This property may be one of the following:
-	•	disabled: Network disabled
-	•	enabled: Network enabled but not started yet
-	•	starting1: Starting up (used by WiFi networking in standalone mode)
-	•	starting2: Starting up (used by WiFi networking in standalone mode)
-	•	changingMode: Running and in the process of switching between modes (used by WiFi networking in standalone mode)
-	•	establishingLink: Starting up, waiting for link
-	•	obtainingIP: Link established, waiting for DHCP
-	•	connected: Just established a connection
-	•	active: Network running
-	•	idle: WiFi adapter is idle
-network.interfaces[].subnet
-
-Subnet of the network adapter or null if unknown
-network.interfaces[].type
-
-Type of this network interface
-This property may be one of the following:
-	•	lan: Wired network interface
-	•	wifi: Wireless network interface
-network.interfaces[].wifiCountry
-
-This field is exclusively maintained by DSF in SBC mode and/or by DWC. It is not available in standalone mode
-WiFi country code if this is a WiFi adapter and if the country code can be determined
-Note: For this setting to be populated in SBC mode it is required to have the DuetPiManagementPlugin running. This is required due to missing Linux permissions of the control server.
-network.name
-
-Name of the machine
-plugins
-
-This field is exclusively maintained by DSF in SBC mode and/or by DWC. It is not available in standalone mode
-Dictionary of loaded plugins where each key is the plugin identifier
-Note: This is only populated by DSF in SBC mode, however it may be populated manually as well in standalone mode. Values in this dictionary cannot become null. If a value is changed to null, the corresponding item is deleted
-plugins{}.id (PluginManifest)
-
-Identifier of this plugin. May consist of letters and digits only (max length 32 chars)
-Note: For plugins with DWC components, this is the Webpack chunk name too
-plugins{}.name (PluginManifest)
-
-Name of the plugin. May consist of letters, digits, dashes, and underscores only (max length 64 chars)
-plugins{}.author (PluginManifest)
-
-Author of the plugin
-plugins{}.version (PluginManifest)
-
-Version of the plugin
-plugins{}.license (PluginManifest)
-
-License of the plugin. Should follow the SPDX format (see https://spdx.org/licenses/)
-plugins{}.homepage (PluginManifest)
-
-Link to the plugin homepage or source code repository
-plugins{}.tags[] (PluginManifest)
-
-List of general tags for search
-plugins{}.dwcVersion (PluginManifest)
-
-Major/minor compatible DWC version
-plugins{}.dwcDependencies[] (PluginManifest)
-
-List of DWC plugins this plugin depends on. Circular dependencies are not supported
-plugins{}.sbcRequired (PluginManifest)
-
-Set to true if a SBC is absolutely required for this plugin
-plugins{}.sbcDsfVersion (PluginManifest)
-
-Required DSF version for the plugin running on the SBC (ignored if there is no SBC executable)
-plugins{}.sbcExecutable (PluginManifest)
-
-Filename in the dsf directory used to start the plugin
-Note: A plugin may provide different binaries in subdirectories per architecture. Supported architectures are: arm, arm64, x86, x86_64
-plugins{}.sbcExecutableArguments (PluginManifest)
-
-Command-line arguments for the executable
-plugins{}.sbcExtraExecutables[] (PluginManifest)
-
-List of other filenames in the dsf directory that should be executable
-plugins{}.sbcAutoRestart (PluginManifest)
-
-Automatically restart the SBC process when terminated
-plugins{}.sbcOutputRedirected (PluginManifest)
-
-Defines if messages from stdout/stderr are output as generic messages
-plugins{}.sbcPermissions (PluginManifest)
-
-List of permissions required by the plugin executable running on the SBC
-This property may be one of the following:
-	•	commandExecution: Execute generic commands
-	•	codeInterceptionRead: Intercept codes but don't interact with them
-	•	codeInterceptionReadWrite: Intercept codes in a blocking way with options to resolve or cancel them
-	•	managePlugins: Install, load, unload, and uninstall plugins. Grants FS access to all third-party plugins too
-	•	servicePlugins: Service plugin runtime information (for internal purposes only, do not use)
-	•	manageUserSessions: Manage user sessions
-	•	objectModelRead: Read from the object model
-	•	objectModelReadWrite: Read from and write to the object model
-	•	registerHttpEndpoints: Create new HTTP endpoints
-	•	readFilaments: Read files in 0:/filaments
-	•	writeFilaments: Write files in 0:/filaments
-	•	readFirmware: Read files in 0:/firmware
-	•	writeFirmware: Write files in 0:/firmware
-	•	readGCodes: Read files in 0:/gcodes
-	•	writeGCodes: Write files in 0:/gcodes
-	•	readMacros: Read files in 0:/macros
-	•	writeMacros: Write files in 0:/macros
-	•	readMenu: Read files in 0:/menu
-	•	writeMenu: Write files in 0:/menu
-	•	readSystem: Read files in 0:/sys
-	•	writeSystem: Write files in 0:/sys
-	•	readWeb: Read files in 0:/www
-	•	writeWeb: Write files in 0:/www
-	•	fileSystemAccess: Access files including all subdirecotires of the virtual SD directory as DSF user
-	•	launchProcesses: Launch new processes
-	•	networkAccess: Communicate over the network (stand-alone)
-	•	superUser: Launch process as root user (for full device control - potentially dangerous)
-	•	webcamAccess: Access /dev/video* devices
-	•	gpioAccess: Access /dev/gpio*, /dev/i2c*, and /dev/spidev* devices
-plugins{}.sbcConfigFiles[] (PluginManifest)
-
-List of files in the sys or virtual SD directory that should not be overwritten on upgrade
-Note: The file may be specified either relative to 0:/sys directory (e.g. motion.conf) or relative to the virtual SD directory (e.g. sys/motion.conf). Drive indices as in 0:/sys/motion.conf are not allowed!
-plugins{}.sbcPackageDependencies[] (PluginManifest)
-
-List of packages this plugin depends on (apt packages in the case of DuetPi)
-plugins{}.sbcPythonDependencies[] (PluginManifest)
-
-List of Python packages this plugin depends on
-plugins{}.sbcPluginDependencies[] (PluginManifest)
-
-List of SBC plugins this plugin depends on. Circular dependencies are not supported
-plugins{}.rrfVersion (PluginManifest)
-
-Major/minor supported RRF version (optional)
-plugins{}.data (PluginManifest)
-
-Custom plugin data to be populated in the object model (DSF/DWC in SBC mode - or - DWC in standalone mode). Before SetPluginData can be used, corresponding properties must be registered via this property first!
-plugins{} (Plugin : PluginManifest)
-
-Class representing a loaded plugin
-plugins{}.dsfFiles[] (Plugin : PluginManifest)
-
-List of files for the DSF plugin
-plugins{}.dwcFiles[] (Plugin : PluginManifest)
-
-List of files for the DWC plugin
-plugins{}.sdFiles[] (Plugin : PluginManifest)
-
-List of files to be installed to the (virtual) SD excluding web files
-plugins{}.pid (Plugin : PluginManifest)
-
-Process ID of the plugin or -1 if not started. It is set to 0 while the plugin is being shut down
-sbc
-
-This field is exclusively maintained by DSF in SBC mode and/or by DWC. It is not available in standalone mode
-Information about the SBC which Duet Software Framework is running on. This is null if the system is operating in standalone mode
-sbc.appArmor
-
-Indicates if AppArmor support is enabled
-Note: By default, AppArmor is required for plugin functionality
-sbc.cpu
-
-Information about the SBC's CPU
-sbc.cpu.avgLoad
-
-Average CPU load (0..100%) or null if unknown
-sbc.cpu.hardware
-
-CPU hardware as reported by /proc/cpuinfo
-sbc.cpu.numCores
-
-Number of CPU cores/threads (defaults to 1)
-sbc.cpu.temperature
-
-Current CPU temperature (in degC) or null if unknown
-sbc.dsf
-
-Information about DSF running on the SBC
-sbc.dsf.buildDateTime
-
-Datetime when DSF was built
-sbc.dsf.httpEndpoints[]
-
-List of registered third-party HTTP endpoints
-sbc.dsf.httpEndpoints[].endpointType
-
-HTTP type of this endpoint
-This property may be one of the following:
-	•	GET: HTTP GET request
-	•	POST: HTTP POST request
-	•	PUT: HTTP PUT request
-	•	PATCH: HTTP PATCH request
-	•	TRACE: HTTP TRACE request
-	•	DELETE: HTTP DELETE request
-	•	OPTIONS: HTTP OPTIONS request
-	•	WebSocket: WebSocket request. This has not been implemented yet but it is reserved for future usage
-sbc.dsf.httpEndpoints[].namespace
-
-Namespace of the endpoint
-Note: May be to register root-level rr_ requests (to emulate RRF poll requests)
-sbc.dsf.httpEndpoints[].path
-
-Path to the endpoint
-sbc.dsf.httpEndpoints[].isUploadRequest
-
-Whether this is a upload request
-Note: If set to true, the whole body payload is written to a temporary file and the file path is passed via the property
-sbc.dsf.httpEndpoints[].unixSocket
-
-Path to the UNIX socket
-sbc.dsf.is64Bit
-
-Indicates if the process is 64-bit
-sbc.dsf.pluginSupport
-
-Indicates if DSF allows the installation and usage of third-party plugins
-sbc.dsf.rootPluginSupport
-
-Indicates if DSF allows the installation and usage of third-party root plugins (potentially dangerous, disabled by default)
-Note: Requires to be true
-sbc.dsf.userSessions[]
-
-List of user sessions
-sbc.dsf.userSessions[].accessLevel
-
-Access level of this session
-This property may be one of the following:
-	•	readOnly: Changes to the system and/or operation are not permitted
-	•	readWrite: Changes to the system and/or operation are permitted
-sbc.dsf.userSessions[].id
-
-Identifier of this session
-sbc.dsf.userSessions[].origin
-
-Origin of this session. For remote sessions, this equals the remote IP address
-sbc.dsf.userSessions[].originId
-
-Corresponding identifier of the origin. If it is a remote session, it is the remote port, else it defaults to the PID of the current process
-sbc.dsf.userSessions[].sessionType
-
-Type of this session
-This property may be one of the following:
-	•	local: Local client
-	•	http: Remote client via HTTP
-	•	telnet: Remote client via Telnet
-sbc.dsf.version
-
-Version of Duet Software Framework (provided by Duet Control Server)
-sbc.distribution
-
-Name and version of the system distribution or null if unknown
-sbc.distributionBuildTime
-
-Build datetime of the system distribution or null if unknown
-sbc.memory
-
-Information about the SBC's memory (RAM)
-sbc.memory.available
-
-Available memory (in bytes)
-sbc.memory.total
-
-Total memory (in bytes)
-sbc.model
-
-SBC model or null if unknown
-sbc.serial
-
-Serial of the SBC or null if unknown
-sbc.uptime
-
-Uptime of the running system (in s)
-sensors
-
-Information about connected sensors including Z-probes and endstops
-sensors.analog[]
-
-List of analog sensors
-sensors.analog[].beta
-
-Beta value of this sensor (if applicable)
-sensors.analog[].c
-
-C value of this sensor
-sensors.analog[].highReading
-
-High sensor reading (only linear analog sensors, otherwise null)
-sensors.analog[].lastReading
-
-Last sensor reading (in C) or null if invalid
-sensors.analog[].lowReading
-
-Low sensor reading (only linear analog sensors, otherwise null)
-sensors.analog[].name
-
-Name of this sensor or null if not configured
-sensors.analog[].offsetAdj
-
-Offset adjustment (in K)
-Note: See also M308 U
-sensors.analog[].port
-
-Port of this sensor or null if not applicable
-sensors.analog[].r25
-
-Resistance of this sensor at 25C
-sensors.analog[].rRef
-
-Series resistance of this sensor channel (only applicable for thermistors)
-sensors.analog[].slopeAdj
-
-Slope adjustment factor
-Note: See also M308 V
-sensors.analog[].state
-
-State of this sensor
-This property may be one of the following:
-	•	ok: Sensor is functional
-	•	shortCircuit: Short circuit detected
-	•	shortToVcc: Short to VCC detected
-	•	shortToGround: Short to GND detected
-	•	openCircuit: Sensor circuit is open
-	•	timeout: Timeout while waiting for sensor data
-	•	ioError: IO error
-	•	hardwareError: Hardware error
-	•	notReady: Not ready
-	•	invalidOutputNumber: Invalid output number
-	•	busBusy: Sensor bus is busy
-	•	badResponse: Bad sensor response
-	•	unknownPort: Unknown sensor port
-	•	notInitialised: Sensor not initialized
-	•	unknownSensor: Unknown sensor
-	•	overOrUnderVoltage: Sensor exceeded min/max voltage
-	•	badVref: Bad VREF detected
-	•	badVssa: Bad VSSA detected
-	•	unknownError: Unknown error
-sensors.analog[].type
-
-Type of this sensor
-This property may be one of the following:
-	•	thermistor: Regular temperature thermistor
-	•	pt1000: PT1000 sensor
-	•	rtdmax31865: RTD MAX31865
-	•	thermocouplemax31855: MAX31855 thermocouple
-	•	thermocouplemax31856: MAX31856 thermocouple
-	•	linearanalog: Linear analog sensor
-	•	dht11: DHT11 sensor
-	•	dht21: DHT21 sensor
-	•	dht22: DHT22 sensor
-	•	dhthumidity: DHT humidity sensor
-	•	bme280: BME280 sensor
-	•	bmepressure: BME280 pressure sensor
-	•	bmehumidity: BME280 humidity sensor
-	•	currentlooppyro: Current loop sensor
-	•	mcutemp: MCU temperature
-	•	drivers: On-board stepper driver sensors
-	•	driversduex: Stepper driver sensors on the DueX expansion board
-	•	unknown: Unknown temperature sensor
-sensors.endstops[]
-
-List of configured endstops
-sensors.endstops[].highEnd
-
-Whether this endstop is at the high end of the axis
-sensors.endstops[].probe
-
-Number of the referenced probe if type is ZProbeAsEndstop, else null
-sensors.endstops[].triggered
-
-Whether or not the endstop is hit
-sensors.endstops[].type
-
-Type of the endstop
-This property may be one of the following:
-	•	inputPin: Generic input pin
-	•	zProbeAsEndstop: Z-probe acts as an endstop
-	•	motorStallAny: Motor stall detection stops all the drives when triggered
-	•	motorStallIndividual: Motor stall detection stops individual drives when triggered
-	•	unknown: Unknown type
-sensors.filamentMonitors[]
-
-List of configured filament monitors
-sensors.filamentMonitors[] (Duet3DFilamentMonitor : FilamentMonitor)
-
-Base class for Duet3D filament monitors
-sensors.filamentMonitors[].avgPercentage (Duet3DFilamentMonitor : FilamentMonitor)
-
-Average ratio of measured vs. commanded movement
-sensors.filamentMonitors[].lastPercentage (Duet3DFilamentMonitor : FilamentMonitor)
-
-Last ratio of measured vs. commanded movement
-sensors.filamentMonitors[].maxPercentage (Duet3DFilamentMonitor : FilamentMonitor)
-
-Maximum ratio of measured vs. commanded movement
-sensors.filamentMonitors[].minPercentage (Duet3DFilamentMonitor : FilamentMonitor)
-
-Minimum ratio of measured vs. commanded movement
-sensors.filamentMonitors[].position (Duet3DFilamentMonitor : FilamentMonitor)
-
-Reported sensor position of this filament monitor. The maximum value depends on the type of the sensor, e.g. 0..1023 for a Duet3D MFM.
-sensors.filamentMonitors[].totalExtrusion (Duet3DFilamentMonitor : FilamentMonitor)
-
-Total extrusion commanded (in mm)
-sensors.filamentMonitors[].enabled (FilamentMonitor)
-
-This field is obsolete and will be removed in the future: Use EnableMode instead
-Indicates if this filament monitor is enabled
-sensors.filamentMonitors[].enableMode (FilamentMonitor)
-
-Enable mode of this filament monitor
-This property may be one of the following:
-	•	0: Filament monitor is disabled
-	•	1: Filament monitor is enabled during prints from SD card
-	•	2: Filament monitor is always enabled (when printing from USB)
-sensors.filamentMonitors[].status (FilamentMonitor)
-
-Last reported status of this filament monitor
-This property may be one of the following:
-	•	noMonitor: No monitor is present
-	•	ok: Filament working normally
-	•	noDataReceived: No data received from the remote filament senosr
-	•	noFilament: No filament present
-	•	tooLittleMovement: Sensor reads less movement than expected
-	•	tooMuchMovement: Sensor reads more movment than expected
-	•	sensorError: Sensor encountered an error
-sensors.filamentMonitors[].type (FilamentMonitor)
-
-Type of this filament monitor
-This property may be one of the following:
-	•	simple: Simple filament sensor
-	•	laser: Laser filament sensor
-	•	pulsed: Pulsed filament sensor
-	•	rotatingMagnet: Rotating magnet filament sensor
-	•	unknown: Unknown sensor type
-sensors.filamentMonitors[] (LaserFilamentMonitor : Duet3DFilamentMonitor)
-
-Information about a laser filament monitor
-sensors.filamentMonitors[].calibrated (LaserFilamentMonitor : Duet3DFilamentMonitor)
-
-Calibrated properties of this filament monitor
-sensors.filamentMonitors[].calibrated.calibrationFactor (LaserFilamentMonitor : Duet3DFilamentMonitor)
-
-Calibration factor of this sensor
-sensors.filamentMonitors[].calibrated.percentMax (LaserFilamentMonitor : Duet3DFilamentMonitor)
-
-Maximum percentage (0..1 or greater)
-sensors.filamentMonitors[].calibrated.percentMin (LaserFilamentMonitor : Duet3DFilamentMonitor)
-
-Minimum percentage (0..1)
-sensors.filamentMonitors[].calibrated.sensivity (LaserFilamentMonitor : Duet3DFilamentMonitor)
-
-Calibrated sensivity
-sensors.filamentMonitors[].calibrated.totalDistance (LaserFilamentMonitor : Duet3DFilamentMonitor)
-
-Total extruded distance (in mm)
-sensors.filamentMonitors[].configured (LaserFilamentMonitor : Duet3DFilamentMonitor)
-
-Configured properties of this filament monitor
-sensors.filamentMonitors[].configured.allMoves (LaserFilamentMonitor : Duet3DFilamentMonitor)
-
-Whether all moves and not only printing moves are supposed to be checked
-sensors.filamentMonitors[].configured.percentMax (LaserFilamentMonitor : Duet3DFilamentMonitor)
-
-Maximum percentage (0..1 or greater)
-sensors.filamentMonitors[].configured.percentMin (LaserFilamentMonitor : Duet3DFilamentMonitor)
-
-Minimum percentage (0..1)
-sensors.filamentMonitors[].configured.sampleDistance (LaserFilamentMonitor : Duet3DFilamentMonitor)
-
-Sample distance (in mm)
-sensors.filamentMonitors[].filamentPresent (LaserFilamentMonitor : Duet3DFilamentMonitor)
-
-Indicates if a filament is present
-sensors.filamentMonitors[] (PulsedFilamentMonitor : FilamentMonitor)
-
-Information about a pulsed filament monitor
-sensors.filamentMonitors[].calibrated (PulsedFilamentMonitor : FilamentMonitor)
-
-Calibrated properties of this filament monitor
-sensors.filamentMonitors[].calibrated.mmPerPulse (PulsedFilamentMonitor : FilamentMonitor)
-
-Extruded distance per pulse (in mm)
-sensors.filamentMonitors[].calibrated.percentMax (PulsedFilamentMonitor : FilamentMonitor)
-
-Maximum percentage (0..1 or greater)
-sensors.filamentMonitors[].calibrated.percentMin (PulsedFilamentMonitor : FilamentMonitor)
-
-Minimum percentage (0..1)
-sensors.filamentMonitors[].calibrated.totalDistance (PulsedFilamentMonitor : FilamentMonitor)
-
-Total extruded distance (in mm)
-sensors.filamentMonitors[].configured (PulsedFilamentMonitor : FilamentMonitor)
-
-Configured properties of this filament monitor
-sensors.filamentMonitors[].configured.mmPerPulse (PulsedFilamentMonitor : FilamentMonitor)
-
-Extruded distance per pulse (in mm)
-sensors.filamentMonitors[].configured.percentMax (PulsedFilamentMonitor : FilamentMonitor)
-
-Maximum percentage (0..1 or greater)
-sensors.filamentMonitors[].configured.percentMin (PulsedFilamentMonitor : FilamentMonitor)
-
-Minimum percentage (0..1)
-sensors.filamentMonitors[].configured.sampleDistance (PulsedFilamentMonitor : FilamentMonitor)
-
-Sample distance (in mm)
-sensors.filamentMonitors[].position (PulsedFilamentMonitor : FilamentMonitor)
-
-Current position of the filament monitor (in mm)
-sensors.filamentMonitors[] (RotatingMagnetFilamentMonitor : Duet3DFilamentMonitor)
-
-Information about a rotating magnet filament monitor
-sensors.filamentMonitors[].calibrated (RotatingMagnetFilamentMonitor : Duet3DFilamentMonitor)
-
-Calibrated properties of this filament monitor
-sensors.filamentMonitors[].calibrated.mmPerRev (RotatingMagnetFilamentMonitor : Duet3DFilamentMonitor)
-
-Extruded distance per revolution (in mm)
-sensors.filamentMonitors[].calibrated.percentMax (RotatingMagnetFilamentMonitor : Duet3DFilamentMonitor)
-
-Maximum percentage (0..1 or greater)
-sensors.filamentMonitors[].calibrated.percentMin (RotatingMagnetFilamentMonitor : Duet3DFilamentMonitor)
-
-Minimum percentage (0..1)
-sensors.filamentMonitors[].calibrated.totalDistance (RotatingMagnetFilamentMonitor : Duet3DFilamentMonitor)
-
-Total extruded distance (in mm)
-sensors.filamentMonitors[].configured (RotatingMagnetFilamentMonitor : Duet3DFilamentMonitor)
-
-Configured properties of this filament monitor
-sensors.filamentMonitors[].configured.allMoves (RotatingMagnetFilamentMonitor : Duet3DFilamentMonitor)
-
-Whether all moves and not only printing moves are supposed to be checked
-sensors.filamentMonitors[].configured.mmPerRev (RotatingMagnetFilamentMonitor : Duet3DFilamentMonitor)
-
-Extruded distance per revolution (in mm)
-sensors.filamentMonitors[].configured.percentMax (RotatingMagnetFilamentMonitor : Duet3DFilamentMonitor)
-
-Maximum percentage (0..1 or greater)
-sensors.filamentMonitors[].configured.percentMin (RotatingMagnetFilamentMonitor : Duet3DFilamentMonitor)
-
-Minimum percentage (0..1)
-sensors.filamentMonitors[].configured.sampleDistance (RotatingMagnetFilamentMonitor : Duet3DFilamentMonitor)
-
-Sample distance (in mm)
-sensors.gpIn[]
-
-List of general-purpose input ports
-sensors.gpIn[].value
-
-Value of this port (0..1)
-sensors.probes[]
-
-List of configured probes
-sensors.probes[].calibA
-
-Linear coefficient for scanning probes
-sensors.probes[].calibB
-
-Quadratic coefficient for scanning probes
-sensors.probes[].calibrationTemperature
-
-Calibration temperature (in C)
-sensors.probes[].deployedByUser
-
-Indicates if the user has deployed the probe
-sensors.probes[].disablesHeaters
-
-Whether probing disables the heater(s)
-sensors.probes[].diveHeight
-
-This field is obsolete and will be removed in the future: Use DiveHeights[0] instead
-Dive height (in mm)
-sensors.probes[].diveHeights[]
-
-Dive heights of the probe. The first element is the regular dive height, the second element may be used by scanning Z-probes
-sensors.probes[].isCalibrated
-
-Indicates if the scanning probe is calibrated
-sensors.probes[].lastStopHeight
-
-Height of the probe where it stopped last time (in mm)
-sensors.probes[].maxProbeCount
-
-Maximum number of times to probe after a bad reading was determined
-sensors.probes[].measuredHeight
-
-Measured height (only applicable for scanning probes, in mm or null)
-sensors.probes[].offsets[]
-
-X+Y offsets (in mm)
-sensors.probes[].recoveryTime
-
-Recovery time (in s)
-sensors.probes[].scanCoefficients[]
-
-Coefficients for the scanning Z-probe (4 elements, if applicable)
-sensors.probes[].speeds[]
-
-Fast and slow probing speeds (in mm/s). Scanning probes may have three speeds where the last one is the movement speed while probing heightmaps
-sensors.probes[].temperatureCoefficients[]
-
-List of temperature coefficients
-sensors.probes[].threshold
-
-Configured trigger threshold (0..1023)
-sensors.probes[].tolerance
-
-Allowed tolerance deviation between two measures (in mm)
-sensors.probes[].touchMode
-
-Touch mode options (if supported, otherwise null)
-sensors.probes[].touchMode.active
-
-Indicates if the touch probe is enabled
-sensors.probes[].touchMode.speed
-
-Speed while probing in touch mode (in mm/s)
-sensors.probes[].touchMode.threshold
-
-Threshold value of the touch probe
-sensors.probes[].touchMode.triggerHeight
-
-Height of the trigger point of the touch probe (in mm)
-sensors.probes[].travelSpeed
-
-Travel speed when probing multiple points (in mm/min)
-sensors.probes[].triggerHeight
-
-Z height at which the probe is triggered (in mm)
-sensors.probes[].type
-
-Type of the configured probe
-This property may be one of the following:
-	•	0: No probe
-	•	1: A simple unmodulated probe (like dc42's infrared probe)
-	•	2: A modulated probe (like the original one shipped with the RepRapPro Ormerod)
-	•	3: Alternate analog probe (like the ultrasonic probe)
-	•	4: Endstop switch (obsolete, should not be used any more)
-	•	5: A switch that is triggered when the probe is activated (filtered)
-	•	6: Endstop switch on the E1 endstop pin (obsolete, should not be used any more)
-	•	7: Endstop switch on Z endstop pin (obsolete, should not be used any more)
-	•	8: A switch that is triggered when the probe is activated (unfiltered)
-	•	9: A BLTouch probe
-	•	10: Z motor stall detection
-sensors.probes[].value[]
-
-Current analog values of the probe
-spindles[]
-
-List of configured CNC spindles
-spindles[].active
-
-Active RPM
-spindles[].canReverse
-
-Flags whether the spindle may spin in reverse direction
-spindles[].current
-
-Current RPM, negative if anticlockwise direction
-spindles[].frequency
-
-Frequency (in Hz)
-spindles[].idlePwm
-
-Idle PWM value (0..1)
-spindles[].max
-
-Maximum RPM
-spindles[].maxPwm
-
-Maximum PWM value when turned on (0..1)
-spindles[].min
-
-Minimum RPM when turned on
-spindles[].minPwm
-
-Minimum PWM value when turned on (0..1)
-spindles[].state
-
-Current state
-This property may be one of the following:
-	•	unconfigured: Spinde not configured
-	•	stopped: Spindle is stopped (inactive)
-	•	forward: Spindle is going forwards
-	•	reverse: Spindle is going in reverse
-spindles[].type
-
-Spindle type
-This property may be one of the following:
-	•	enaDir: Enable and direction
-	•	fwdRev: Forward and reverse
-state
-
-Information about the machine state
-state.atxPower
-
-State of the ATX power pin (if controlled)
-state.atxPowerPort
-
-Port of the ATX power pin or null if not assigned
-state.beep
-
-Information about a requested beep or null if none is requested
-state.beep.duration
-
-Duration of the requested beep (in ms)
-state.beep.frequency
-
-Frequency of the requested beep (in Hz)
-state.currentTool
-
-Number of the currently selected tool or -1 if none is selected
-state.deferredPowerDown
-
-When provided it normally has value 0 normally and 1 when a deferred power down is pending
-Note: It is only available after power switching has been enabled by M80 or M81
-state.displayMessage
-
-Persistent message to display (see M117)
-state.gpOut[]
-
-List of general-purpose output ports
-state.gpOut[].freq
-
-PWM frequency of this port (in Hz)
-state.gpOut[].pwm
-
-PWM value of this port (0..1)
-state.laserPwm
-
-Laser PWM of the next commanded move (0..1) or null if not applicable
-state.logFile
-
-This field is maintained by DSF in SBC mode
-Log file being written to or null if logging is disabled
-state.logLevel
-
-This field is maintained by DSF in SBC mode
-Current log level
-This property may be one of the following:
-	•	debug: Log everything including debug messages
-	•	info: Log information and warning messages
-	•	warn: Log warning messages only
-	•	off: Logging is disabled
-state.messageBox
-
-Details about a requested message box or null if none is requested
-state.messageBox.axisControls
-
-Bitmap of the axis movement controls to show (indices)
-state.messageBox.cancelButton
-
-Indicates if a cancel button is supposed to be shown
-state.messageBox.choices[]
-
-List of possible choices (only for mode 4)
-state.messageBox.default
-
-Default value (only for modes >= 4)
-state.messageBox.max
-
-Maximum input value (only for modes >= 5)
-state.messageBox.message
-
-Content of the message box
-state.messageBox.min
-
-Minimum input value (only for modes >= 5)
-state.messageBox.mode
-
-Mode of the message box to display
-This property may be one of the following:
-	•	0: Display a message box without any buttons
-	•	1: Display a message box with only a Close button
-	•	2: Display a message box with only an Ok button which is supposed to send M292 when pressed, blocking
-	•	3: Display a message box with an Ok button that sends M292 P0 or a cancel button that sends M292 P1 when clicked, blocking
-	•	4: Multiple choices, blocking
-	•	5: Integer value required, blocking
-	•	6: Floating-point value required, blocking
-	•	7: String value required, blocking
-state.messageBox.seq
-
-Sequence number of the message box
-Note: This is increased whenever a new message box is supposed to be displayed
-state.messageBox.timeout
-
-Total timeout for this message box (in ms)
-state.messageBox.title
-
-Title of the message box
-state.machineMode
-
-Current mode of operation
-This property may be one of the following:
-	•	FFF: Fused Filament Fabrication (default)
-	•	CNC: Computer Numerical Control
-	•	Laser: Laser operation mode (e.g. laser cutters)
-state.macroRestarted
-
-Indicates if the current macro file was restarted after a pause
-state.msUpTime
-
-Millisecond fraction of UpTime
-state.nextTool
-
-Number of the next tool to be selected
-state.pluginsStarted
-
-This field is exclusively maintained by DSF in SBC mode and/or by DWC. It is not available in standalone mode
-Indicates if at least one plugin has been started
-state.powerFailScript
-
-Script to execute when the power fails
-state.previousTool
-
-Number of the previous tool
-state.restorePoints[]
-
-List of restore points
-state.restorePoints[].coords[]
-
-Axis coordinates of the restore point (in mm)
-state.restorePoints[].extruderPos
-
-The virtual extruder position at the start of this move
-state.restorePoints[].fanPwm
-
-PWM value of the tool fan (0..1)
-state.restorePoints[].feedRate
-
-Requested feedrate (in mm/s)
-state.restorePoints[].ioBits
-
-The output port bits setting for this move or null if not applicable
-state.restorePoints[].laserPwm
-
-Laser PWM value (0..1) or null if not applicable
-state.restorePoints[].toolNumber
-
-The tool number that was active
-state.startupError
-
-This field is maintained by DSF in SBC mode
-First error on start-up or null if there was none
-state.startupError.file
-
-Filename of the macro where the error occurred
-state.startupError.line
-
-Line number of the error
-state.startupError.message
-
-Message of the error
-state.status
-
-Current state of the machine
-This property may be one of the following:
-	•	disconnected: Not connected to the Duet
-	•	starting: Processing config.g
-	•	updating: The firmware is being updated
-	•	off: The machine is turned off (i.e. the input voltage is too low for operation)
-	•	halted: The machine has encountered an emergency stop and is ready to reset
-	•	pausing: The machine is about to pause a file job
-	•	paused: The machine has paused a file job
-	•	resuming: The machine is about to resume a paused file job
-	•	cancelling: Job file is being cancelled
-	•	processing: The machine is processing a file job
-	•	simulating: The machine is simulating a file job to determine its processing time
-	•	busy: The machine is busy doing something (e.g. moving)
-	•	changingTool: The machine is changing the current tool
-	•	idle: The machine is on but has nothing to do
-state.thisActive
-
-Shorthand for inputs[state.thisInput].active
-state.thisInput
-
-Index of the current G-code input channel (see Inputs)
-Note: This is primarily intended for macro files to determine on which G-code channel it is running. The value of this property is always null in object model queries
-state.time
-
-Internal date and time in RepRapFirmware or null if unknown
-state.upTime
-
-How long the machine has been running (in s)
-tools[]
-
-List of configured tools
-tools[].active[]
-
-Active temperatures of the associated heaters (in C)
-tools[].axes[]
-
-Associated axes. At present only X and Y can be mapped per tool.
-Note: The order is the same as the visual axes, so by default the layout is [ [0], // X [1] // Y ] Make sure to set each item individually so the change events are called. Each item is a bitmap represented as an array
-tools[].extruders[]
-
-Extruder drives of this tool
-tools[].fans[]
-
-List of associated fans (indices)
-Note: This is a bitmap represented as an array
-tools[].feedForward[]
-
-This field is obsolete and will be removed in the future: Use FeedForwardPwm instead
-Feedforward coefficients to apply to the mapped heaters during extrusions
-tools[].feedForwardAdvance
-
-Time advance for applying feedforward in milliseconds
-tools[].feedForwardPwm[]
-
-Feedforward coefficients to apply to the mapped heaters during extrusions
-tools[].feedForwardTemp[]
-
-Temperature increase per mm/dec extrusion speed
-tools[].filamentExtruder
-
-Extruder drive index for resolving the tool filament (index or -1)
-tools[].heaters[]
-
-List of associated heaters (indices)
-tools[].isRetracted
-
-True if the filament has been firmware-retracted
-tools[].mix[]
-
-Mix ratios of the associated extruder drives
-tools[].name
-
-Name of this tool
-tools[].number
-
-Number of this tool
-tools[].offsets[]
-
-Axis offsets (in mm) This list is in the same order as Axes
-tools[].offsetsProbed
-
-Bitmap of the probed axis offsets
-tools[].retraction
-
-Firmware retraction parameters
-tools[].retraction.extraRestart
-
-Amount of additional filament to extrude when undoing a retraction (in mm)
-tools[].retraction.length
-
-Retraction length (in mm)
-tools[].retraction.speed
-
-Retraction speed (in mm/s)
-tools[].retraction.unretractSpeed
-
-Unretract speed (in mm/s)
-tools[].retraction.zHop
-
-Amount of Z lift after doing a retraction (in mm)
-tools[].spindle
-
-Index of the mapped spindle or -1 if not mapped
-tools[].spindleRpm
-
-RPM of the mapped spindle
-tools[].standby[]
-
-Standby temperatures of the associated heaters (in C)
-tools[].state
-
-Current state of this tool
-This property may be one of the following:
-	•	off: Tool is turned off
-	•	active: Tool is active
-	•	standby: Tool is in standby
-volumes[]
-
-This field is maintained by DSF in SBC mode
-List of available mass storages
-volumes[].capacity
-
-Total capacity of the storage device (in bytes or null)
-volumes[].freeSpace
-
-How much space is still available on this device (in bytes or null)
-volumes[].mounted
-
-Whether the storage device is mounted
-volumes[].name
-
-This field is exclusively maintained by DSF in SBC mode and/or by DWC. It is not available in standalone mode
-Name of this volume
-volumes[].openFiles
-
-Number of currently open files or null if unknown
-volumes[].partitionSize
-
-Total size of this volume (in bytes or null)
-volumes[].path
-
-This field is exclusively maintained by DSF in SBC mode and/or by DWC. It is not available in standalone mode
-Logical path of the storage device
-volumes[].speed
-
-Speed of the storage device (in bytes/s or null if unknown)
-
-
-
-

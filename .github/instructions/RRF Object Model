@@ -1,0 +1,3207 @@
+Introduction
+All Duet software projects (RepRapFirmware, Duet Software Framework) provide a central 'Object Model' (OM) that replicates the entire machine state, storing configuration and sensor data. This data model is synchronized with Duet Web Control as well as stored in its backend, and can be accessed by Gcode and meta Gcode commands, macros and external data requests. This allows for powerful control and feedback systems to be built.
+The object model
+For information about the object model structure, check out the DSF code documentation.
+For a list of the currently-supported fields, see Object Model documentation
+Viewing and using the Object Model
+DWC
+Use the Object Model plugin to browse the Object Model tree. Enable the plugin in DWC > Settings > Plugins, and it will appear in DWC > Plugins > Object Model.
+Gcode
+Examples of Gcode using Object Model fields are on the Meta Gcode page here.
+External applications
+Query the OM from external applications using M409 or the HTTP request rr_model.
+Job information and custom Object Model keys
+When a job runs, RepRapFirmware extracts information from the Gcode file and stores it in the Object Model. This data can be used using Gcode and Meta Gcode to, for example, determine any additional actions that need to be taken.
+A list of the information gathered is here, and includes (not an exhaustive list):
+File name, file size, file modification date, the application that generated the gcode
+Object height, layer height, number of layers, filament usage, print time
+File thumbnail size, width, file type
+M486 (object cancellation) info: list of build objects, position, whether cancelled
+Name and duration of the previous job
+When the job is running, OM variables are updated with current layer number, time left, percentage complete
+Additionally, from RepRapFirmware 3.6.0, user-defined Object Model keys and values can be embedded in the Gcode file, which will be created in the OM when the Gcode file is run:
+The header and footer of a job file may now contain comments of the form
+;customInfo <key>=<value>
+where <key> is an identifier and <value> is an expression. Such comments will result in the specified key-value pairs being added to the object model under job.file.customInfo. They are also returned as additional information in the rr_fileinfo response. The M36 response now includes any customInfo found in the GCode file (although there is a known issue with this feature, see 1096)
+Notes on using the Object Model
+Some fields may not be available in standalone mode because some fields are only maintained by DSF and/or DWC. It is advised to consider this when developing applications that address Duets in standalone and SBC mode.
+Certain fields have class names in braces (...) appended to the object model path. These class names are present for items where different item types may be configured. If a class inherits values from a base type, the inheritance is marked using a colon (:) followed by the base class name. So, for example, LaserFilamentMonitor : FilamentMonitor means that a LaserFilamentMonitor inherits all the properties from the FilamentMonitor base class.
+In standalone mode, each main key (like boards or heat) has its own sequence number in the seqs key which is not documented here. Whenever a non-live field is updated (see M409 F"f"), this sequence number is increased. For clients targeting standalone mode, it can be helpful to check these values to determine when it is time to request a full key from RRF again. There is an extra value seqs.reply as well which is used notify clients about new messages (see rr_reply). Note that these sequence numbers are not exposed in SBC mode.
+
+
+Overview
+
+This page is auto-generated. If you find any errors, please report them on the forum and DO NOT EDIT this page! If you are capable of editing source code, it is encouraged to make pull requests for the original DSF API code instead.
+
+This page refers to version 3.6 of the Object Model.
+
+All Duet software projects share the same object model to store configuration and sensor data. This page provides documentation about the different object model keys and associated properties.
+
+Some fields may not be available in standalone mode because some fields are only maintained by DSF and/or DWC. It is advised to consider this when developing applications that address Duets in standalone and SBC mode.
+
+Certain fields have class names in braces (...) appended to the object model path. These class names are present for items where different item types may be configured. If a class inherits values from a base type, the inheritance is marked using a colon (:) followed by the base class name. So, for example, LaserFilamentMonitor : FilamentMonitor means that a LaserFilamentMonitor inherits all the properties from the FilamentMonitor base class.
+
+In standalone mode, each main key (like boards or heat) has its own sequence number in the seqs key which is not documented here. Whenever a non-live field is updated (see M409 F"f"), this sequence number is increased. For clients targeting standalone mode, it can be helpful to check these values to determine when it is time to request a full key from RRF again. There is an extra value seqs.reply as well which is used notify clients about new messages (see rr_reply). Note that these sequence numbers are not exposed in SBC mode.
+
+This page is preliminary and subject to further changes.
+
+Object Model Description
+
+boards[]
+
+List of connected boards
+
+Note: The first item represents the main board
+
+boards[].accelerometer
+
+Accelerometer of this board or null if unknown
+
+boards[].accelerometer.orientation
+
+Orientation of the accelerometer
+
+Note: See https://docs.duet3d.com/en/Duet3D_hardware/Accessories/Duet3D_Accelerometer#orientation for a list of orientations
+
+boards[].accelerometer.points
+
+Number of collected data points in the last run or 0 if it failed
+
+boards[].accelerometer.runs
+
+Number of completed sampling runs
+
+boards[].bootloaderFileName
+
+Filename of the bootloader binary or null if unknown
+
+boards[].canAddress
+
+CAN address of this board or null if not applicable
+
+boards[].closedLoop
+
+Closed loop data of this board or null if unknown
+
+boards[].closedLoop.points
+
+Number of collected data points in the last run or 0 if it failed
+
+boards[].closedLoop.runs
+
+Number of completed sampling runs
+
+boards[].directDisplay
+
+Details about a connected display or null if none is connected
+
+boards[].directDisplay.encoder
+
+Encoder of this screen or null if none
+
+boards[].directDisplay.encoder.pulsesPerClick
+
+Number of pulses per click of the rotary encoder
+
+boards[].directDisplay.screen
+
+Screen information
+
+boards[].directDisplay.screen.colourBits (DirectDisplayScreen)
+
+Number of colour bits
+
+boards[].directDisplay.screen.controller (DirectDisplayScreen)
+
+Display type
+
+This property may be one of the following:
+
+ST7920: ST7920 controller
+ST7567: ST7567 controller
+ILI9488: ILI9488 controller
+boards[].directDisplay.screen.height (DirectDisplayScreen)
+
+Height of the display screen in pixels
+
+boards[].directDisplay.screen.spiFreq (DirectDisplayScreen)
+
+SPI frequency of the display (in Hz)
+
+boards[].directDisplay.screen.width (DirectDisplayScreen)
+
+Width of the display screen in pixels
+
+boards[].directDisplay.screen (DirectDisplayScreenST7567 : DirectDisplayScreen)
+
+Direct-connected display screen with a ST7567 controller
+
+boards[].directDisplay.screen.contrast (DirectDisplayScreenST7567 : DirectDisplayScreen)
+
+Configured contrast
+
+boards[].directDisplay.screen.resistorRatio (DirectDisplayScreenST7567 : DirectDisplayScreen)
+
+Configured resistor ratio
+
+boards[].drivers[]
+
+Drivers of this board
+
+boards[].drivers[].closedLoop
+
+Closed-loop settings (if applicable)
+
+boards[].drivers[].closedLoop.currentFraction
+
+Current fraction f the configured motor current used
+
+boards[].drivers[].closedLoop.currentFraction.avg
+
+Average fraction of the configured motor current used
+
+boards[].drivers[].closedLoop.currentFraction.max
+
+Maximum fraction of the configured motor current used
+
+boards[].drivers[].closedLoop.positionError
+
+Position error in full steps of the motor
+
+boards[].drivers[].closedLoop.positionError.max
+
+Maximum position error in full steps of the motor
+
+boards[].drivers[].closedLoop.positionError.rms
+
+RMS of the position error in full steps of the motor
+
+boards[].drivers[].status
+
+Driver status register value The lowest 8 bits of these have the same bit positions as in the TMC2209 DRV_STATUS register. The TMC5160 DRV_STATUS is different so the bits are translated to this. Similarly for TMC2660. Only the lowest 16 bits are passed in driver event messages
+
+boards[].firmwareDate
+
+Date of the firmware build
+
+boards[].firmwareFileName
+
+Filename of the firmware binary or null if unknown
+
+boards[].firmwareName
+
+Name of the firmware build
+
+boards[].firmwareVersion
+
+Version of the firmware build
+
+boards[].iapFileNameSBC
+
+Filename of the IAP binary that is used for updates from the SBC or null if unsupported
+
+Note: This is only available for the mainboard (first board item)
+
+boards[].freeRam
+
+Amount of free RAM on this board (in bytes or null if unknown)
+
+boards[].iapFileNameSD
+
+Filename of the IAP binary that is used for updates from the SD card or null if unsupported
+
+Note: This is only available for the mainboard (first board item)
+
+boards[].inductiveSensor
+
+Information about an inductive sensor or null if not present
+
+boards[].maxHeaters
+
+Maximum number of heaters this board can control
+
+boards[].maxMotors
+
+Maximum number of motors this board can drive
+
+boards[].mcuTemp
+
+Minimum, maximum, and current temperatures of the MCU or null if unknown
+
+boards[].mcuTemp.current
+
+Current value
+
+boards[].mcuTemp.min
+
+Minimum value
+
+boards[].mcuTemp.max
+
+Maximum value
+
+boards[].name
+
+Full name of the board
+
+boards[].shortName
+
+Short name of this board
+
+boards[].state
+
+State of this board
+
+This property may be one of the following:
+
+unknown: Unknown state
+flashing: Flashing new firmware
+flashFailed: Failed to flash new firmware
+resetting: Board is being reset
+running: Board is up and running
+boards[].supports12864
+
+This field is obsolete and will be removed in the future: Replaced with SupportsDirectDisplay
+
+Indicates if this board supports external 12864 displays
+
+boards[].supportsDirectDisplay
+
+Indicates if this board supports external displays
+
+boards[].uniqueId
+
+Unique identifier of the board or null if unknown
+
+boards[].v12
+
+Minimum, maximum, and current voltages on the 12V rail or null if unknown
+
+boards[].v12.current
+
+Current value
+
+boards[].v12.min
+
+Minimum value
+
+boards[].v12.max
+
+Maximum value
+
+boards[].vIn
+
+Minimum, maximum, and current voltages on the input rail or null if unknown
+
+boards[].vIn.current
+
+Current value
+
+boards[].vIn.min
+
+Minimum value
+
+boards[].vIn.max
+
+Maximum value
+
+boards[].wifiFirmwareFileName
+
+Filename of the on-board WiFi chip or null if not present
+
+directories
+
+Information about the individual directories
+
+Note: This may not be available in RepRapFirmware if no mass storages are available
+
+directories.filaments
+
+Path to the filaments directory
+
+directories.firmware
+
+Path to the firmware directory
+
+directories.gCodes
+
+Path to the G-Codes directory
+
+directories.macros
+
+Path to the macros directory
+
+directories.menu
+
+Path to the menu directory
+
+Note: Intended for 12864 displays but currently unused in DSF. It is only needed for the Duet Maestro + DWC
+
+directories.system
+
+This field is maintained by DSF in SBC mode
+
+Path to the system directory
+
+directories.web
+
+Path to the web directory
+
+fans[]
+
+List of configured fans
+
+fans[].actualValue
+
+Value of this fan (0..1 or -1 if unknown)
+
+fans[].blip
+
+Blip value indicating how long the fan is supposed to run at 100% when turning it on to get it started (in s)
+
+fans[].frequency
+
+Configured frequency of this fan (in Hz)
+
+fans[].max
+
+Maximum value of this fan (0..1)
+
+fans[].min
+
+Minimum value of this fan (0..1)
+
+fans[].name
+
+Name of the fan
+
+fans[].requestedValue
+
+Requested value for this fan on a scale between 0 to 1
+
+fans[].rpm
+
+Current RPM of this fan or -1 if unknown/unset
+
+fans[].tachoPpr
+
+Pulses per tacho revolution
+
+fans[].thermostatic
+
+Thermostatic control parameters
+
+fans[].thermostatic.heaters[]
+
+This field is obsolete and will be removed in the future: Use Sensors instead
+
+List of heaters to monitor (indices)
+
+Note: This is a bitmap represented as an array
+
+fans[].thermostatic.highTemperature
+
+Upper temperature range required to turn on the fan (in C)
+
+fans[].thermostatic.lowTemperature
+
+Lower temperature range required to turn on the fan (in C)
+
+fans[].thermostatic.sensors[]
+
+List of sensors to monitor (indices)
+
+Note: This is a bitmap represented as an array
+
+global
+
+Dictionary of global variables vs JSON values
+
+Note: When DSF attempts to reconnect to RRF, this may be set to null to clear the contents
+
+heat
+
+Information about the heat subsystem
+
+heat.bedHeaters[]
+
+List of configured bed heaters (indices)
+
+Note: Items may be -1 if unconfigured
+
+heat.chamberHeaters[]
+
+List of configured chamber heaters (indices)
+
+Note: Items may be -1 if unconfigured
+
+heat.coldExtrudeTemperature
+
+Minimum required temperature for extrusion moves (in C)
+
+heat.coldRetractTemperature
+
+Minimum required temperature for retraction moves (in C)
+
+heat.heaters[]
+
+List of configured heaters
+
+heat.heaters[].active
+
+Active temperature of the heater (in C)
+
+heat.heaters[].avgPwm
+
+Average heater PWM value (0..1)
+
+heat.heaters[].current
+
+Current temperature of the heater (in C)
+
+heat.heaters[].extrPwmBoost
+
+Current feedforward PWM boost applied to the heater
+
+heat.heaters[].extrTempBoost
+
+Current temperature boost applied to the heater
+
+heat.heaters[].max
+
+Maximum temperature allowed for this heater (in C)
+
+Note: This is only temporary and should be replaced by a representation of the heater protection as in RRF
+
+heat.heaters[].min
+
+Minimum temperature allowed for this heater (in C)
+
+Note: This is only temporary and should be replaced by a representation of the heater protection as in RRF
+
+heat.heaters[].maxBadReadings
+
+Maximum number of consecutive temperature reading failures before a heater fault is raised
+
+heat.heaters[].maxHeatingFaultTime
+
+Time for which a temperature anomaly must persist on this heater before raising a heater fault (in s)
+
+heat.heaters[].maxTempExcursion
+
+Permitted temperature excursion from the setpoint for this heater (in K)
+
+heat.heaters[].model
+
+Information about the heater model
+
+heat.heaters[].model.coolingExp
+
+Cooling rate exponent
+
+heat.heaters[].model.coolingRate
+
+Cooling rate (in K/s)
+
+heat.heaters[].model.deadTime
+
+Dead time (in s)
+
+heat.heaters[].model.enabled
+
+Indicates if this heater is enabled
+
+heat.heaters[].model.fanCoolingRate
+
+Cooling rate with the fan on (in K/s)
+
+heat.heaters[].model.heatingRate
+
+Heating rate (in K/s)
+
+heat.heaters[].model.inverted
+
+Indicates if the heater PWM signal is inverted
+
+heat.heaters[].model.maxPwm
+
+Maximum PWM value
+
+heat.heaters[].model.pid
+
+Details about the PID controller
+
+heat.heaters[].model.pid.d
+
+Derivative value of the PID regulator
+
+heat.heaters[].model.pid.i
+
+Integral value of the PID regulator
+
+heat.heaters[].model.pid.overridden
+
+Indicates if custom PID values are used
+
+heat.heaters[].model.pid.p
+
+Proportional value of the PID regulator
+
+heat.heaters[].model.pid.used
+
+Indicates if PID control is being used
+
+heat.heaters[].model.standardVoltage
+
+Standard voltage or null if unknown
+
+heat.heaters[].monitors[]
+
+Monitors of this heater
+
+heat.heaters[].monitors[].action
+
+Action to perform when the trigger condition is met
+
+This property may be one of the following:
+
+0: Generate a heater fault
+1: Permanently switch off the heater
+2: Temporarily switch off the heater until the condition is no longer met
+3: Shut down the printer
+heat.heaters[].monitors[].condition
+
+Condition to meet to perform an action
+
+This property may be one of the following:
+
+disabled: Heater monitor is disabled
+tooHigh: Limit temperature has been exceeded
+tooLow: Limit temperature is too low
+heat.heaters[].monitors[].limit
+
+Limit threshold for this heater monitor
+
+heat.heaters[].monitors[].sensor
+
+Sensor number to monitor
+
+heat.heaters[].sensor
+
+Sensor number of this heater or -1 if not configured
+
+heat.heaters[].standby
+
+Standby temperature of the heater (in C)
+
+heat.heaters[].state
+
+State of the heater
+
+This property may be one of the following:
+
+off: Heater is turned off
+standby: Heater is in standby mode
+active: Heater is active
+fault: Heater faulted
+tuning: Heater is being tuned
+offline: Heater is offline
+inputs[]
+
+Information about every available G/M/T-code channel
+
+inputs[].active
+
+True if the input is is in active mode i.e. executing commands for its assigned motion system, false if it is assigned to a motion system other than the current one
+
+Note: This will always be true except for the File and File2 inputs
+
+inputs[].axesRelative
+
+Whether relative positioning is being used
+
+inputs[].compatibility
+
+Emulation used on this channel
+
+This property may be one of the following:
+
+Default: No emulation (same as RepRapFirmware)
+RepRapFirmware: Emulating RepRapFirmware
+Marlin: Emulating Marlin
+Teacup: Emulating Teacup
+Sprinter: Emulating Sprinter
+Repetier: Emulating Repetier
+NanoDLP: Special emulation for NanoDLP
+inputs[].distanceUnit
+
+Whether inches are being used instead of mm
+
+This property may be one of the following:
+
+mm: Millimeters
+in: Inches
+inputs[].drivesRelative
+
+Whether relative extrusion is being used
+
+inputs[].feedRate
+
+Current feedrate in mm/s
+
+inputs[].inMacro
+
+Whether a macro file is being processed
+
+inputs[].inverseTimeMode
+
+Indicates if inverse time mode (G73) is active
+
+inputs[].lineNumber
+
+Number of the current line
+
+inputs[].macroRestartable
+
+Indicates if the current macro file can be restarted after a pause
+
+inputs[].motionSystem
+
+Active motion system index
+
+inputs[].name
+
+Name of this channel
+
+This property may be one of the following:
+
+HTTP: Code channel for HTTP requests
+Telnet: Code channel for Telnet requests
+File: Code channel for primary file prints
+USB: Code channel for USB requests
+Aux: Code channel for serial devices (e.g. PanelDue)
+Trigger: Code channel for running triggers or config.g
+Queue: Code channel for the code queue that executes a couple of codes in-sync with moves of the primary print file
+LCD: Code channel for auxiliary LCD devices (e.g. PanelOne)
+SBC: Default code channel for requests over SPI
+Daemon: Code channel that executes the daemon process
+Aux2: Code channel for the second UART port
+Autopause: Code channel that executes macros on power fail, heater faults and filament out
+File2: Code channel for secondary file prints
+Queue2: Code channel for the code queue that executes a couple of codes in-sync with moves of the primary print file
+Unknown: Unknown code channel
+inputs[].selectedPlane
+
+Index of the selected plane
+
+inputs[].stackDepth
+
+Depth of the stack
+
+inputs[].state
+
+State of this input channel
+
+This property may be one of the following:
+
+awaitingAcknowledgement: Awaiting message acknowledgement
+idle: Channel is idle
+executing: Channel is executing a G/M/T-code
+waiting: Channel is waiting for more data
+reading: Channel is reading a G/M/T-code
+inputs[].volumetric
+
+Whether volumetric extrusion is being used
+
+job
+
+Information about the current job
+
+job.build
+
+Information about the current build or null if not available
+
+job.build.currentObject
+
+Index of the current object being printed or -1 if unknown
+
+Note: This value may now be greater than the length of the job.build.objects array. This is because the size of job.build.objects is limited to conserve memory (to 20 on Duet 2 or 40 on Duet 3), whereas when M486 labelling is used, many more objects can be numbered and the first 64 can be cancelled individually
+
+job.build.m486Names
+
+Whether M486 names are being used
+
+job.build.m486Numbers
+
+Whether M486 numbers are being used
+
+job.build.objects[]
+
+List of detected build objects
+
+job.build.objects[].cancelled
+
+Indicates if this build object is cancelled
+
+job.build.objects[].name
+
+Name of the build object (if any)
+
+job.build.objects[].x[]
+
+X coordinates of the build object (in mm or null if not found)
+
+job.build.objects[].y[]
+
+Y coordinates of the build object (in mm or null if not found)
+
+job.duration
+
+Total active duration of the current job file (in s or null)
+
+job.file
+
+Information about the file being processed
+
+job.file.customInfo
+
+This field is maintained by DSF in SBC mode
+
+User-defined key-value pairs
+
+job.file.filament[]
+
+Filament consumption per extruder drive (in mm)
+
+job.file.fileName
+
+The filename of the G-code file
+
+job.file.generatedBy
+
+Name of the application that generated this file
+
+job.file.height
+
+Build height of the G-code job or 0 if not found (in mm)
+
+job.file.lastModified
+
+Value indicating when the file was last modified or null if unknown
+
+job.file.layerHeight
+
+Height of each other layer or 0 if not found (in mm)
+
+job.file.numLayers
+
+Number of total layers or 0 if unknown
+
+job.file.printTime
+
+Estimated print time (in s)
+
+job.file.simulatedTime
+
+Estimated print time from G-code simulation (in s)
+
+job.file.size
+
+Size of the file
+
+job.file.thumbnails[]
+
+This field is maintained by DSF in SBC mode
+
+Collection of thumbnails parsed from Gcode
+
+job.file.thumbnails[].data
+
+Base64-encoded thumbnail or null if invalid or not requested
+
+Note: This property is not provided by RepRapFirmware fileinfo results and it may be null if no thumbnail content is requested
+
+job.file.thumbnails[].format
+
+Format of this thumbnail
+
+This property may be one of the following:
+
+jpeg: Joint Photographic Experts Group
+png: Portable Network Graphics
+qoi: Quite OK Image
+job.file.thumbnails[].height
+
+Height of this thumbnail
+
+job.file.thumbnails[].offset
+
+File offset of this thumbnail
+
+job.file.thumbnails[].size
+
+Size of this thumbnail
+
+job.file.thumbnails[].width
+
+Width of this thumbnail
+
+job.filePosition
+
+Current position in the file being processed (in bytes or null)
+
+job.lastDuration
+
+Total duration of the last job (in s or null)
+
+job.lastFileName
+
+Name of the last file processed or null if none
+
+job.lastFileAborted
+
+This field is exclusively maintained by DSF in SBC mode and/or by DWC. It is not available in standalone mode
+
+Indicates if the last file was aborted (unexpected cancellation)
+
+job.lastFileCancelled
+
+This field is exclusively maintained by DSF in SBC mode and/or by DWC. It is not available in standalone mode
+
+Indicates if the last file was cancelled (user cancelled)
+
+job.lastFileSimulated
+
+This field is exclusively maintained by DSF in SBC mode and/or by DWC. It is not available in standalone mode
+
+Indicates if the last file processed was simulated
+
+Note: This is not set if the file was aborted or cancelled
+
+job.lastWarmUpDuration
+
+Warm-up duration of the last print or null if not available (in s)
+
+job.layer
+
+Number of the current layer or null not available
+
+job.layers[]
+
+This field is exclusively maintained by DSF in SBC mode and/or by DWC. It is not available in standalone mode
+
+Information about the past layers
+
+Note: In previous API versions this was a but it has been changed to to allow past layers to be modified again when needed. Note that previous plugins subscribing to this property will not receive any more updates about this property to avoid memory leaks
+
+job.layers[].duration
+
+Duration of the layer (in s)
+
+job.layers[].filament[]
+
+Actual amount of filament extruded during this layer (in mm)
+
+job.layers[].fractionPrinted
+
+Fraction of the file printed during this layer (0..1)
+
+job.layers[].height
+
+Height of the layer (in mm or 0 if unknown)
+
+job.layers[].temperatures[]
+
+Last heater temperatures (in C or null if unknown)
+
+job.layerTime
+
+Time elapsed since the last layer change (in s or null)
+
+job.pauseDuration
+
+Total pause time since the job started
+
+job.rawExtrusion
+
+Total extrusion amount without extrusion factors applied (in mm)
+
+job.timesLeft
+
+Estimated times left
+
+job.timesLeft.filament
+
+Time left based on filament consumption (in s or null)
+
+job.timesLeft.file
+
+Time left based on file progress (in s or null)
+
+job.timesLeft.layer
+
+This field is obsolete and will be removed in the future: No longer used, will always return null
+
+Time left based on the layer progress (in s or null)
+
+job.timesLeft.slicer
+
+Time left based on the slicer reports (see M73 R, in s or null)
+
+job.timesLeft.toPause
+
+Time left before the next colour change is expected (see M73 C, in s or null)
+
+job.warmUpDuration
+
+Time needed to heat up the heaters (in s or null)
+
+ledStrips[]
+
+List of configured LED strips
+
+ledStrips[].board
+
+Board address of the corresponding pin
+
+ledStrips[].pin
+
+Name of the pin this LED strip is connected to
+
+ledStrips[].stopMovement
+
+Indicates if this strip is bit-banged and therefore requires motion to be stopped before sending a command
+
+ledStrips[].type
+
+Type of this LED strip
+
+This property may be one of the following:
+
+DotStar: DotStar LED strip
+NeoPixel_RGB: NeoPixel LED strip with only RGB capability
+NeoPixel_RGBW: NeoPixel RGB LED strip with additional white output
+limits
+
+Machine configuration limits
+
+limits.axes
+
+Maximum number of axes or null if unknown
+
+limits.axesPlusExtruders
+
+Maximum number of axes + extruders or null if unknown
+
+limits.bedHeaters
+
+Maximum number of bed heaters or null if unknown
+
+limits.boards
+
+Maximum number of boards or null if unknown
+
+limits.chamberHeaters
+
+Maximum number of chamber heaters or null if unknown
+
+limits.drivers
+
+Maximum number of drivers or null if unknown
+
+limits.driversPerAxis
+
+Maximum number of drivers per axis or null if unknown
+
+limits.extruders
+
+Maximum number of extruders or null if unknown
+
+limits.extrudersPerTool
+
+Maximum number of extruders per tool or null if unknown
+
+limits.fans
+
+Maximum number of fans or null if unknown
+
+limits.gpInPorts
+
+Maximum number of general-purpose input ports or null if unknown
+
+limits.gpOutPorts
+
+Maximum number of general-purpose output ports or null if unknown
+
+limits.heaters
+
+Maximum number of heaters or null if unknown
+
+limits.heatersPerTool
+
+Maximum number of heaters per tool or null if unknown
+
+limits.ledStrips
+
+Maximum number of configured LED strips or null if unknown
+
+limits.monitorsPerHeater
+
+Maximum number of monitors per heater or null if unknown
+
+limits.portsPerHeater
+
+Maximum number of output ports per heater or null if unknown
+
+limits.reportedAxes
+
+Maximum number of axes reported when the move key is requested. If the number of reported axes is greater than or equal to this value, a client may need to request move.axes explicitly in order to get the full move.axes array
+
+limits.restorePoints
+
+Maximum number of restore points or null if unknown
+
+limits.sensors
+
+Maximum number of sensors or null if unknown
+
+limits.spindles
+
+Maximum number of spindles or null if unknown
+
+limits.tools
+
+Maximum number of tools or null if unknown
+
+limits.trackedObjects
+
+Maximum number of tracked objects or null if unknown
+
+limits.triggers
+
+Maximum number of triggers or null if unknown
+
+limits.volumes
+
+Maximum number of volumes or null if unknown
+
+limits.workplaces
+
+Maximum number of workplaces or null if unknown
+
+limits.zProbeProgramBytes
+
+Maximum number of Z-probe programming bytes or null if unknown
+
+limits.zProbes
+
+Maximum number of Z-probes or null if unknown
+
+messages[]
+
+This field is exclusively maintained by DSF in SBC mode and/or by DWC. It is not available in standalone mode
+
+Generic messages that do not belong explicitly to codes being executed. This includes status messages, generic errors and outputs generated by M118
+
+move
+
+Information about the move subsystem
+
+move.accelerationTime
+
+Value of the M201 T parameter. Only present in builds that support S-curve acceleration
+
+move.axes[]
+
+Standard model responses return up to 9 elements of this field. It may be necessary to request more of this field using the 'a' flag.
+
+List of the configured axes
+
+move.axes[].acceleration
+
+Acceleration of this axis (in mm/s^2)
+
+move.axes[].babystep
+
+Babystep amount (in mm)
+
+move.axes[].backlash
+
+Configured backlash of this axis (in mm)
+
+move.axes[].current
+
+Motor current (in mA)
+
+move.axes[].drivers[]
+
+List of the assigned drivers
+
+move.axes[].homed
+
+Whether or not the axis is homed
+
+move.axes[].jerk
+
+Motor jerk (in mm/min)
+
+move.axes[].letter
+
+Letter of this axis
+
+move.axes[].machinePosition
+
+Current machine position (in mm) or null if unknown/unset
+
+Note: This value reflects the machine position of the move being performed or of the last one if the machine is not moving
+
+move.axes[].max
+
+Maximum travel of this axis (in mm)
+
+move.axes[].maxProbed
+
+Whether the axis maximum was probed
+
+move.axes[].microstepping
+
+Microstepping configuration
+
+move.axes[].microstepping.interpolated
+
+Indicates if the stepper driver uses interpolation
+
+move.axes[].microstepping.value
+
+Microsteps per full step
+
+move.axes[].min
+
+Minimum travel of this axis (in mm)
+
+move.axes[].minProbed
+
+Whether the axis minimum was probed
+
+move.axes[].percentCurrent
+
+Percentage applied to the motor current (0..100)
+
+move.axes[].percentStstCurrent
+
+Percentage applied to the motor current during standstill (0..100 or null if not supported)
+
+move.axes[].phaseStep
+
+Whether or not this axis uses phase stepping
+
+move.axes[].printingJerk
+
+Motor jerk during the current print only (in mm/s)
+
+move.axes[].reducedAcceleration
+
+Reduced accelerations used by Z probing and stall homing moves (in mm/s^2)
+
+move.axes[].speed
+
+Maximum speed (in mm/min)
+
+move.axes[].stepsPerMm
+
+Number of microsteps per mm
+
+move.axes[].stepPos
+
+Current step position of the axis (in steps)
+
+move.axes[].userPosition
+
+Current user position (in mm) or null if unknown
+
+Note: This value reflects the target position of the last move fed into the look-ahead buffer
+
+move.axes[].visible
+
+Whether or not the axis is visible
+
+move.axes[].workplaceOffsets[]
+
+Offsets of this axis for each workplace (in mm)
+
+move.backlashFactor
+
+Backlash distance multiplier
+
+move.calibration
+
+Information about the automatic calibration
+
+move.calibration.final
+
+Final calibration results (for Delta calibration)
+
+move.calibration.final.deviation
+
+RMS deviation (in mm)
+
+move.calibration.final.mean
+
+Mean deviation (in mm)
+
+move.calibration.initial
+
+Initial calibration results (for Delta calibration)
+
+move.calibration.initial.deviation
+
+RMS deviation (in mm)
+
+move.calibration.initial.mean
+
+Mean deviation (in mm)
+
+move.calibration.numFactors
+
+Number of factors used (for Delta calibration)
+
+move.compensation
+
+Information about the currently configured compensation options
+
+move.compensation.fadeHeight
+
+Effective height before the bed compensation is turned off (in mm) or null if not configured
+
+move.compensation.file
+
+Full path to the currently used height map file or null if none is in use
+
+move.compensation.liveGrid
+
+Grid settings of the loaded heightmap or null if no heightmap is loaded
+
+move.compensation.liveGrid.axes[]
+
+Axis letters of this heightmap
+
+move.compensation.liveGrid.maxs[]
+
+End coordinates of the heightmap
+
+move.compensation.liveGrid.mins[]
+
+Start coordinates of the heightmap
+
+move.compensation.liveGrid.radius
+
+Probing radius for delta kinematics
+
+move.compensation.liveGrid.spacings[]
+
+Spacings between the coordinates
+
+move.compensation.meshDeviation
+
+Deviations of the mesh grid or null if not applicable
+
+move.compensation.meshDeviation.deviation
+
+RMS deviation (in mm)
+
+move.compensation.meshDeviation.mean
+
+Mean deviation (in mm)
+
+move.compensation.probeGrid
+
+Probe grid settings as defined by M557
+
+move.compensation.probeGrid.axes[]
+
+Axis letters of this heightmap
+
+move.compensation.probeGrid.maxs[]
+
+End coordinates of the heightmap
+
+move.compensation.probeGrid.mins[]
+
+Start coordinates of the heightmap
+
+move.compensation.probeGrid.radius
+
+Probing radius for delta kinematics
+
+move.compensation.probeGrid.spacings[]
+
+Spacings between the coordinates
+
+move.compensation.skew
+
+Information about the configured orthogonal axis parameters
+
+move.compensation.skew.compensateXY
+
+Indicates if the TanXY value is used to compensate X when Y moves (else Y when X moves)
+
+move.compensation.skew.tanXY
+
+Tangent of the skew angle for the XY or YX axes
+
+move.compensation.skew.tanXZ
+
+Tangent of the skew angle for the XZ axes
+
+move.compensation.skew.tanYZ
+
+Tangent of the skew angle for the YZ axes
+
+move.compensation.type
+
+Type of the compensation in use
+
+This property may be one of the following:
+
+none: No compensation
+mesh: Mesh compensation
+move.currentMove
+
+Information about the current move
+
+move.currentMove.acceleration
+
+Acceleration of the current move (in mm/s^2)
+
+move.currentMove.deceleration
+
+Deceleration of the current move (in mm/s^2)
+
+move.currentMove.extrusionRate
+
+Current extrusion rate (in mm/s)
+
+move.currentMove.laserPwm
+
+Laser PWM of the current move (0..1) or null if not applicable
+
+move.currentMove.requestedSpeed
+
+Requested speed of the current move (in mm/s)
+
+move.currentMove.topSpeed
+
+Top speed of the current move (in mm/s)
+
+move.extruders[]
+
+List of configured extruders
+
+move.extruders[].acceleration
+
+Acceleration of this extruder (in mm/s^2)
+
+move.extruders[].current
+
+Motor current (in mA)
+
+move.extruders[].driver
+
+Assigned driver
+
+move.extruders[].filament
+
+Name of the currently loaded filament
+
+move.extruders[].filamentDiameter
+
+Diameter of the corresponding filament (in mm)
+
+move.extruders[].factor
+
+Extrusion factor to use (0..1 or greater)
+
+move.extruders[].jerk
+
+Motor jerk (in mm/s)
+
+move.extruders[].microstepping
+
+Microstepping configuration
+
+move.extruders[].microstepping.interpolated
+
+Indicates if the stepper driver uses interpolation
+
+move.extruders[].microstepping.value
+
+Microsteps per full step
+
+move.extruders[].nonlinear
+
+Nonlinear extrusion parameters (see M592)
+
+move.extruders[].nonlinear.a
+
+A coefficient in the extrusion formula
+
+move.extruders[].nonlinear.b
+
+B coefficient in the extrusion formula
+
+move.extruders[].nonlinear.upperLimit
+
+Upper limit of the nonlinear extrusion compensation
+
+move.extruders[].percentCurrent
+
+Percentage applied to the motor current (0..100)
+
+move.extruders[].percentStstCurrent
+
+Percentage applied to the motor current during standstill (0..100 or null if not supported)
+
+move.extruders[].phaseStep
+
+Whether or not this axis uses phase stepping
+
+move.extruders[].position
+
+Extruder position (in mm)
+
+move.extruders[].pressureAdvance
+
+Pressure advance
+
+move.extruders[].printingJerk
+
+Motor jerk during the current print only (in mm/s)
+
+move.extruders[].rawPosition
+
+Raw extruder position as commanded by the slicer without extrusion factor applied (in mm)
+
+move.extruders[].speed
+
+Maximum speed (in mm/s)
+
+move.extruders[].stepsPerMm
+
+Number of microsteps per mm
+
+move.idle
+
+Idle current reduction parameters
+
+move.idle.factor
+
+Motor current reduction factor (0..1)
+
+move.idle.timeout
+
+Idle timeout after which the stepper motor currents are reduced (in s)
+
+move.keepout[]
+
+List of configured keep-out zones
+
+move.keepout[].active
+
+Indicates if this keep-out zone is enabled
+
+move.keepout[].coords[]
+
+Minimum and maximum coordinates of this zone
+
+move.keepout[].coords[].min
+
+Minimum axis coordinate
+
+move.keepout[].coords[].max
+
+Maximum axis coordinate
+
+move.kinematics
+
+Configured kinematics options
+
+move.kinematics (CoreKinematics : ZLeadscrewKinematics)
+
+Information about core kinematics
+
+move.kinematics.forwardMatrix[] (CoreKinematics : ZLeadscrewKinematics)
+
+Forward matrix
+
+move.kinematics.inverseMatrix[] (CoreKinematics : ZLeadscrewKinematics)
+
+Inverse matrix
+
+move.kinematics (DeltaKinematics : Kinematics)
+
+Delta kinematics
+
+move.kinematics.deltaRadius (DeltaKinematics : Kinematics)
+
+Delta radius (in mm)
+
+move.kinematics.homedHeight (DeltaKinematics : Kinematics)
+
+Homed height of a delta printer in mm
+
+move.kinematics.printRadius (DeltaKinematics : Kinematics)
+
+Print radius for Hangprinter and Delta geometries (in mm)
+
+move.kinematics.towers[] (DeltaKinematics : Kinematics)
+
+Delta tower properties
+
+move.kinematics.towers[].angleCorrection (DeltaKinematics : Kinematics)
+
+Tower position corrections (in degrees)
+
+move.kinematics.towers[].diagonal (DeltaKinematics : Kinematics)
+
+Diagonal rod length (in mm)
+
+move.kinematics.towers[].endstopAdjustment (DeltaKinematics : Kinematics)
+
+Deviation of the ideal endstop position (in mm)
+
+move.kinematics.towers[].xPos (DeltaKinematics : Kinematics)
+
+X coordinate of this tower (in mm)
+
+move.kinematics.towers[].yPos (DeltaKinematics : Kinematics)
+
+Y coordinate of this tower (in mm)
+
+move.kinematics.xTilt (DeltaKinematics : Kinematics)
+
+How much Z needs to be raised for each unit of movement in the +X direction
+
+move.kinematics.yTilt (DeltaKinematics : Kinematics)
+
+How much Z needs to be raised for each unit of movement in the +Y direction
+
+move.kinematics (HangprinterKinematics : Kinematics)
+
+Information about hangprinter kinematics
+
+move.kinematics.anchors[] (HangprinterKinematics : Kinematics)
+
+Anchor configurations for A, B, C, Dz
+
+move.kinematics.printRadius (HangprinterKinematics : Kinematics)
+
+Print radius (in mm)
+
+move.kinematics.name (Kinematics)
+
+Name of the configured kinematics
+
+This property may be one of the following:
+
+cartesian: Cartesian
+coreXY: CoreXY
+coreXYU: CoreXY with extra U axis
+coreXYUV: CoreXY with extra UV axes
+coreXZ: CoreXZ
+markForged: MarkForged
+FiveBarScara: Five-bar SCARA
+Hangprinter: Hangprinter
+delta: Linear Delta
+Polar: Polar
+Rotary delta: Rotary delta
+Scara: SCARA
+unknown: Unknown
+move.kinematics.segmentation (Kinematics)
+
+Segmentation parameters or null if not configured
+
+move.kinematics.segmentation.segmentsPerSec (Kinematics)
+
+Number of segments per second
+
+move.kinematics.segmentation.minSegmentLength (Kinematics)
+
+Minimum length of a segment (in mm)
+
+move.kinematics (PolarKinematics : Kinematics)
+
+Kinematics class for polar kinematics
+
+move.kinematics.radiusHomed (PolarKinematics : Kinematics)
+
+Homed radius (in mm)
+
+move.kinematics.radiusMax (PolarKinematics : Kinematics)
+
+Maximum radius (in mm)
+
+move.kinematics.radiusMin (PolarKinematics : Kinematics)
+
+Minimum radius (in mm)
+
+move.kinematics.ttAccMax (PolarKinematics : Kinematics)
+
+Maximum turntable acceleration (in mm/s^2)
+
+move.kinematics.ttSpeedMax (PolarKinematics : Kinematics)
+
+Maximum turntable speed (in mm/s)
+
+move.kinematics (ScaraKinematics : ZLeadscrewKinematics)
+
+Kinematics class for SCARA kinematics
+
+move.kinematics.distalLength (ScaraKinematics : ZLeadscrewKinematics)
+
+Distal arm length (in mm)
+
+move.kinematics.minRadius (ScaraKinematics : ZLeadscrewKinematics)
+
+Requested minimum radius (in mm)
+
+move.kinematics.proximalLength (ScaraKinematics : ZLeadscrewKinematics)
+
+Proximal arm length (in mm)
+
+move.kinematics.xOffset (ScaraKinematics : ZLeadscrewKinematics)
+
+X offset (in mm)
+
+move.kinematics.yOffset (ScaraKinematics : ZLeadscrewKinematics)
+
+Y offset (in mm)
+
+move.kinematics (ZLeadscrewKinematics : Kinematics)
+
+Base kinematics class that provides the ability to level the bed using Z leadscrews
+
+move.kinematics.tiltCorrection (ZLeadscrewKinematics : Kinematics)
+
+Parameters describing the tilt correction
+
+move.kinematics.tiltCorrection.correctionFactor (ZLeadscrewKinematics : Kinematics)
+
+Correction factor
+
+move.kinematics.tiltCorrection.lastCorrections[] (ZLeadscrewKinematics : Kinematics)
+
+Last corrections (in mm)
+
+move.kinematics.tiltCorrection.maxCorrection (ZLeadscrewKinematics : Kinematics)
+
+Maximum Z correction (in mm)
+
+move.kinematics.tiltCorrection.screwPitch (ZLeadscrewKinematics : Kinematics)
+
+Pitch of the Z leadscrews (in mm)
+
+move.kinematics.tiltCorrection.screwX[] (ZLeadscrewKinematics : Kinematics)
+
+X positions of the leadscrews (in mm)
+
+move.kinematics.tiltCorrection.screwY[] (ZLeadscrewKinematics : Kinematics)
+
+Y positions of the leadscrews (in mm)
+
+move.limitAxes
+
+Limit axis positions by their minima and maxima
+
+move.noMovesBeforeHoming
+
+Indicates if standard moves are forbidden if the corresponding axis is not homed
+
+move.printingAcceleration
+
+Maximum acceleration allowed while printing (in mm/s^2)
+
+move.queue[]
+
+List of move queue items (DDA rings)
+
+move.queue[].gracePeriod
+
+The minimum idle time before we should start a move (in s)
+
+move.queue[].length
+
+Maximum number of moves that can be accomodated in the DDA ring
+
+move.rotation
+
+Parameters for centre rotation
+
+move.rotation.angle
+
+Angle of the centre rotatation (in deg)
+
+move.rotation.centre[]
+
+XY coordinates of the centre rotation
+
+move.shaping
+
+Parameters for input shaping
+
+move.shaping.amplitudes[]
+
+Amplitudes of the input shaper
+
+move.shaping.damping
+
+Damping factor
+
+move.shaping.delays[]
+
+Input shaper delays (in s)
+
+move.shaping.frequency
+
+Frequency (in Hz)
+
+move.shaping.type
+
+Configured input shaping type
+
+This property may be one of the following:
+
+none: None
+mzv: MZV
+zvd: ZVD
+zvdd: ZVDD
+zvddd: ZVDDD
+eI2: EI2 (2-hump)
+eI3: EI3 (3-hump)
+custom: Custom
+move.speedFactor
+
+Speed factor applied to every regular move (0.01..1 or greater)
+
+move.travelAcceleration
+
+Maximum acceleration allowed while travelling (in mm/s^2)
+
+move.usingSCurve
+
+Indicates if S-curve acceleration is used. Only present in builds that support it
+
+move.virtualEPos
+
+Virtual total extruder position
+
+move.workplaceNumber
+
+Index of the currently selected workplace
+
+network
+
+Information about connected network adapters
+
+network.corsSite
+
+This field is maintained by DSF in SBC mode
+
+If this is set, the web server will allow cross-origin requests via the Access-Control-Allow-Origin header
+
+network.hostname
+
+Hostname of the machine
+
+network.interfaces[]
+
+This field is maintained by DSF in SBC mode
+
+List of available network interfaces
+
+network.interfaces[].activeProtocols[]
+
+This field is exclusively maintained by DSF in SBC mode and/or by DWC. It is not available in standalone mode
+
+List of active protocols
+
+This property may be one of the following:
+
+http: HTTP protocol
+https: HTTPS protocol
+ftp: FTP protocol
+sftp: SFTP protocol
+telnet: Telnet protocol
+ssh: SSH protocol
+network.interfaces[].actualIP
+
+Actual IPv4 address of the network adapter or null if unknown
+
+network.interfaces[].configuredIP
+
+This field is exclusively maintained by DSF in SBC mode and/or by DWC. It is not available in standalone mode
+
+Configured IPv4 address of the network adapter or null if unknown
+
+network.interfaces[].dnsServer
+
+This field is exclusively maintained by DSF in SBC mode and/or by DWC. It is not available in standalone mode
+
+Configured IPv4 DNS server of the network adapter or null if unknown
+
+network.interfaces[].firmwareVersion
+
+Version of the network interface or null if unknown. This is only reported by ESP-based boards in standalone mode
+
+network.interfaces[].gateway
+
+IPv4 gateway of the network adapter or null if unknown
+
+network.interfaces[].mac
+
+Physical address of the network adapter or null if unknown
+
+network.interfaces[].numReconnects
+
+Number of reconnect attempts or null if unknown. This is only reported by ESP-based boards in standalone mode
+
+network.interfaces[].rssi
+
+This field is maintained by DSF in SBC mode
+
+Received signal strength indicator of the WiFi adapter (only WiFi, in dBm, or null if unknown)
+
+network.interfaces[].signal
+
+This field is obsolete and will be removed in the future: Use RSSI instead This field is exclusively maintained by DSF in SBC mode and/or by DWC. It is not available in standalone mode
+
+Signal of the WiFi adapter (only WiFi, in dBm, or null if unknown)
+
+network.interfaces[].speed
+
+This field is exclusively maintained by DSF in SBC mode and/or by DWC. It is not available in standalone mode
+
+Speed of the network interface (in MBit, null if unknown, 0 if not connected)
+
+network.interfaces[].ssid
+
+This field is maintained by DSF in SBC mode
+
+SSID of the WiFi network or null if not applicable
+
+network.interfaces[].state
+
+State of this network interface or null if unknown
+
+This property may be one of the following:
+
+disabled: Network disabled
+enabled: Network enabled but not started yet
+starting1: Starting up (used by WiFi networking in standalone mode)
+starting2: Starting up (used by WiFi networking in standalone mode)
+changingMode: Running and in the process of switching between modes (used by WiFi networking in standalone mode)
+establishingLink: Starting up, waiting for link
+obtainingIP: Link established, waiting for DHCP
+connected: Just established a connection
+active: Network running
+idle: WiFi adapter is idle
+network.interfaces[].subnet
+
+Subnet of the network adapter or null if unknown
+
+network.interfaces[].type
+
+Type of this network interface
+
+This property may be one of the following:
+
+lan: Wired network interface
+wifi: Wireless network interface
+network.interfaces[].wifiCountry
+
+This field is exclusively maintained by DSF in SBC mode and/or by DWC. It is not available in standalone mode
+
+WiFi country code if this is a WiFi adapter and if the country code can be determined
+
+Note: For this setting to be populated in SBC mode it is required to have the DuetPiManagementPlugin running. This is required due to missing Linux permissions of the control server.
+
+network.name
+
+Name of the machine
+
+plugins
+
+This field is exclusively maintained by DSF in SBC mode and/or by DWC. It is not available in standalone mode
+
+Dictionary of loaded plugins where each key is the plugin identifier
+
+Note: This is only populated by DSF in SBC mode, however it may be populated manually as well in standalone mode. Values in this dictionary cannot become null. If a value is changed to null, the corresponding item is deleted
+
+plugins{}.id (PluginManifest)
+
+Identifier of this plugin. May consist of letters and digits only (max length 32 chars)
+
+Note: For plugins with DWC components, this is the Webpack chunk name too
+
+plugins{}.name (PluginManifest)
+
+Name of the plugin. May consist of letters, digits, dashes, and underscores only (max length 64 chars)
+
+plugins{}.author (PluginManifest)
+
+Author of the plugin
+
+plugins{}.version (PluginManifest)
+
+Version of the plugin
+
+plugins{}.license (PluginManifest)
+
+License of the plugin. Should follow the SPDX format (see https://spdx.org/licenses/)
+
+plugins{}.homepage (PluginManifest)
+
+Link to the plugin homepage or source code repository
+
+plugins{}.tags[] (PluginManifest)
+
+List of general tags for search
+
+plugins{}.dwcVersion (PluginManifest)
+
+Major/minor compatible DWC version
+
+plugins{}.dwcDependencies[] (PluginManifest)
+
+List of DWC plugins this plugin depends on. Circular dependencies are not supported
+
+plugins{}.sbcRequired (PluginManifest)
+
+Set to true if a SBC is absolutely required for this plugin
+
+plugins{}.sbcDsfVersion (PluginManifest)
+
+Required DSF version for the plugin running on the SBC (ignored if there is no SBC executable)
+
+plugins{}.sbcExecutable (PluginManifest)
+
+Filename in the dsf directory used to start the plugin
+
+Note: A plugin may provide different binaries in subdirectories per architecture. Supported architectures are: arm, arm64, x86, x86_64
+
+plugins{}.sbcExecutableArguments (PluginManifest)
+
+Command-line arguments for the executable
+
+plugins{}.sbcExtraExecutables[] (PluginManifest)
+
+List of other filenames in the dsf directory that should be executable
+
+plugins{}.sbcAutoRestart (PluginManifest)
+
+Automatically restart the SBC process when terminated
+
+plugins{}.sbcOutputRedirected (PluginManifest)
+
+Defines if messages from stdout/stderr are output as generic messages
+
+plugins{}.sbcPermissions (PluginManifest)
+
+List of permissions required by the plugin executable running on the SBC
+
+This property may be one of the following:
+
+commandExecution: Execute generic commands
+codeInterceptionRead: Intercept codes but don't interact with them
+codeInterceptionReadWrite: Intercept codes in a blocking way with options to resolve or cancel them
+managePlugins: Install, load, unload, and uninstall plugins. Grants FS access to all third-party plugins too
+servicePlugins: Service plugin runtime information (for internal purposes only, do not use)
+manageUserSessions: Manage user sessions
+objectModelRead: Read from the object model
+objectModelReadWrite: Read from and write to the object model
+registerHttpEndpoints: Create new HTTP endpoints
+readFilaments: Read files in 0:/filaments
+writeFilaments: Write files in 0:/filaments
+readFirmware: Read files in 0:/firmware
+writeFirmware: Write files in 0:/firmware
+readGCodes: Read files in 0:/gcodes
+writeGCodes: Write files in 0:/gcodes
+readMacros: Read files in 0:/macros
+writeMacros: Write files in 0:/macros
+readMenu: Read files in 0:/menu
+writeMenu: Write files in 0:/menu
+readSystem: Read files in 0:/sys
+writeSystem: Write files in 0:/sys
+readWeb: Read files in 0:/www
+writeWeb: Write files in 0:/www
+fileSystemAccess: Access files including all subdirecotires of the virtual SD directory as DSF user
+launchProcesses: Launch new processes
+networkAccess: Communicate over the network (stand-alone)
+superUser: Launch process as root user (for full device control - potentially dangerous)
+webcamAccess: Access /dev/video* devices
+gpioAccess: Access /dev/gpio*, /dev/i2c*, and /dev/spidev* devices
+plugins{}.sbcConfigFiles[] (PluginManifest)
+
+List of files in the sys or virtual SD directory that should not be overwritten on upgrade
+
+Note: The file may be specified either relative to 0:/sys directory (e.g. motion.conf) or relative to the virtual SD directory (e.g. sys/motion.conf). Drive indices as in 0:/sys/motion.conf are not allowed!
+
+plugins{}.sbcPackageDependencies[] (PluginManifest)
+
+List of packages this plugin depends on (apt packages in the case of DuetPi)
+
+plugins{}.sbcPythonDependencies[] (PluginManifest)
+
+List of Python packages this plugin depends on
+
+plugins{}.sbcPluginDependencies[] (PluginManifest)
+
+List of SBC plugins this plugin depends on. Circular dependencies are not supported
+
+plugins{}.rrfVersion (PluginManifest)
+
+Major/minor supported RRF version (optional)
+
+plugins{}.data (PluginManifest)
+
+Custom plugin data to be populated in the object model (DSF/DWC in SBC mode - or - DWC in standalone mode). Before SetPluginData can be used, corresponding properties must be registered via this property first!
+
+plugins{} (Plugin : PluginManifest)
+
+Class representing a loaded plugin
+
+plugins{}.dsfFiles[] (Plugin : PluginManifest)
+
+List of files for the DSF plugin
+
+plugins{}.dwcFiles[] (Plugin : PluginManifest)
+
+List of files for the DWC plugin
+
+plugins{}.sdFiles[] (Plugin : PluginManifest)
+
+List of files to be installed to the (virtual) SD excluding web files
+
+plugins{}.pid (Plugin : PluginManifest)
+
+Process ID of the plugin or -1 if not started. It is set to 0 while the plugin is being shut down
+
+sbc
+
+This field is exclusively maintained by DSF in SBC mode and/or by DWC. It is not available in standalone mode
+
+Information about the SBC which Duet Software Framework is running on. This is null if the system is operating in standalone mode
+
+sbc.appArmor
+
+Indicates if AppArmor support is enabled
+
+Note: By default, AppArmor is required for plugin functionality
+
+sbc.cpu
+
+Information about the SBC's CPU
+
+sbc.cpu.avgLoad
+
+Average CPU load (0..100%) or null if unknown
+
+sbc.cpu.hardware
+
+CPU hardware as reported by /proc/cpuinfo
+
+sbc.cpu.numCores
+
+Number of CPU cores/threads (defaults to 1)
+
+sbc.cpu.temperature
+
+Current CPU temperature (in degC) or null if unknown
+
+sbc.dsf
+
+Information about DSF running on the SBC
+
+sbc.dsf.buildDateTime
+
+Datetime when DSF was built
+
+sbc.dsf.httpEndpoints[]
+
+List of registered third-party HTTP endpoints
+
+sbc.dsf.httpEndpoints[].endpointType
+
+HTTP type of this endpoint
+
+This property may be one of the following:
+
+GET: HTTP GET request
+POST: HTTP POST request
+PUT: HTTP PUT request
+PATCH: HTTP PATCH request
+TRACE: HTTP TRACE request
+DELETE: HTTP DELETE request
+OPTIONS: HTTP OPTIONS request
+WebSocket: WebSocket request. This has not been implemented yet but it is reserved for future usage
+sbc.dsf.httpEndpoints[].namespace
+
+Namespace of the endpoint
+
+Note: May be to register root-level rr_ requests (to emulate RRF poll requests)
+
+sbc.dsf.httpEndpoints[].path
+
+Path to the endpoint
+
+sbc.dsf.httpEndpoints[].isUploadRequest
+
+Whether this is a upload request
+
+Note: If set to true, the whole body payload is written to a temporary file and the file path is passed via the property
+
+sbc.dsf.httpEndpoints[].unixSocket
+
+Path to the UNIX socket
+
+sbc.dsf.is64Bit
+
+Indicates if the process is 64-bit
+
+sbc.dsf.pluginSupport
+
+Indicates if DSF allows the installation and usage of third-party plugins
+
+sbc.dsf.rootPluginSupport
+
+Indicates if DSF allows the installation and usage of third-party root plugins (potentially dangerous, disabled by default)
+
+Note: Requires to be true
+
+sbc.dsf.userSessions[]
+
+List of user sessions
+
+sbc.dsf.userSessions[].accessLevel
+
+Access level of this session
+
+This property may be one of the following:
+
+readOnly: Changes to the system and/or operation are not permitted
+readWrite: Changes to the system and/or operation are permitted
+sbc.dsf.userSessions[].id
+
+Identifier of this session
+
+sbc.dsf.userSessions[].origin
+
+Origin of this session. For remote sessions, this equals the remote IP address
+
+sbc.dsf.userSessions[].originId
+
+Corresponding identifier of the origin. If it is a remote session, it is the remote port, else it defaults to the PID of the current process
+
+sbc.dsf.userSessions[].sessionType
+
+Type of this session
+
+This property may be one of the following:
+
+local: Local client
+http: Remote client via HTTP
+telnet: Remote client via Telnet
+sbc.dsf.version
+
+Version of Duet Software Framework (provided by Duet Control Server)
+
+sbc.distribution
+
+Name and version of the system distribution or null if unknown
+
+sbc.distributionBuildTime
+
+Build datetime of the system distribution or null if unknown
+
+sbc.memory
+
+Information about the SBC's memory (RAM)
+
+sbc.memory.available
+
+Available memory (in bytes)
+
+sbc.memory.total
+
+Total memory (in bytes)
+
+sbc.model
+
+SBC model or null if unknown
+
+sbc.serial
+
+Serial of the SBC or null if unknown
+
+sbc.uptime
+
+Uptime of the running system (in s)
+
+sensors
+
+Information about connected sensors including Z-probes and endstops
+
+sensors.analog[]
+
+List of analog sensors
+
+sensors.analog[].beta
+
+Beta value of this sensor (if applicable)
+
+sensors.analog[].c
+
+C value of this sensor
+
+sensors.analog[].highReading
+
+High sensor reading (only linear analog sensors, otherwise null)
+
+sensors.analog[].lastReading
+
+Last sensor reading (in C) or null if invalid
+
+sensors.analog[].lowReading
+
+Low sensor reading (only linear analog sensors, otherwise null)
+
+sensors.analog[].name
+
+Name of this sensor or null if not configured
+
+sensors.analog[].offsetAdj
+
+Offset adjustment (in K)
+
+Note: See also M308 U
+
+sensors.analog[].port
+
+Port of this sensor or null if not applicable
+
+sensors.analog[].r25
+
+Resistance of this sensor at 25C
+
+sensors.analog[].rRef
+
+Series resistance of this sensor channel (only applicable for thermistors)
+
+sensors.analog[].slopeAdj
+
+Slope adjustment factor
+
+Note: See also M308 V
+
+sensors.analog[].state
+
+State of this sensor
+
+This property may be one of the following:
+
+ok: Sensor is functional
+shortCircuit: Short circuit detected
+shortToVcc: Short to VCC detected
+shortToGround: Short to GND detected
+openCircuit: Sensor circuit is open
+timeout: Timeout while waiting for sensor data
+ioError: IO error
+hardwareError: Hardware error
+notReady: Not ready
+invalidOutputNumber: Invalid output number
+busBusy: Sensor bus is busy
+badResponse: Bad sensor response
+unknownPort: Unknown sensor port
+notInitialised: Sensor not initialized
+unknownSensor: Unknown sensor
+overOrUnderVoltage: Sensor exceeded min/max voltage
+badVref: Bad VREF detected
+badVssa: Bad VSSA detected
+unknownError: Unknown error
+sensors.analog[].type
+
+Type of this sensor
+
+This property may be one of the following:
+
+thermistor: Regular temperature thermistor
+pt1000: PT1000 sensor
+rtdmax31865: RTD MAX31865
+thermocouplemax31855: MAX31855 thermocouple
+thermocouplemax31856: MAX31856 thermocouple
+linearanalog: Linear analog sensor
+dht11: DHT11 sensor
+dht21: DHT21 sensor
+dht22: DHT22 sensor
+dhthumidity: DHT humidity sensor
+bme280: BME280 sensor
+bmepressure: BME280 pressure sensor
+bmehumidity: BME280 humidity sensor
+currentlooppyro: Current loop sensor
+mcutemp: MCU temperature
+drivers: On-board stepper driver sensors
+driversduex: Stepper driver sensors on the DueX expansion board
+unknown: Unknown temperature sensor
+sensors.endstops[]
+
+List of configured endstops
+
+sensors.endstops[].highEnd
+
+Whether this endstop is at the high end of the axis
+
+sensors.endstops[].probe
+
+Number of the referenced probe if type is ZProbeAsEndstop, else null
+
+sensors.endstops[].triggered
+
+Whether or not the endstop is hit
+
+sensors.endstops[].type
+
+Type of the endstop
+
+This property may be one of the following:
+
+inputPin: Generic input pin
+zProbeAsEndstop: Z-probe acts as an endstop
+motorStallAny: Motor stall detection stops all the drives when triggered
+motorStallIndividual: Motor stall detection stops individual drives when triggered
+unknown: Unknown type
+sensors.filamentMonitors[]
+
+List of configured filament monitors
+
+sensors.filamentMonitors[] (Duet3DFilamentMonitor : FilamentMonitor)
+
+Base class for Duet3D filament monitors
+
+sensors.filamentMonitors[].avgPercentage (Duet3DFilamentMonitor : FilamentMonitor)
+
+Average ratio of measured vs. commanded movement
+
+sensors.filamentMonitors[].lastPercentage (Duet3DFilamentMonitor : FilamentMonitor)
+
+Last ratio of measured vs. commanded movement
+
+sensors.filamentMonitors[].maxPercentage (Duet3DFilamentMonitor : FilamentMonitor)
+
+Maximum ratio of measured vs. commanded movement
+
+sensors.filamentMonitors[].minPercentage (Duet3DFilamentMonitor : FilamentMonitor)
+
+Minimum ratio of measured vs. commanded movement
+
+sensors.filamentMonitors[].position (Duet3DFilamentMonitor : FilamentMonitor)
+
+Reported sensor position of this filament monitor. The maximum value depends on the type of the sensor, e.g. 0..1023 for a Duet3D MFM.
+
+sensors.filamentMonitors[].totalExtrusion (Duet3DFilamentMonitor : FilamentMonitor)
+
+Total extrusion commanded (in mm)
+
+sensors.filamentMonitors[].enabled (FilamentMonitor)
+
+This field is obsolete and will be removed in the future: Use EnableMode instead
+
+Indicates if this filament monitor is enabled
+
+sensors.filamentMonitors[].enableMode (FilamentMonitor)
+
+Enable mode of this filament monitor
+
+This property may be one of the following:
+
+0: Filament monitor is disabled
+1: Filament monitor is enabled during prints from SD card
+2: Filament monitor is always enabled (when printing from USB)
+sensors.filamentMonitors[].status (FilamentMonitor)
+
+Last reported status of this filament monitor
+
+This property may be one of the following:
+
+noMonitor: No monitor is present
+ok: Filament working normally
+noDataReceived: No data received from the remote filament senosr
+noFilament: No filament present
+tooLittleMovement: Sensor reads less movement than expected
+tooMuchMovement: Sensor reads more movment than expected
+sensorError: Sensor encountered an error
+sensors.filamentMonitors[].type (FilamentMonitor)
+
+Type of this filament monitor
+
+This property may be one of the following:
+
+simple: Simple filament sensor
+laser: Laser filament sensor
+pulsed: Pulsed filament sensor
+rotatingMagnet: Rotating magnet filament sensor
+unknown: Unknown sensor type
+sensors.filamentMonitors[] (LaserFilamentMonitor : Duet3DFilamentMonitor)
+
+Information about a laser filament monitor
+
+sensors.filamentMonitors[].calibrated (LaserFilamentMonitor : Duet3DFilamentMonitor)
+
+Calibrated properties of this filament monitor
+
+sensors.filamentMonitors[].calibrated.calibrationFactor (LaserFilamentMonitor : Duet3DFilamentMonitor)
+
+Calibration factor of this sensor
+
+sensors.filamentMonitors[].calibrated.percentMax (LaserFilamentMonitor : Duet3DFilamentMonitor)
+
+Maximum percentage (0..1 or greater)
+
+sensors.filamentMonitors[].calibrated.percentMin (LaserFilamentMonitor : Duet3DFilamentMonitor)
+
+Minimum percentage (0..1)
+
+sensors.filamentMonitors[].calibrated.sensivity (LaserFilamentMonitor : Duet3DFilamentMonitor)
+
+Calibrated sensivity
+
+sensors.filamentMonitors[].calibrated.totalDistance (LaserFilamentMonitor : Duet3DFilamentMonitor)
+
+Total extruded distance (in mm)
+
+sensors.filamentMonitors[].configured (LaserFilamentMonitor : Duet3DFilamentMonitor)
+
+Configured properties of this filament monitor
+
+sensors.filamentMonitors[].configured.allMoves (LaserFilamentMonitor : Duet3DFilamentMonitor)
+
+Whether all moves and not only printing moves are supposed to be checked
+
+sensors.filamentMonitors[].configured.percentMax (LaserFilamentMonitor : Duet3DFilamentMonitor)
+
+Maximum percentage (0..1 or greater)
+
+sensors.filamentMonitors[].configured.percentMin (LaserFilamentMonitor : Duet3DFilamentMonitor)
+
+Minimum percentage (0..1)
+
+sensors.filamentMonitors[].configured.sampleDistance (LaserFilamentMonitor : Duet3DFilamentMonitor)
+
+Sample distance (in mm)
+
+sensors.filamentMonitors[].filamentPresent (LaserFilamentMonitor : Duet3DFilamentMonitor)
+
+Indicates if a filament is present
+
+sensors.filamentMonitors[] (PulsedFilamentMonitor : FilamentMonitor)
+
+Information about a pulsed filament monitor
+
+sensors.filamentMonitors[].calibrated (PulsedFilamentMonitor : FilamentMonitor)
+
+Calibrated properties of this filament monitor
+
+sensors.filamentMonitors[].calibrated.mmPerPulse (PulsedFilamentMonitor : FilamentMonitor)
+
+Extruded distance per pulse (in mm)
+
+sensors.filamentMonitors[].calibrated.percentMax (PulsedFilamentMonitor : FilamentMonitor)
+
+Maximum percentage (0..1 or greater)
+
+sensors.filamentMonitors[].calibrated.percentMin (PulsedFilamentMonitor : FilamentMonitor)
+
+Minimum percentage (0..1)
+
+sensors.filamentMonitors[].calibrated.totalDistance (PulsedFilamentMonitor : FilamentMonitor)
+
+Total extruded distance (in mm)
+
+sensors.filamentMonitors[].configured (PulsedFilamentMonitor : FilamentMonitor)
+
+Configured properties of this filament monitor
+
+sensors.filamentMonitors[].configured.mmPerPulse (PulsedFilamentMonitor : FilamentMonitor)
+
+Extruded distance per pulse (in mm)
+
+sensors.filamentMonitors[].configured.percentMax (PulsedFilamentMonitor : FilamentMonitor)
+
+Maximum percentage (0..1 or greater)
+
+sensors.filamentMonitors[].configured.percentMin (PulsedFilamentMonitor : FilamentMonitor)
+
+Minimum percentage (0..1)
+
+sensors.filamentMonitors[].configured.sampleDistance (PulsedFilamentMonitor : FilamentMonitor)
+
+Sample distance (in mm)
+
+sensors.filamentMonitors[].position (PulsedFilamentMonitor : FilamentMonitor)
+
+Current position of the filament monitor (in mm)
+
+sensors.filamentMonitors[] (RotatingMagnetFilamentMonitor : Duet3DFilamentMonitor)
+
+Information about a rotating magnet filament monitor
+
+sensors.filamentMonitors[].calibrated (RotatingMagnetFilamentMonitor : Duet3DFilamentMonitor)
+
+Calibrated properties of this filament monitor
+
+sensors.filamentMonitors[].calibrated.mmPerRev (RotatingMagnetFilamentMonitor : Duet3DFilamentMonitor)
+
+Extruded distance per revolution (in mm)
+
+sensors.filamentMonitors[].calibrated.percentMax (RotatingMagnetFilamentMonitor : Duet3DFilamentMonitor)
+
+Maximum percentage (0..1 or greater)
+
+sensors.filamentMonitors[].calibrated.percentMin (RotatingMagnetFilamentMonitor : Duet3DFilamentMonitor)
+
+Minimum percentage (0..1)
+
+sensors.filamentMonitors[].calibrated.totalDistance (RotatingMagnetFilamentMonitor : Duet3DFilamentMonitor)
+
+Total extruded distance (in mm)
+
+sensors.filamentMonitors[].configured (RotatingMagnetFilamentMonitor : Duet3DFilamentMonitor)
+
+Configured properties of this filament monitor
+
+sensors.filamentMonitors[].configured.allMoves (RotatingMagnetFilamentMonitor : Duet3DFilamentMonitor)
+
+Whether all moves and not only printing moves are supposed to be checked
+
+sensors.filamentMonitors[].configured.mmPerRev (RotatingMagnetFilamentMonitor : Duet3DFilamentMonitor)
+
+Extruded distance per revolution (in mm)
+
+sensors.filamentMonitors[].configured.percentMax (RotatingMagnetFilamentMonitor : Duet3DFilamentMonitor)
+
+Maximum percentage (0..1 or greater)
+
+sensors.filamentMonitors[].configured.percentMin (RotatingMagnetFilamentMonitor : Duet3DFilamentMonitor)
+
+Minimum percentage (0..1)
+
+sensors.filamentMonitors[].configured.sampleDistance (RotatingMagnetFilamentMonitor : Duet3DFilamentMonitor)
+
+Sample distance (in mm)
+
+sensors.gpIn[]
+
+List of general-purpose input ports
+
+sensors.gpIn[].value
+
+Value of this port (0..1)
+
+sensors.probes[]
+
+List of configured probes
+
+sensors.probes[].calibA
+
+Linear coefficient for scanning probes
+
+sensors.probes[].calibB
+
+Quadratic coefficient for scanning probes
+
+sensors.probes[].calibrationTemperature
+
+Calibration temperature (in C)
+
+sensors.probes[].deployedByUser
+
+Indicates if the user has deployed the probe
+
+sensors.probes[].disablesHeaters
+
+Whether probing disables the heater(s)
+
+sensors.probes[].diveHeight
+
+This field is obsolete and will be removed in the future: Use DiveHeights[0] instead
+
+Dive height (in mm)
+
+sensors.probes[].diveHeights[]
+
+Dive heights of the probe. The first element is the regular dive height, the second element may be used by scanning Z-probes
+
+sensors.probes[].isCalibrated
+
+Indicates if the scanning probe is calibrated
+
+sensors.probes[].lastStopHeight
+
+Height of the probe where it stopped last time (in mm)
+
+sensors.probes[].maxProbeCount
+
+Maximum number of times to probe after a bad reading was determined
+
+sensors.probes[].measuredHeight
+
+Measured height (only applicable for scanning probes, in mm or null)
+
+sensors.probes[].offsets[]
+
+X+Y offsets (in mm)
+
+sensors.probes[].recoveryTime
+
+Recovery time (in s)
+
+sensors.probes[].scanCoefficients[]
+
+Coefficients for the scanning Z-probe (4 elements, if applicable)
+
+sensors.probes[].speeds[]
+
+Fast and slow probing speeds (in mm/s). Scanning probes may have three speeds where the last one is the movement speed while probing heightmaps
+
+sensors.probes[].temperatureCoefficients[]
+
+List of temperature coefficients
+
+sensors.probes[].threshold
+
+Configured trigger threshold (0..1023)
+
+sensors.probes[].tolerance
+
+Allowed tolerance deviation between two measures (in mm)
+
+sensors.probes[].touchMode
+
+Touch mode options (if supported, otherwise null)
+
+sensors.probes[].touchMode.active
+
+Indicates if the touch probe is enabled
+
+sensors.probes[].touchMode.speed
+
+Speed while probing in touch mode (in mm/s)
+
+sensors.probes[].touchMode.threshold
+
+Threshold value of the touch probe
+
+sensors.probes[].touchMode.triggerHeight
+
+Height of the trigger point of the touch probe (in mm)
+
+sensors.probes[].travelSpeed
+
+Travel speed when probing multiple points (in mm/min)
+
+sensors.probes[].triggerHeight
+
+Z height at which the probe is triggered (in mm)
+
+sensors.probes[].type
+
+Type of the configured probe
+
+This property may be one of the following:
+
+0: No probe
+1: A simple unmodulated probe (like dc42's infrared probe)
+2: A modulated probe (like the original one shipped with the RepRapPro Ormerod)
+3: Alternate analog probe (like the ultrasonic probe)
+4: Endstop switch (obsolete, should not be used any more)
+5: A switch that is triggered when the probe is activated (filtered)
+6: Endstop switch on the E1 endstop pin (obsolete, should not be used any more)
+7: Endstop switch on Z endstop pin (obsolete, should not be used any more)
+8: A switch that is triggered when the probe is activated (unfiltered)
+9: A BLTouch probe
+10: Z motor stall detection
+sensors.probes[].value[]
+
+Current analog values of the probe
+
+spindles[]
+
+List of configured CNC spindles
+
+spindles[].active
+
+Active RPM
+
+spindles[].canReverse
+
+Flags whether the spindle may spin in reverse direction
+
+spindles[].current
+
+Current RPM, negative if anticlockwise direction
+
+spindles[].frequency
+
+Frequency (in Hz)
+
+spindles[].idlePwm
+
+Idle PWM value (0..1)
+
+spindles[].max
+
+Maximum RPM
+
+spindles[].maxPwm
+
+Maximum PWM value when turned on (0..1)
+
+spindles[].min
+
+Minimum RPM when turned on
+
+spindles[].minPwm
+
+Minimum PWM value when turned on (0..1)
+
+spindles[].state
+
+Current state
+
+This property may be one of the following:
+
+unconfigured: Spinde not configured
+stopped: Spindle is stopped (inactive)
+forward: Spindle is going forwards
+reverse: Spindle is going in reverse
+spindles[].type
+
+Spindle type
+
+This property may be one of the following:
+
+enaDir: Enable and direction
+fwdRev: Forward and reverse
+state
+
+Information about the machine state
+
+state.atxPower
+
+State of the ATX power pin (if controlled)
+
+state.atxPowerPort
+
+Port of the ATX power pin or null if not assigned
+
+state.beep
+
+Information about a requested beep or null if none is requested
+
+state.beep.duration
+
+Duration of the requested beep (in ms)
+
+state.beep.frequency
+
+Frequency of the requested beep (in Hz)
+
+state.currentTool
+
+Number of the currently selected tool or -1 if none is selected
+
+state.deferredPowerDown
+
+When provided it normally has value 0 normally and 1 when a deferred power down is pending
+
+Note: It is only available after power switching has been enabled by M80 or M81
+
+state.displayMessage
+
+Persistent message to display (see M117)
+
+state.gpOut[]
+
+List of general-purpose output ports
+
+state.gpOut[].freq
+
+PWM frequency of this port (in Hz)
+
+state.gpOut[].pwm
+
+PWM value of this port (0..1)
+
+state.laserPwm
+
+Laser PWM of the next commanded move (0..1) or null if not applicable
+
+state.logFile
+
+This field is maintained by DSF in SBC mode
+
+Log file being written to or null if logging is disabled
+
+state.logLevel
+
+This field is maintained by DSF in SBC mode
+
+Current log level
+
+This property may be one of the following:
+
+debug: Log everything including debug messages
+info: Log information and warning messages
+warn: Log warning messages only
+off: Logging is disabled
+state.messageBox
+
+Details about a requested message box or null if none is requested
+
+state.messageBox.axisControls
+
+Bitmap of the axis movement controls to show (indices)
+
+state.messageBox.cancelButton
+
+Indicates if a cancel button is supposed to be shown
+
+state.messageBox.choices[]
+
+List of possible choices (only for mode 4)
+
+state.messageBox.default
+
+Default value (only for modes >= 4)
+
+state.messageBox.max
+
+Maximum input value (only for modes >= 5)
+
+state.messageBox.message
+
+Content of the message box
+
+state.messageBox.min
+
+Minimum input value (only for modes >= 5)
+
+state.messageBox.mode
+
+Mode of the message box to display
+
+This property may be one of the following:
+
+0: Display a message box without any buttons
+1: Display a message box with only a Close button
+2: Display a message box with only an Ok button which is supposed to send M292 when pressed, blocking
+3: Display a message box with an Ok button that sends M292 P0 or a cancel button that sends M292 P1 when clicked, blocking
+4: Multiple choices, blocking
+5: Integer value required, blocking
+6: Floating-point value required, blocking
+7: String value required, blocking
+state.messageBox.seq
+
+Sequence number of the message box
+
+Note: This is increased whenever a new message box is supposed to be displayed
+
+state.messageBox.timeout
+
+Total timeout for this message box (in ms)
+
+state.messageBox.title
+
+Title of the message box
+
+state.machineMode
+
+Current mode of operation
+
+This property may be one of the following:
+
+FFF: Fused Filament Fabrication (default)
+CNC: Computer Numerical Control
+Laser: Laser operation mode (e.g. laser cutters)
+state.macroRestarted
+
+Indicates if the current macro file was restarted after a pause
+
+state.msUpTime
+
+Millisecond fraction of UpTime
+
+state.nextTool
+
+Number of the next tool to be selected
+
+state.pluginsStarted
+
+This field is exclusively maintained by DSF in SBC mode and/or by DWC. It is not available in standalone mode
+
+Indicates if at least one plugin has been started
+
+state.powerFailScript
+
+Script to execute when the power fails
+
+state.previousTool
+
+Number of the previous tool
+
+state.restorePoints[]
+
+List of restore points
+
+state.restorePoints[].coords[]
+
+Axis coordinates of the restore point (in mm)
+
+state.restorePoints[].extruderPos
+
+The virtual extruder position at the start of this move
+
+state.restorePoints[].fanPwm
+
+PWM value of the tool fan (0..1)
+
+state.restorePoints[].feedRate
+
+Requested feedrate (in mm/s)
+
+state.restorePoints[].ioBits
+
+The output port bits setting for this move or null if not applicable
+
+state.restorePoints[].laserPwm
+
+Laser PWM value (0..1) or null if not applicable
+
+state.restorePoints[].toolNumber
+
+The tool number that was active
+
+state.startupError
+
+This field is maintained by DSF in SBC mode
+
+First error on start-up or null if there was none
+
+state.startupError.file
+
+Filename of the macro where the error occurred
+
+state.startupError.line
+
+Line number of the error
+
+state.startupError.message
+
+Message of the error
+
+state.status
+
+Current state of the machine
+
+This property may be one of the following:
+
+disconnected: Not connected to the Duet
+starting: Processing config.g
+updating: The firmware is being updated
+off: The machine is turned off (i.e. the input voltage is too low for operation)
+halted: The machine has encountered an emergency stop and is ready to reset
+pausing: The machine is about to pause a file job
+paused: The machine has paused a file job
+resuming: The machine is about to resume a paused file job
+cancelling: Job file is being cancelled
+processing: The machine is processing a file job
+simulating: The machine is simulating a file job to determine its processing time
+busy: The machine is busy doing something (e.g. moving)
+changingTool: The machine is changing the current tool
+idle: The machine is on but has nothing to do
+state.thisActive
+
+Shorthand for inputs[state.thisInput].active
+
+state.thisInput
+
+Index of the current G-code input channel (see Inputs)
+
+Note: This is primarily intended for macro files to determine on which G-code channel it is running. The value of this property is always null in object model queries
+
+state.time
+
+Internal date and time in RepRapFirmware or null if unknown
+
+state.upTime
+
+How long the machine has been running (in s)
+
+tools[]
+
+List of configured tools
+
+tools[].active[]
+
+Active temperatures of the associated heaters (in C)
+
+tools[].axes[]
+
+Associated axes. At present only X and Y can be mapped per tool.
+
+Note: The order is the same as the visual axes, so by default the layout is [ [0], // X [1] // Y ] Make sure to set each item individually so the change events are called. Each item is a bitmap represented as an array
+
+tools[].extruders[]
+
+Extruder drives of this tool
+
+tools[].fans[]
+
+List of associated fans (indices)
+
+Note: This is a bitmap represented as an array
+
+tools[].feedForward[]
+
+This field is obsolete and will be removed in the future: Use FeedForwardPwm instead
+
+Feedforward coefficients to apply to the mapped heaters during extrusions
+
+tools[].feedForwardAdvance
+
+Time advance for applying feedforward in milliseconds
+
+tools[].feedForwardPwm[]
+
+Feedforward coefficients to apply to the mapped heaters during extrusions
+
+tools[].feedForwardTemp[]
+
+Temperature increase per mm/dec extrusion speed
+
+tools[].filamentExtruder
+
+Extruder drive index for resolving the tool filament (index or -1)
+
+tools[].heaters[]
+
+List of associated heaters (indices)
+
+tools[].isRetracted
+
+True if the filament has been firmware-retracted
+
+tools[].mix[]
+
+Mix ratios of the associated extruder drives
+
+tools[].name
+
+Name of this tool
+
+tools[].number
+
+Number of this tool
+
+tools[].offsets[]
+
+Axis offsets (in mm) This list is in the same order as Axes
+
+tools[].offsetsProbed
+
+Bitmap of the probed axis offsets
+
+tools[].retraction
+
+Firmware retraction parameters
+
+tools[].retraction.extraRestart
+
+Amount of additional filament to extrude when undoing a retraction (in mm)
+
+tools[].retraction.length
+
+Retraction length (in mm)
+
+tools[].retraction.speed
+
+Retraction speed (in mm/s)
+
+tools[].retraction.unretractSpeed
+
+Unretract speed (in mm/s)
+
+tools[].retraction.zHop
+
+Amount of Z lift after doing a retraction (in mm)
+
+tools[].spindle
+
+Index of the mapped spindle or -1 if not mapped
+
+tools[].spindleRpm
+
+RPM of the mapped spindle
+
+tools[].standby[]
+
+Standby temperatures of the associated heaters (in C)
+
+tools[].state
+
+Current state of this tool
+
+This property may be one of the following:
+
+off: Tool is turned off
+active: Tool is active
+standby: Tool is in standby
+volumes[]
+
+This field is maintained by DSF in SBC mode
+
+List of available mass storages
+
+volumes[].capacity
+
+Total capacity of the storage device (in bytes or null)
+
+volumes[].freeSpace
+
+How much space is still available on this device (in bytes or null)
+
+volumes[].mounted
+
+Whether the storage device is mounted
+
+volumes[].name
+
+This field is exclusively maintained by DSF in SBC mode and/or by DWC. It is not available in standalone mode
+
+Name of this volume
+
+volumes[].openFiles
+
+Number of currently open files or null if unknown
+
+volumes[].partitionSize
+
+Total size of this volume (in bytes or null)
+
+volumes[].path
+
+This field is exclusively maintained by DSF in SBC mode and/or by DWC. It is not available in standalone mode
+
+Logical path of the storage device
+
+volumes[].speed
+
+Speed of the storage device (in bytes/s or null if unknown)

@@ -1,0 +1,180 @@
+This is a list of variables available in custom G-Code macro language in PrusaSlicer. The macro language is described in detail in a separate page.
+
+Placeholders for configuration options
+
+Each configuration option can be used in all of your custom G-Codes and output filename template. The identifier of the respective placeholder is shown in a tooltip when you hover the config option in parameter tabs:
+
+
+
+That is, using {layer_height} in a custom G-Code would expand into 0.15.
+
+Placeholders available in all custom G-Codes
+
+There are additional placeholders available in all custom G-Codes:
+
+current_extruder
+current_object_idx
+day
+filament_preset
+first_layer_print_convex_hull
+first_layer_print_max
+first_layer_print_min
+first_layer_print_size
+has_single_extruder_multi_material_priming
+has_wipe_tower
+hour
+initial_extruder
+initial_tool
+input_filename_base
+is_extruder_used
+minute
+month
+num_extruders
+num_instances
+num_objects
+physical_printer_preset
+print_bed_max
+print_bed_min
+print_bed_size
+print_preset
+printer_preset
+scale
+second
+timestamp
+total_layer_count
+total_toolchanges
+year
+
+ 
+
+Custom G-Code specific placeholders
+
+There are extra placeholders only available in certain custom G-Codes. See the table below for an overview.
+
+ 	Toolchange	Before layer	After Layer	Filament Start	Filament End	End
+next_extruder	✓	✗	✗	✗	✗	✗
+previous_extruder	✓	✗	✗	✗	✗	✗
+toolchange_z	✓	✗	✗	✗	✗	✗
+max_layer_z	✓	✓	✓	✓	✓	✓
+layer_num	✓	✓	✓	✓	✓	✓
+layer_z	✓	✓	✓	✓	✓	✓
+filament_extruder_id	✗	✗	✗	✓	✓	✗
+ 
+
+ 
+
+Output filename format FDM
+
+The macro language can be used in Output filename format field available in Print Settings -> Output options. In this context you can use all the configuration placeholders plus the following:
+
+day
+extruded_volume
+filament_preset
+hour
+initial_extruder
+initial_filament_type
+initial_tool
+input_filename_base
+minute
+month
+normal_print_time
+num_extruders
+num_instances
+num_objects
+num_printing_extruders
+physical_printer_preset
+print_preset
+print_time
+printer_preset
+printing_filament_types
+scale
+second
+silent_print_time
+timestamp
+total_cost
+total_toolchanges
+total_weight
+total_wipe_tower_cost
+total_wipe_tower_filament
+used_filament
+version
+year
+
+ 
+
+Output filename format SLA
+
+You can use all configuration options placeholders plus the following:
+
+day
+hour
+input_filename_base
+minute
+month
+num_instances
+num_objects
+objects_used_material
+print_time
+scale
+second
+support_used_material
+timestamp
+total_cost
+total_weight
+version
+year
+
+Was this article helpful?
+ 
+22 comments
+
+Log in
+  to post a comment
+justbennett•about 1 month ago
+So "first_layer_temperature" isn't on this list? That's confusing. Because it's definitely a placeholder Right?
+Reply
+Francois Leclerc•about 2 months ago
+Can we request a new configuration placeholder? I would like to know the printing time of the first layer. It's listed after the slice is created but I don't know what is the placeholder to use for it to be part of the filename.
+It would be Extremely nice to be able to set a default file output format. I have multiple printer settings according to the type of printing I want to do and any change to the output format needs to be replicated by hand in every printer profiles. Having that functionality for the printer profiles by nozzle sizes would be a great addition.
+I second the request to have control over where the Bed number is located.
+Reply
+Justin•6 months ago
+What about Bed number? cause currently it automatically sticks that on the end of the file name and I want it on the front.
+Reply
+CW•6 months ago
+Same, I also want it on the front.
+Reply
+bosr•6 months ago
+Same here, it makes file listing much easier.
+Thanks in advance
+Reply
+Gregor_PRIV•6 months ago
+Ditto - before printer's tiny display scrolls the filename all the way till the bed number I feel I'm getting older.
+Actually, custom naming of the beds would also be insanely useful. ;)
+Reply
+smoere•5 months ago
++1 from me. for now i start filename with timestamp as a workaround, getting plate number/bed number as variable would be nicer
+Reply
+aaron peterson•9 months ago
+There is also the nozzle_diameter[] array, for instance:
+
+{input_filename_base}_{nozzle_diameter[0]},{nozzle_diameter[1]}n_{layer_height}mm_{printing_filament_types}_{printer_model}_{round(total_weight)}g_{print_time}.gcode
+Reply
+Tago•9 months ago
+How could I get print time per instance to file name?
+
+- {print_time / num_instances} does not work, gives error "Cannot divide a non-numeric type"
+- print_time_seconds etc values don't work, then I get error that this is not valid variable name.
+Reply
+Thomas•11 months ago
+I assume this is not kept current since i would assume that newest slicers can include what plate this file correspond to
+Reply
+Polyvector•9 months ago
+Were you able to find the variable that corresponds to the active print bed? I tried a bunch of possibilities, but every one errored out. Currently, I can only get it to number the files if I batch output the entire file at once.
+Reply
+Doctor Wizard•about 1 year ago
+Am I overlooking it, or is there a way to add the initial print temperature to the filename?
+Reply
+aaron peterson•9 months ago
+first_layer_temperature[initial_tool]
+Reply

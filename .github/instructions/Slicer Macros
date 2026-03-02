@@ -1,0 +1,156 @@
+Macros allow you to create conditions and evaluate math equations in the Custom G-code fields.
+
+PrusaSlicer macro language is not compatible with Slic3r conditional expressions.
+Constructs
+
+Conditional evaluation
+
+{if 
+
+Expression evaluation
+
+{
+
+Legacy Placeholder syntax
+
+[variable]
+or
+[variable_index]
+
+Inside either construct, PrusaSlicer configuration variables can be accessed by their names
+
+layer_z
+
+and elements of vector variables can be accessed by using square braces
+
+temperature[0]
+
+refers to the temperature of the first extruder.
+
+Multidimensional vectors can currently be only accessed as a simple vector variable resulting in a string value (e.g. if the extruder_variable[1] resulting in [n,0] string value -- can be posted in g-code but can not be used in arithmetic operations).
+
+Strings are identified by double quotes
+"string"
+and regular expressions by slashes
+/regex/
+ Strings are not parsed recursively, i.e. curly and square brackets inside strings will appear in the output. This allows constructs such as
+{"[text in square brackets]"}
+
+Operators
+
+The following operators are allowed:
+
+Comparison
+<, >, ==, !=, <>, <=, >=
+Example:
+{if layer_height == 0.2};Do something{endif}
+Boolean logic
+and, or, not
+or, equivalently,
+&&, ||, !
+ 
+Example
+{if layer_height > 0.1 and first_layer_temperature[0] > 220};Do something{endif}
+Arithmetics
++, -, , /
+Example:
+M104 S{first_layer_temperature[0] * 2/3}
+(Note that first_layer_temperature is a vector)
+Ternary operator
+(
+This needs to be enclosed in parentheses to work.
+Example:
+M104 S{(first_layer_temperature[0]>220 ? 230 : 200)}
+This expression sets the extruder temperature to either 230 or 200 depending on whether the first layer needs to be above 220°.
+Regular expression matching
+(=~ (matching), !~ (not matching))
+Regular expressions are enclosed in slashes /
+Example:
+{if printer_notes=~/.PRINTER_VENDOR_PRUSA3D./};Printer is Prusa{endif}
+Functions
+
+Minimum
+min(a,b)
+
+Maximum
+max(a,b)
+
+Casting to integer
+int(a)
+
+Rounding to an integer
+round(a)
+
+Rounding / padding with spaces: rounds fractional part to num_decimals digits (adding trailing zeros if needed), then left fills with spaces so the number has num_digits characters in total (including a decimal point if present). Last argument can be omitted, defaults to zero.
+digits(a, num_digits, num_decimals=0)
+
+Rounding / padding with zeros: same as above, only left filled with zeros
+zdigits(a, num_digits, num_decimals=0)
+
+Check if the configuration option is active
+is_nil(config_option_name)
+
+ 
+
+Variables (placeholders)
+
+You can use variables inside customs scripts and in the output file name template.
+
+Check the List of all PrusaSlicer placeholders, grouped according to their scope.
+
+ 
+
+Scalar variables
+
+These values are scalar and can be directly referenced.
+
+printer_notes (string)
+layer_z (only available in layer change GCode)
+layer_num (only available in layer change GCode)
+toolchange_z (available in custom toolchange GCode since version 2.4.0)
+Some variables are defined by complex formulas. For example, the perimeter_extrusion_width if left to zero takes the value of extrusion_width if non zero, otherwise a default perimeter_extrusion_width is calculated for the current layer_height. These substitutions are only done for the new syntax expressions (enclosed in curly braces {}), while the expressions written using the old placeholder syntax (enclosed in square braces []) are interpreted verbatim.
+
+Vector (array variables)
+
+These variables are arrays and need to be accessed as such (e.g. temperature[0]).
+
+temperature
+first_layer_temperature
+bed_temperature (note that this is a vector, even though only one value makes sense: bed_temperature[0])
+first_layer_bed_temperature (same as above!)
+Multidimensional vector
+
+These variables can only be accessed as simple vectors and can not be used in arithmetic expressions.
+
+extruder_offset
+bed_shape
+Examples
+
+Temp tower
+
+You can use the "Before layer change" custom G-code to slowly decrease hot end temperatures. First, one may use the if/elsif/else expression:
+
+{if layer_z < 10}M104 S265
+{elsif layer_z < 17}M104 S260
+{elsif layer_z < 24}M104 S255
+{elsif layer_z < 31}M104 S250
+{elsif layer_z < 38}M104 S245
+{elsif layer_z < 45}M104 S240
+{endif}
+
+ The same result may be achieved by a shorter if/else/endif expression together with a linear interpolation:
+
+M104 S{if layer_z < 10}265{elsif layer_z > 45}240{else}{265+(240-265)*(layer_z-10.0)/(45-10)}{endif}
+
+Or one may use the ternary operator:
+
+M104 S{((layer_z < 10) ? 265 : ((layer_z > 45) ? 240 : 265+(240-265)*(layer_z-10.0)/(45-10)))}
+
+Faster heat up with weak bed heaters before print
+
+If you have a bed that takes a very long time to get up to temperature you can shave off a little bit of waiting time by using "Start G-code" to heat up the bed to the destination temperature minus 5 degrees and then starting to warm up the hot end while the bed continues to heat to the target value:
+
+M190 S{first_layer_bed_temperature[0] - 5} ; wait for bed temperature - 5
+M140 S[first_layer_bed_temperature] ; continue bed heating using legacy [
+
+ 
