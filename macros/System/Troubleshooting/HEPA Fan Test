@@ -1,0 +1,152 @@
+; ///// HEPA Fan Troubleshooting Test /////
+; Tests the HEPA filter fan at 25%, 50%, 75%, and 100% speeds.
+; Verifies that the fan spins within expected RPM ranges.
+; Log file: /sys/Result/hepa_fan_test_log.csv
+; Yellow LED = test in progress | Green = passed | Red = failed
+
+; ---- Introduction ----
+M291 R"HEPA Fan Test" P"The HEPA fan will be tested at different speeds.<br>The test takes approximately 1 minute." S4 K{"Start Test","Cancel"}
+if input == 1
+  abort "HEPA fan test cancelled by user"
+
+; ---- Initialize ----
+M98 P"0:/sys/led/pause.g"                                                                    ; Yellow LED = test in progress
+M106 P7 H-1 X1.0 S0                                                                          ; Take manual control of fan, set to 0
+
+var pauseTime = 10                                                                            ; Stabilization wait (seconds)
+var testPassed = true
+var logLine = ""
+
+; ---- Expected RPM Ranges ----
+var min25 = 2500
+var max25 = 5000
+var min50 = 4000
+var max50 = 7500
+var min75 = 5500
+var max75 = 9500
+var min100 = 7000
+var max100 = 15000
+
+; ---- Create Log File ----
+var logHeader = "Speed(%),SetPoint(S),ExpectedMin(RPM),ExpectedMax(RPM),Actual(RPM),Result"
+echo >"0:/sys/Result/hepa_fan_test_log.csv" var.logHeader
+echo "=== HEPA Fan Test Started ==="
+
+; ---- Test Fan Speed 0% (verify fan stops) ----
+G4 S{var.pauseTime}
+
+var rpm0 = fans[7].rpm
+var pass0 = var.rpm0 <= 200
+if !var.pass0
+  set var.testPassed = false
+
+set var.logLine = "0,0,0,200," ^ var.rpm0 ^ ","
+if var.pass0
+  set var.logLine = var.logLine ^ "PASS"
+else
+  set var.logLine = var.logLine ^ "FAIL"
+echo >>"0:/sys/Result/hepa_fan_test_log.csv" var.logLine
+echo "[0%] RPM: " ^ var.rpm0
+
+; ---- Test Fan Speed 25% ----
+M106 P7 S63.75
+G4 S{var.pauseTime}
+
+var rpm25 = fans[7].rpm
+var pass25 = var.rpm25 >= var.min25 && var.rpm25 <= var.max25
+if !var.pass25
+  set var.testPassed = false
+
+set var.logLine = "25,63.75," ^ var.min25 ^ "," ^ var.max25 ^ "," ^ var.rpm25 ^ ","
+if var.pass25
+  set var.logLine = var.logLine ^ "PASS"
+else
+  set var.logLine = var.logLine ^ "FAIL"
+echo >>"0:/sys/Result/hepa_fan_test_log.csv" var.logLine
+echo "[25%] RPM: " ^ var.rpm25
+
+; ---- Test Fan Speed 50% ----
+M106 P7 S127.5
+G4 S{var.pauseTime}
+
+var rpm50 = fans[7].rpm
+var pass50 = var.rpm50 >= var.min50 && var.rpm50 <= var.max50
+if !var.pass50
+  set var.testPassed = false
+
+set var.logLine = "50,127.5," ^ var.min50 ^ "," ^ var.max50 ^ "," ^ var.rpm50 ^ ","
+if var.pass50
+  set var.logLine = var.logLine ^ "PASS"
+else
+  set var.logLine = var.logLine ^ "FAIL"
+echo >>"0:/sys/Result/hepa_fan_test_log.csv" var.logLine
+echo "[50%] RPM: " ^ var.rpm50
+
+; ---- Test Fan Speed 75% ----
+M106 P7 S191.25
+G4 S{var.pauseTime}
+
+var rpm75 = fans[7].rpm
+var pass75 = var.rpm75 >= var.min75 && var.rpm75 <= var.max75
+if !var.pass75
+  set var.testPassed = false
+
+set var.logLine = "75,191.25," ^ var.min75 ^ "," ^ var.max75 ^ "," ^ var.rpm75 ^ ","
+if var.pass75
+  set var.logLine = var.logLine ^ "PASS"
+else
+  set var.logLine = var.logLine ^ "FAIL"
+echo >>"0:/sys/Result/hepa_fan_test_log.csv" var.logLine
+echo "[75%] RPM: " ^ var.rpm75
+
+; ---- Test Fan Speed 100% ----
+M106 P7 S255
+G4 S{var.pauseTime}
+
+var rpm100 = fans[7].rpm
+var pass100 = var.rpm100 >= var.min100 && var.rpm100 <= var.max100
+if !var.pass100
+  set var.testPassed = false
+
+set var.logLine = "100,255," ^ var.min100 ^ "," ^ var.max100 ^ "," ^ var.rpm100 ^ ","
+if var.pass100
+  set var.logLine = var.logLine ^ "PASS"
+else
+  set var.logLine = var.logLine ^ "FAIL"
+echo >>"0:/sys/Result/hepa_fan_test_log.csv" var.logLine
+echo "[100%] RPM: " ^ var.rpm100
+
+; ---- Write Overall Result to Log ----
+if var.testPassed
+  echo >>"0:/sys/Result/hepa_fan_test_log.csv" "RESULT: PASSED"
+else
+  echo >>"0:/sys/Result/hepa_fan_test_log.csv" "RESULT: FAILED"
+echo "=== HEPA Fan Test Complete ==="
+
+; ---- Stop Fan & Restore Normal Operation ----
+M106 P7 S0
+M106 P7 H3 T50 X{global.hepafan}
+
+; ---- Build Results Summary ----
+
+if var.testPassed
+  ; ---- PASSED ----
+  M98 P"0:/sys/led/end.g"                                                                    ; Green LED
+  M291 R"HEPA Fan Test" P"HEPA fan test <b>PASSED</b>." S2
+else
+  ; ---- FAILED ----
+  M98 P"0:/sys/led/fault.g"                                                                  ; Red LED
+  var failMsg = "HEPA fan test <b>FAILED</b>.<br><br>"
+  set var.failMsg = var.failMsg ^ "<b>Measured RPM:</b><br>"
+  set var.failMsg = var.failMsg ^ "• 25%: " ^ var.rpm25 ^ " RPM<br>"
+  set var.failMsg = var.failMsg ^ "• 50%: " ^ var.rpm50 ^ " RPM<br>"
+  set var.failMsg = var.failMsg ^ "• 75%: " ^ var.rpm75 ^ " RPM<br>"
+  set var.failMsg = var.failMsg ^ "• 100%: " ^ var.rpm100 ^ " RPM<br><br>"
+  set var.failMsg = var.failMsg ^ "Log: /sys/Result/hepa_fan_test_log.csv<br>"
+  set var.failMsg = var.failMsg ^ "Please contact <b>support</b> and send<br>them the log file."
+  M291 R"HEPA Fan Test" P{var.failMsg} S2
+
+; ---- Restore White LED ----
+M98 P"0:/sys/led/resetstatus.g"
+
+; ///// End of HEPA Fan Troubleshooting Test /////
