@@ -1,1 +1,1 @@
-M570 H2 P30 T25 R5 ; Enable Bed Heater fault detection
+M570 H2 P60 T50 R5 ; Enable Bed Heater fault detection
