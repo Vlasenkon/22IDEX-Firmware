@@ -97,7 +97,7 @@ var logFile = "0:/sys/Result/heating_test_" ^ (+state.time) ^ ".csv"          ; 
 ; ---- Create Temperature Log File ----
 var logHeader = "TestStart,Elapsed(s),Bed(C),ChamberAir(C)"
 set var.logHeader = var.logHeader ^ ",ChamberHeater(C),LeftNozzle(C),RightNozzle(C)"
-set var.logHeader = var.logHeader ^ ",BedState,ChamberState"
+set var.logHeader = var.logHeader ^ ",BedState,ChamberState,HEPAFan(RPM),BedPWM,ChamberPWM"
 echo >{var.logFile} var.logHeader
 
 ; Log initial state (time 0)
@@ -108,6 +108,9 @@ set var.logLine = var.logLine ^ "," ^ heat.heaters[0].current
 set var.logLine = var.logLine ^ "," ^ heat.heaters[1].current
 set var.logLine = var.logLine ^ "," ^ heat.heaters[2].state
 set var.logLine = var.logLine ^ "," ^ heat.heaters[3].state
+set var.logLine = var.logLine ^ "," ^ fans[7].rpm
+set var.logLine = var.logLine ^ "," ^ heat.heaters[2].avgPwm
+set var.logLine = var.logLine ^ "," ^ heat.heaters[3].avgPwm
 echo >>{var.logFile} var.logLine
 
 ; Echo test configuration to console
@@ -175,6 +178,9 @@ while !var.bedReached || !var.chamberReached
     set var.logLine = var.logLine ^ "," ^ heat.heaters[1].current
     set var.logLine = var.logLine ^ "," ^ heat.heaters[2].state
     set var.logLine = var.logLine ^ "," ^ heat.heaters[3].state
+    set var.logLine = var.logLine ^ "," ^ fans[7].rpm
+    set var.logLine = var.logLine ^ "," ^ heat.heaters[2].avgPwm
+    set var.logLine = var.logLine ^ "," ^ heat.heaters[3].avgPwm
     echo >>{var.logFile} var.logLine
 
     ; Console output for real-time monitoring
@@ -197,6 +203,9 @@ while !var.bedReached || !var.chamberReached
     set var.logLine = var.logLine ^ "," ^ heat.heaters[1].current
     set var.logLine = var.logLine ^ "," ^ heat.heaters[2].state
     set var.logLine = var.logLine ^ "," ^ heat.heaters[3].state
+    set var.logLine = var.logLine ^ "," ^ fans[7].rpm
+    set var.logLine = var.logLine ^ "," ^ heat.heaters[2].avgPwm
+    set var.logLine = var.logLine ^ "," ^ heat.heaters[3].avgPwm
     echo >>{var.logFile} var.logLine
     echo >>{var.logFile} "RESULT: FAILED - Heater fault"
     M98 P"0:/sys/led/fault.g"
@@ -223,6 +232,9 @@ while !var.bedReached || !var.chamberReached
     set var.logLine = var.logLine ^ "," ^ heat.heaters[1].current
     set var.logLine = var.logLine ^ "," ^ heat.heaters[2].state
     set var.logLine = var.logLine ^ "," ^ heat.heaters[3].state
+    set var.logLine = var.logLine ^ "," ^ fans[7].rpm
+    set var.logLine = var.logLine ^ "," ^ heat.heaters[2].avgPwm
+    set var.logLine = var.logLine ^ "," ^ heat.heaters[3].avgPwm
     echo >>{var.logFile} var.logLine
     echo >>{var.logFile} "RESULT: FAILED - Timeout (90 min)"
     M98 P"0:/sys/led/fault.g"                                                                ; Red LED = failure
@@ -254,6 +266,9 @@ while !var.bedReached || !var.chamberReached
     set var.logLine = var.logLine ^ "," ^ heat.heaters[1].current
     set var.logLine = var.logLine ^ "," ^ heat.heaters[2].state
     set var.logLine = var.logLine ^ "," ^ heat.heaters[3].state
+    set var.logLine = var.logLine ^ "," ^ fans[7].rpm
+    set var.logLine = var.logLine ^ "," ^ heat.heaters[2].avgPwm
+    set var.logLine = var.logLine ^ "," ^ heat.heaters[3].avgPwm
     echo >>{var.logFile} var.logLine
     echo >>{var.logFile} "RESULT: Cancelled (endstop)"
     M98 P"0:/sys/led/resetstatus.g"
@@ -274,6 +289,9 @@ set var.logLine = var.logLine ^ "," ^ heat.heaters[0].current
 set var.logLine = var.logLine ^ "," ^ heat.heaters[1].current
 set var.logLine = var.logLine ^ "," ^ heat.heaters[2].state
 set var.logLine = var.logLine ^ "," ^ heat.heaters[3].state
+set var.logLine = var.logLine ^ "," ^ fans[7].rpm
+set var.logLine = var.logLine ^ "," ^ heat.heaters[2].avgPwm
+set var.logLine = var.logLine ^ "," ^ heat.heaters[3].avgPwm
 echo >>{var.logFile} var.logLine
 echo >>{var.logFile} "RESULT: PASSED"
 
