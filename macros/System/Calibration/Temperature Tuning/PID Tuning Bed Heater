@@ -1,5 +1,6 @@
 ;========= CONFIGURABLE TEMPERATURE PARAMETERS =========
 var bedTargetTemp = 150      ; Default target bed temperature for PID tuning (°C)
+var useChamber = false       ; Whether to pre-heat the chamber (set later based on user choice)
 
 ; ---- User confirmation and temperature selection ----
 M291 S4 K{"Start with 150°C","Custom temperature","Cancel"} R"Bed Heater PID Tuning" P"Do not leave printer unattended."
@@ -15,7 +16,51 @@ elif input == 1
 else
   abort "PID tuning cancelled by user."
 
+; ---- Chamber heating prompt for high-temperature targets ----
+if var.bedTargetTemp > 140
+    var chamberMsg = "Target is " ^ var.bedTargetTemp ^ "°C."
+    set var.chamberMsg = var.chamberMsg ^ " Chamber heating is needed for accurate PID tuning."
+    set var.chamberMsg = var.chamberMsg ^ "<br><br>Please CLOSE the front door and lid before proceeding."
+    set var.chamberMsg = var.chamberMsg ^ "<br><br>Chamber will heat to 100°C first (wait for 60°C)."
+    set var.chamberMsg = var.chamberMsg ^ "<br><br>Or skip chamber heating and tune with ambient air only."
+    M291 S4 K{"OK - Proceed","Skip chamber heating"} R"Chamber Heating Required" P{var.chamberMsg}
+    if input == 0
+        set var.useChamber = true
+        echo "User selected: proceed with chamber heating"
+    else
+        set var.useChamber = false
+        echo "User selected: skip chamber heating"
 
+; ---- Pre-Test Heater Fault Check ----
+var faultFound = false
+var faultMsg = "Heater fault(s) detected before PID tuning:<br><br>"
+
+if heat.heaters[2].state == "fault"
+    set var.faultFound = true
+    set var.faultMsg = var.faultMsg ^ "• <b>Bed Heater (H2)</b> is in FAULT state<br>"
+
+if var.useChamber && heat.heaters[3].state == "fault"
+    set var.faultFound = true
+    set var.faultMsg = var.faultMsg ^ "• <b>Chamber Heater (H3)</b> is in FAULT state<br>"
+
+if var.faultFound
+    set var.faultMsg = var.faultMsg ^ "<br>Reset the fault and continue?"
+    M98 P"0:/sys/led/fault.g"
+    M291 R"Heater Fault Detected" P{var.faultMsg} S4 K{"Reset Faults & Continue","Cancel"}
+    if input == 0
+        M562                                                                                  ; Reset all heater faults
+        G4 S2                                                                                 ; Wait for faults to clear
+        ; Verify faults are cleared
+        if heat.heaters[2].state == "fault" || (var.useChamber && heat.heaters[3].state == "fault")
+            M98 P"0:/sys/led/fault.g"
+            M291 R"Fault Reset Failed" P"Heater faults could not be cleared.<br>Check hardware and wiring." S2
+            M98 P"0:/sys/led/resetstatus.g"
+            abort "Heater faults could not be cleared"
+        M98 P"0:/sys/led/resetstatus.g"
+        echo "Heater faults cleared successfully"
+    else
+        M98 P"0:/sys/led/resetstatus.g"
+        abort "PID tuning cancelled - heater faults not cleared"
 
 ; Disable Fans
 M106 P3 S0
@@ -29,8 +74,8 @@ M568 P3 S0 R0
 
 
 
-; Only wait for bed to cool down if target is 140°C or below (no chamber pre-heat)
-if var.bedTargetTemp <= 140
+; Only wait for bed to cool down if target is 140°C or below, or if skipping chamber
+if var.bedTargetTemp <= 140 || !var.useChamber
     if heat.heaters[2].current > 50
         M291 R"Wait for Heater to Cool Down" P"All heater temperatures were set to 0°C." S1 T10
         while heat.heaters[2].current > 50
@@ -40,21 +85,22 @@ if var.bedTargetTemp <= 140
 M98 P"0:/sys/led/dimmwhite.g"
 M98 P"0:/sys/led/pause.g"
 
-; If bed target is above 140°C, pre-heat chamber to 100°C and wait for 60°C
-if var.bedTargetTemp > 140
+; If bed target is above 140°C and user chose chamber heating, pre-heat chamber to 100°C and wait for 60°C
+if var.useChamber
     echo "Bed target above 140°C - heating chamber to 100°C before PID tuning"
     M141 S100
-    M291 R"Chamber Pre-Heat" P"Chamber heating to 100°C. Waiting for 60°C before starting PID tuning." S1 T10
+    M291 R"Chamber Pre-Heat" P"Chamber heating to 100°C. Waiting for 60°C before starting PID tuning.<br>Ensure front door and lid are closed." S1 T10
     while heat.heaters[3].current < 60
         G4 S5
     echo "Chamber reached " ^ heat.heaters[3].current ^ "°C - proceeding with PID tuning"
 
 ; Validate chamber air temperature before tuning
 var ambient = heat.heaters[3].current
-if var.ambient < 10 || var.ambient > 100
-    M98 P"0:/sys/led/fault.g"
-    M291 R"Chamber Temperature Out of Range" P{"Chamber air temperature "^var.ambient^"°C is outside 10-100°C. Adjust the chamber and rerun PID tuning."} S1
-    abort "Error: Chamber air temperature is not within range to start."
+if var.useChamber
+    if var.ambient < 10 || var.ambient > 100
+        M98 P"0:/sys/led/fault.g"
+        M291 R"Chamber Temperature Out of Range" P{"Chamber air temperature "^var.ambient^"°C is outside 10-100°C. Adjust the chamber and rerun PID tuning."} S1
+        abort "Error: Chamber air temperature is not within range to start."
 
 M303 H2 S{var.bedTargetTemp} A{var.ambient} Q1
 if result != 0
