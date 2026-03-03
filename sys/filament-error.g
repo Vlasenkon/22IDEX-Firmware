@@ -48,14 +48,6 @@ if var.shouldPause
 
   if exists(global.filamentbackup) && global.filamentbackup == true
     M400
-
-    ; Purge old/residual filament from the backup tool hotend (1.5 m at 3 mm/s)
-    M291 R"Purging Filament" P"Purging residual filament from backup tool before resuming.<br>Please wait..." S1 T0
-    M83                                                                                     ; relative extruder mode
-    G1 E1500 F180                                                                            ; extrude 1500 mm (1.5 m) at 3 mm/s
-    M400                                                                                     ; wait for purge to complete
-    M98 P"0:/sys/nozzlewipe.g"                                                               ; wipe nozzle after purge
-
     M292
     M24 ; Resume the print
 
