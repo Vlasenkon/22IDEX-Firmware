@@ -67,6 +67,13 @@ M568 P{var.tool} S{var.workingTemps} R{var.workingTemps} A2
 ; Execute the standard retract/load helpers with change-mode behaviour
 M98 P"0:/sys/baseunload.g" C1
 
+; Purge old/residual filament from the hotend (1.5 m at 3 mm/s)
+M291 R"Purging Filament" P"Purging old filament from the hotend (1.5 m at 3 mm/s).<br>Please wait..." S1 T0
+M83                                                                                         ; relative extruder mode
+G1 E1500 F180                                                                                ; extrude 1500 mm (1.5 m) at 3 mm/s
+M400                                                                                         ; wait for purge to complete
+M98 P"0:/sys/nozzlewipe.g"                                                                   ; wipe nozzle after purge
+
 M291 R"Load New Filament" P"Insert the new filament, then choose Load." S4 K{"Load", "Cancel"}
 if result != -1 && input = 0
   M98 P"0:/sys/baseload.g" C1
