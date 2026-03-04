@@ -31,6 +31,15 @@ if var.bedTargetTemp > 140
         set var.useChamber = false
         echo "User selected: skip chamber heating"
 
+; ---- HEPA Filter Option ----
+var hepaOn = false
+M291 S4 K{"Default (automatic)","On (force during test)"} R"HEPA Filter" P"Select HEPA filter mode during PID tuning.<br><br><b>Default</b> - thermostatic (auto based on chamber temp).<br><b>On</b> - force HEPA on for the duration of the test."
+if input == 1
+    set var.hepaOn = true
+    echo "HEPA filter will be forced ON during PID tuning"
+else
+    echo "HEPA filter will remain in default thermostatic mode"
+
 ; ---- Pre-Test Heater Fault Check ----
 var faultFound = false
 var faultMsg = "Heater fault(s) detected before PID tuning:<br><br>"
@@ -82,6 +91,11 @@ if var.bedTargetTemp <= 140 || !var.useChamber
             G4 S5
 
 
+; ---- Apply HEPA filter setting ----
+if var.hepaOn
+    M106 P7 H-1 S{global.hepafan}                                                         ; Force HEPA on at saved speed
+    echo "HEPA filter forced ON at speed " ^ global.hepafan
+
 M98 P"0:/sys/led/dimmwhite.g"
 M98 P"0:/sys/led/pause.g"
 
@@ -102,6 +116,30 @@ if var.useChamber
         M291 R"Chamber Temperature Out of Range" P{"Chamber air temperature "^var.ambient^"°C is outside 10-100°C. Adjust the chamber and rerun PID tuning."} S1
         abort "Error: Chamber air temperature is not within range to start."
 
+; ---- Create Temperature Log File ----
+var logFile = "0:/sys/Result/pid_bed_" ^ (+state.time) ^ ".csv"
+var logLine = ""
+var logHeader = "Elapsed(s),Bed(C),ChamberAir(C),ChamberHeater(C),LeftNozzle(C),RightNozzle(C)"
+set var.logHeader = var.logHeader ^ ",BedState,ChamberState,HEPAFan(RPM),BedPWM,ChamberPWM"
+echo >{var.logFile} var.logHeader
+
+; Log initial state
+set var.logLine = "0," ^ heat.heaters[2].current
+set var.logLine = var.logLine ^ "," ^ heat.heaters[3].current
+set var.logLine = var.logLine ^ "," ^ sensors.analog[4].lastReading
+set var.logLine = var.logLine ^ "," ^ heat.heaters[0].current
+set var.logLine = var.logLine ^ "," ^ heat.heaters[1].current
+set var.logLine = var.logLine ^ "," ^ heat.heaters[2].state
+set var.logLine = var.logLine ^ "," ^ heat.heaters[3].state
+set var.logLine = var.logLine ^ "," ^ fans[7].rpm
+set var.logLine = var.logLine ^ "," ^ heat.heaters[2].avgPwm
+set var.logLine = var.logLine ^ "," ^ heat.heaters[3].avgPwm
+echo >>{var.logFile} var.logLine
+
+var startTime = state.upTime
+var elapsed = 0
+echo "=== PID Tuning Log Started: " ^ var.logFile ^ " ==="
+
 M303 H2 S{var.bedTargetTemp} A{var.ambient} Q1
 if result != 0
     M98 P"0:/sys/led/fault.g"
@@ -110,9 +148,38 @@ if result != 0
     M99
 
 while heat.heaters[2].state = "tuning"
-        G4 S10
+    G4 S10
+    set var.elapsed = state.upTime - var.startTime
+    set var.logLine = var.elapsed ^ "," ^ heat.heaters[2].current
+    set var.logLine = var.logLine ^ "," ^ heat.heaters[3].current
+    set var.logLine = var.logLine ^ "," ^ sensors.analog[4].lastReading
+    set var.logLine = var.logLine ^ "," ^ heat.heaters[0].current
+    set var.logLine = var.logLine ^ "," ^ heat.heaters[1].current
+    set var.logLine = var.logLine ^ "," ^ heat.heaters[2].state
+    set var.logLine = var.logLine ^ "," ^ heat.heaters[3].state
+    set var.logLine = var.logLine ^ "," ^ fans[7].rpm
+    set var.logLine = var.logLine ^ "," ^ heat.heaters[2].avgPwm
+    set var.logLine = var.logLine ^ "," ^ heat.heaters[3].avgPwm
+    echo >>{var.logFile} var.logLine
+    echo "[" ^ var.elapsed ^ "s] Bed:" ^ heat.heaters[2].current ^ " Chamber:" ^ heat.heaters[3].current ^ " HEPA:" ^ fans[7].rpm ^ "rpm"
 
 M98 P"0:/sys/led/end.g"
+
+; Log final entry
+var totalTime = state.upTime - var.startTime
+set var.logLine = var.totalTime ^ "," ^ heat.heaters[2].current
+set var.logLine = var.logLine ^ "," ^ heat.heaters[3].current
+set var.logLine = var.logLine ^ "," ^ sensors.analog[4].lastReading
+set var.logLine = var.logLine ^ "," ^ heat.heaters[0].current
+set var.logLine = var.logLine ^ "," ^ heat.heaters[1].current
+set var.logLine = var.logLine ^ "," ^ heat.heaters[2].state
+set var.logLine = var.logLine ^ "," ^ heat.heaters[3].state
+set var.logLine = var.logLine ^ "," ^ fans[7].rpm
+set var.logLine = var.logLine ^ "," ^ heat.heaters[2].avgPwm
+set var.logLine = var.logLine ^ "," ^ heat.heaters[3].avgPwm
+echo >>{var.logFile} var.logLine
+echo >>{var.logFile} "RESULT: PID tuning completed in " ^ var.totalTime ^ "s"
+echo "=== PID Tuning Log Complete: " ^ var.totalTime ^ "s ==="
 
 var rr = heat.heaters[2].model.heatingRate
 var kk1 = heat.heaters[2].model.coolingRate
@@ -127,4 +194,8 @@ echo >"0:/user/PIDBedHead.g" "M307 H2 R"^{var.rr}^" K"^{var.kk1}^":"^{var.kk2}^"
 M141 S0
 echo "Chamber heater turned off after PID tuning"
 
-M291 R"PID Tune Complete" P"Bed PID values have been saved." S1
+; ---- Restore HEPA filter to default thermostatic mode ----
+M106 P7 H3 T50 X{global.hepafan}                                                             ; Restore HEPA to thermostatic
+echo "HEPA filter restored to default thermostatic mode"
+
+M291 R"PID Tune Complete" P{"Bed PID values have been saved.<br><br>Log: " ^ var.logFile} S1
