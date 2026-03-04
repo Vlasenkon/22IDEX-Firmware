@@ -1,0 +1,512 @@
+; ///// Build Plate & Chamber Heating Test /////
+; Tests heating performance and logs all temperatures to CSV.
+; Log file: /sys/Result/heating_test_<timestamp>.csv
+; Hold X or U endstop to cancel at any time.
+; Maximum test duration: 90 minutes.
+
+; ---- Mode Selection ----
+var modeMsg = "Select which heaters to test:<br><br>"
+set var.modeMsg = var.modeMsg ^ "<b>Both</b> is the recommended option."
+set var.modeMsg = var.modeMsg ^ "<br>Hold X or U endstop to cancel during test."
+
+M291 R"Heating Test" P{var.modeMsg} S4 K{"Both (Bed + Chamber)","Build Plate Only","Chamber Only","Cancel"}
+
+var testBed = false
+var testChamber = false
+
+if input == 0
+  set var.testBed = true
+  set var.testChamber = true
+elif input == 1
+  set var.testBed = true
+elif input == 2
+  set var.testChamber = true
+else
+  abort "Test cancelled by user"
+
+; ---- Build Plate Temperature Selection ----
+var bedTarget = 160
+
+if var.testBed
+  var bedTempMsg = "Select target temperature for the build plate:"
+  set var.bedTempMsg = var.bedTempMsg ^ "<br><br>Default: <b>160°C</b>"
+  M291 R"Build Plate Temperature" P{var.bedTempMsg} S4 K{"160°C (Default)","Custom Temperature","Cancel"}
+  if input == 1
+    M291 J1 L70 H200 F160 P"Enter build plate target temperature (70-200°C):" R"Custom Temperature" S5
+    set var.bedTarget = input
+  elif input == 2
+    abort "Test cancelled by user"
+
+; ---- Z Position Selection ----
+var zPos = 100
+M291 J1 L10 H420 F{var.zPos} P"Enter build plate position for the test (10-420mm):" R"Build Plate Position" S5
+set var.zPos = input
+
+; ---- Initialize ----
+M98 P"0:/sys/led/resetstatus.g"
+M140 S0 R0
+M141 S0
+
+; ---- Homing Check ----
+if !move.axes[0].homed || !move.axes[1].homed || !move.axes[2].homed || !move.axes[3].homed
+  G28                                                                                        ; Home all axes
+
+; ---- Position Tools ----
+T0
+G90                                                                                           ; Absolute positioning
+G1 F18000 X-100 Y0 U100 Z{var.zPos}
+
+; ---- Pre-Test Heater Fault Check ----
+var faultFound = false
+var faultMsg = "Heater fault(s) detected before test:<br><br>"
+
+if var.testBed && heat.heaters[2].state == "fault"
+  set var.faultFound = true
+  set var.faultMsg = var.faultMsg ^ "• <b>Bed Heater (H2)</b> is in FAULT state<br>"
+
+if var.testChamber && heat.heaters[3].state == "fault"
+  set var.faultFound = true
+  set var.faultMsg = var.faultMsg ^ "• <b>Chamber Heater (H3)</b> is in FAULT state<br>"
+
+if var.faultFound
+  set var.faultMsg = var.faultMsg ^ "<br>Reset the fault and retry?"
+  M98 P"0:/sys/led/fault.g"
+  M291 R"Heater Fault Detected" P{var.faultMsg} S4 K{"Reset Faults & Continue","Cancel"}
+  if input == 0
+    M562                                                                                      ; Reset all heater faults
+    G4 S2                                                                                     ; Wait for faults to clear
+    ; Verify faults are cleared
+    if (var.testBed && heat.heaters[2].state == "fault") || (var.testChamber && heat.heaters[3].state == "fault")
+      M98 P"0:/sys/led/fault.g"
+      M291 R"Fault Reset Failed" P"Heater faults could not be cleared.<br>Check hardware and wiring." S2
+      M98 P"0:/sys/led/resetstatus.g"
+      abort "Heater faults could not be cleared"
+    M98 P"0:/sys/led/resetstatus.g"
+    echo "Heater faults cleared successfully"
+  else
+    M98 P"0:/sys/led/resetstatus.g"
+    abort "Test cancelled - heater faults not cleared"
+
+; ---- Monitoring Variables ----
+var startTime = state.upTime
+var maxDuration = 5400                                                                        ; 90 minutes
+var lastLogTime = -10                                                                         ; Force first log immediately
+var elapsed = 0
+var bedReached = !var.testBed                                                                 ; true if not testing bed (already "done")
+var chamberReached = !var.testChamber                                                         ; true if not testing chamber (already "done")
+var bedReachedTime = 0
+var chamberReachedTime = 0
+var logLine = ""
+var testTimestamp = +state.time
+var logFile = "0:/sys/Result/heating_test_" ^ var.testTimestamp ^ ".csv"
+var paramFile = "0:/sys/Result/heating_test_" ^ var.testTimestamp ^ ".txt"
+
+; ---- Create Temperature Log File ----
+var logHeader = "Elapsed(s),Bed(C),ChamberAir(C)"
+set var.logHeader = var.logHeader ^ ",ChamberHeater(C),LeftNozzle(C),RightNozzle(C)"
+set var.logHeader = var.logHeader ^ ",BedState,ChamberState,HEPA_RPM/100,HEPA_Req,ChamberFan_Req,Vin_Board0,Vin_Board1"
+echo >{var.logFile} var.logHeader
+
+; Log initial state (time 0)
+set var.logLine = "0," ^ heat.heaters[2].current
+set var.logLine = var.logLine ^ "," ^ heat.heaters[3].current
+set var.logLine = var.logLine ^ "," ^ sensors.analog[4].lastReading
+set var.logLine = var.logLine ^ "," ^ heat.heaters[0].current
+set var.logLine = var.logLine ^ "," ^ heat.heaters[1].current
+set var.logLine = var.logLine ^ "," ^ heat.heaters[2].state
+set var.logLine = var.logLine ^ "," ^ heat.heaters[3].state
+set var.logLine = var.logLine ^ "," ^ {fans[7].rpm / 100}
+set var.logLine = var.logLine ^ "," ^ fans[7].requestedValue
+set var.logLine = var.logLine ^ "," ^ fans[4].requestedValue
+set var.logLine = var.logLine ^ "," ^ boards[0].vIn.current
+set var.logLine = var.logLine ^ "," ^ boards[1].vIn.current
+echo >>{var.logFile} var.logLine
+
+; ---- Save Heater Configuration Parameters ----
+echo >{var.paramFile} "=== Heater Configuration Snapshot ==="
+echo >>{var.paramFile} "Date: " ^ state.time
+echo >>{var.paramFile} "Build Plate Z: " ^ var.zPos ^ "mm"
+if var.testBed
+  echo >>{var.paramFile} "Bed Target: " ^ var.bedTarget ^ "C"
+if var.testChamber
+  echo >>{var.paramFile} "Chamber Target: 105C (pass at 100C)"
+echo >>{var.paramFile} ""
+
+echo >>{var.paramFile} "=== Axis Positions ==="
+echo >>{var.paramFile} "X: " ^ move.axes[0].machinePosition ^ "mm"
+echo >>{var.paramFile} "Y: " ^ move.axes[1].machinePosition ^ "mm"
+echo >>{var.paramFile} "Z: " ^ move.axes[2].machinePosition ^ "mm"
+echo >>{var.paramFile} "U: " ^ move.axes[3].machinePosition ^ "mm"
+echo >>{var.paramFile} ""
+
+; H0 - Left Nozzle
+echo >>{var.paramFile} "--- H0 (Left Nozzle) ---"
+var paramLine = "M307 H0 R" ^ heat.heaters[0].model.heatingRate
+set var.paramLine = var.paramLine ^ " K" ^ heat.heaters[0].model.coolingRate ^ ":" ^ heat.heaters[0].model.fanCoolingRate
+set var.paramLine = var.paramLine ^ " D" ^ heat.heaters[0].model.deadTime
+set var.paramLine = var.paramLine ^ " E" ^ heat.heaters[0].model.coolingExp
+set var.paramLine = var.paramLine ^ " S" ^ heat.heaters[0].model.enabled
+echo >>{var.paramFile} var.paramLine
+if #heat.heaters[0].monitors > 0
+  var h0m = 0
+  while var.h0m < #heat.heaters[0].monitors
+    if heat.heaters[0].monitors[var.h0m].condition != "disabled"
+      echo >>{var.paramFile} "  Monitor " ^ var.h0m ^ ": condition=" ^ heat.heaters[0].monitors[var.h0m].condition ^ " limit=" ^ heat.heaters[0].monitors[var.h0m].limit ^ " action=" ^ heat.heaters[0].monitors[var.h0m].action
+    set var.h0m = var.h0m + 1
+echo >>{var.paramFile} ""
+
+; H1 - Right Nozzle
+echo >>{var.paramFile} "--- H1 (Right Nozzle) ---"
+set var.paramLine = "M307 H1 R" ^ heat.heaters[1].model.heatingRate
+set var.paramLine = var.paramLine ^ " K" ^ heat.heaters[1].model.coolingRate ^ ":" ^ heat.heaters[1].model.fanCoolingRate
+set var.paramLine = var.paramLine ^ " D" ^ heat.heaters[1].model.deadTime
+set var.paramLine = var.paramLine ^ " E" ^ heat.heaters[1].model.coolingExp
+set var.paramLine = var.paramLine ^ " S" ^ heat.heaters[1].model.enabled
+echo >>{var.paramFile} var.paramLine
+if #heat.heaters[1].monitors > 0
+  var h1m = 0
+  while var.h1m < #heat.heaters[1].monitors
+    if heat.heaters[1].monitors[var.h1m].condition != "disabled"
+      echo >>{var.paramFile} "  Monitor " ^ var.h1m ^ ": condition=" ^ heat.heaters[1].monitors[var.h1m].condition ^ " limit=" ^ heat.heaters[1].monitors[var.h1m].limit ^ " action=" ^ heat.heaters[1].monitors[var.h1m].action
+    set var.h1m = var.h1m + 1
+echo >>{var.paramFile} ""
+
+; H2 - Bed
+echo >>{var.paramFile} "--- H2 (Bed Heater) ---"
+set var.paramLine = "M307 H2 R" ^ heat.heaters[2].model.heatingRate
+set var.paramLine = var.paramLine ^ " K" ^ heat.heaters[2].model.coolingRate ^ ":" ^ heat.heaters[2].model.fanCoolingRate
+set var.paramLine = var.paramLine ^ " D" ^ heat.heaters[2].model.deadTime
+set var.paramLine = var.paramLine ^ " E" ^ heat.heaters[2].model.coolingExp
+set var.paramLine = var.paramLine ^ " S" ^ heat.heaters[2].model.enabled
+echo >>{var.paramFile} var.paramLine
+if #heat.heaters[2].monitors > 0
+  var h2m = 0
+  while var.h2m < #heat.heaters[2].monitors
+    if heat.heaters[2].monitors[var.h2m].condition != "disabled"
+      echo >>{var.paramFile} "  Monitor " ^ var.h2m ^ ": condition=" ^ heat.heaters[2].monitors[var.h2m].condition ^ " limit=" ^ heat.heaters[2].monitors[var.h2m].limit ^ " action=" ^ heat.heaters[2].monitors[var.h2m].action
+    set var.h2m = var.h2m + 1
+echo >>{var.paramFile} ""
+
+; H3 - Chamber
+echo >>{var.paramFile} "--- H3 (Chamber Heater) ---"
+set var.paramLine = "M307 H3 R" ^ heat.heaters[3].model.heatingRate
+set var.paramLine = var.paramLine ^ " K" ^ heat.heaters[3].model.coolingRate ^ ":" ^ heat.heaters[3].model.fanCoolingRate
+set var.paramLine = var.paramLine ^ " D" ^ heat.heaters[3].model.deadTime
+set var.paramLine = var.paramLine ^ " E" ^ heat.heaters[3].model.coolingExp
+set var.paramLine = var.paramLine ^ " S" ^ heat.heaters[3].model.enabled
+echo >>{var.paramFile} var.paramLine
+if #heat.heaters[3].monitors > 0
+  var h3m = 0
+  while var.h3m < #heat.heaters[3].monitors
+    if heat.heaters[3].monitors[var.h3m].condition != "disabled"
+      echo >>{var.paramFile} "  Monitor " ^ var.h3m ^ ": condition=" ^ heat.heaters[3].monitors[var.h3m].condition ^ " limit=" ^ heat.heaters[3].monitors[var.h3m].limit ^ " action=" ^ heat.heaters[3].monitors[var.h3m].action
+    set var.h3m = var.h3m + 1
+
+; ---- Heater PWM and Heating Rate (static) ----
+echo >>{var.paramFile} ""
+echo >>{var.paramFile} "=== Heater PWM (at test start) ==="
+echo >>{var.paramFile} "H0 (Left Nozzle)  avgPwm: " ^ heat.heaters[0].avgPwm
+echo >>{var.paramFile} "H1 (Right Nozzle) avgPwm: " ^ heat.heaters[1].avgPwm
+echo >>{var.paramFile} "H2 (Bed Heater)   avgPwm: " ^ heat.heaters[2].avgPwm
+echo >>{var.paramFile} "H3 (Chamber)      avgPwm: " ^ heat.heaters[3].avgPwm
+
+echo >>{var.paramFile} ""
+echo >>{var.paramFile} "=== Heating Rates (from model) ==="
+echo >>{var.paramFile} "H0 heatingRate: " ^ heat.heaters[0].model.heatingRate
+echo >>{var.paramFile} "H1 heatingRate: " ^ heat.heaters[1].model.heatingRate
+echo >>{var.paramFile} "H2 heatingRate: " ^ heat.heaters[2].model.heatingRate
+echo >>{var.paramFile} "H3 heatingRate: " ^ heat.heaters[3].model.heatingRate
+
+echo >>{var.paramFile} ""
+echo >>{var.paramFile} "=== Board Voltages (at test start) ==="
+echo >>{var.paramFile} "Board 0 Vin: " ^ boards[0].vIn.current ^ "V (min: " ^ boards[0].vIn.min ^ " max: " ^ boards[0].vIn.max ^ ")"
+echo >>{var.paramFile} "Board 1 Vin: " ^ boards[1].vIn.current ^ "V (min: " ^ boards[1].vIn.min ^ " max: " ^ boards[1].vIn.max ^ ")"
+
+echo >>{var.paramFile} ""
+echo >>{var.paramFile} "=== MCU Temperatures (at test start) ==="
+echo >>{var.paramFile} "Board 0 MCU: " ^ boards[0].mcuTemp.current ^ "C (min: " ^ boards[0].mcuTemp.min ^ " max: " ^ boards[0].mcuTemp.max ^ ")"
+echo >>{var.paramFile} "Board 1 MCU: " ^ boards[1].mcuTemp.current ^ "C (min: " ^ boards[1].mcuTemp.min ^ " max: " ^ boards[1].mcuTemp.max ^ ")"
+
+echo >>{var.paramFile} ""
+echo >>{var.paramFile} "=== Firmware ==="
+echo >>{var.paramFile} "Board 0: " ^ boards[0].firmwareFileName ^ " v" ^ boards[0].firmwareVersion
+echo >>{var.paramFile} "Board 1: " ^ boards[1].firmwareFileName ^ " v" ^ boards[1].firmwareVersion
+
+echo >>{var.paramFile} ""
+echo >>{var.paramFile} "NOTE: HEPA_RPM/100 in CSV is actual RPM divided by 100 for graph scaling"
+
+echo "Heater parameters saved to: " ^ var.paramFile
+
+; Echo test configuration to console
+echo "=== Heating Test Started ==="
+if var.testBed && var.testChamber
+  echo "Mode: Both (Bed + Chamber)"
+elif var.testBed
+  echo "Mode: Build Plate Only"
+else
+  echo "Mode: Chamber Only"
+
+if var.testBed
+  echo "Bed target: " ^ var.bedTarget ^ "°C"
+if var.testChamber
+  echo "Chamber set: 105°C | Watching for: 100°C"
+
+; ---- Start Heating ----
+if var.testBed
+  M140 S{var.bedTarget}
+
+if var.testChamber
+  M141 S105
+
+M98 P"0:/sys/led/start_cold.g"                                                               ; Blue LED = heating
+
+; ---- Show Status Notification ----
+var statusMsg = "Heating test in progress...<br><br>"
+set var.statusMsg = var.statusMsg ^ "LEDs: <b>Blue</b>=Heating | "
+set var.statusMsg = var.statusMsg ^ "<b>Green</b>=Passed | <b>Red</b>=Failed"
+set var.statusMsg = var.statusMsg ^ "<br>Hold X or U endstop to cancel."
+if var.testBed
+  set var.statusMsg = var.statusMsg ^ "<br>Bed target: " ^ var.bedTarget ^ "°C"
+if var.testChamber
+  set var.statusMsg = var.statusMsg ^ "<br>Chamber target: 100°C"
+M291 R"Heating Test" P{var.statusMsg} S1 T0
+
+; ---- Heating Loop ----
+while !var.bedReached || !var.chamberReached
+  G4 S1
+  set var.elapsed = state.upTime - var.startTime
+
+  ; Check bed temperature target
+  if var.testBed && !var.bedReached
+    if heat.heaters[2].current >= var.bedTarget
+      set var.bedReached = true
+      set var.bedReachedTime = var.elapsed
+      echo "Bed reached " ^ var.bedTarget ^ "°C at " ^ var.elapsed ^ "s"
+
+  ; Check chamber air temperature target (100°C)
+  if var.testChamber && !var.chamberReached
+    if heat.heaters[3].current >= 100
+      set var.chamberReached = true
+      set var.chamberReachedTime = var.elapsed
+      echo "Chamber reached 100°C at " ^ var.elapsed ^ "s"
+
+  ; Log temperatures every 10 seconds
+  if (var.elapsed - var.lastLogTime) >= 10
+    set var.lastLogTime = var.elapsed
+
+    ; Build CSV line
+    set var.logLine = var.elapsed ^ "," ^ heat.heaters[2].current
+    set var.logLine = var.logLine ^ "," ^ heat.heaters[3].current
+    set var.logLine = var.logLine ^ "," ^ sensors.analog[4].lastReading
+    set var.logLine = var.logLine ^ "," ^ heat.heaters[0].current
+    set var.logLine = var.logLine ^ "," ^ heat.heaters[1].current
+    set var.logLine = var.logLine ^ "," ^ heat.heaters[2].state
+    set var.logLine = var.logLine ^ "," ^ heat.heaters[3].state
+    set var.logLine = var.logLine ^ "," ^ {fans[7].rpm / 100}
+    set var.logLine = var.logLine ^ "," ^ fans[7].requestedValue
+    set var.logLine = var.logLine ^ "," ^ fans[4].requestedValue
+    set var.logLine = var.logLine ^ "," ^ boards[0].vIn.current
+    set var.logLine = var.logLine ^ "," ^ boards[1].vIn.current
+    echo >>{var.logFile} var.logLine
+
+    ; Console output for real-time monitoring
+    var consoleLog = "[" ^ var.elapsed ^ "s] Bed:" ^ heat.heaters[2].current
+    set var.consoleLog = var.consoleLog ^ " Chamber:" ^ heat.heaters[3].current
+    set var.consoleLog = var.consoleLog ^ " L:" ^ heat.heaters[0].current
+    set var.consoleLog = var.consoleLog ^ " R:" ^ heat.heaters[1].current
+    echo var.consoleLog
+
+  ; Heater fault check
+  if (var.testBed && heat.heaters[2].state == "fault") || (var.testChamber && heat.heaters[3].state == "fault")
+    M292
+    M140 S0 R0
+    M141 S0
+    ; Log fault entry
+    set var.logLine = var.elapsed ^ "," ^ heat.heaters[2].current
+    set var.logLine = var.logLine ^ "," ^ heat.heaters[3].current
+    set var.logLine = var.logLine ^ "," ^ sensors.analog[4].lastReading
+    set var.logLine = var.logLine ^ "," ^ heat.heaters[0].current
+    set var.logLine = var.logLine ^ "," ^ heat.heaters[1].current
+    set var.logLine = var.logLine ^ "," ^ heat.heaters[2].state
+    set var.logLine = var.logLine ^ "," ^ heat.heaters[3].state
+    set var.logLine = var.logLine ^ "," ^ {fans[7].rpm / 100}
+    set var.logLine = var.logLine ^ "," ^ fans[7].requestedValue
+    set var.logLine = var.logLine ^ "," ^ fans[4].requestedValue
+    set var.logLine = var.logLine ^ "," ^ boards[0].vIn.current
+    set var.logLine = var.logLine ^ "," ^ boards[1].vIn.current
+    echo >>{var.logFile} var.logLine
+    echo >>{var.logFile} "RESULT: FAILED - Heater fault"
+    M98 P"0:/sys/led/fault.g"
+    var htFaultMsg = "Heating test FAILED - Heater fault!<br><br>"
+    if var.testBed && heat.heaters[2].state == "fault"
+      set var.htFaultMsg = var.htFaultMsg ^ "<b>Bed Heater (H2)</b>: FAULT<br>"
+    if var.testChamber && heat.heaters[3].state == "fault"
+      set var.htFaultMsg = var.htFaultMsg ^ "<b>Chamber Heater (H3)</b>: FAULT<br>"
+    set var.htFaultMsg = var.htFaultMsg ^ "<br>Log: " ^ var.logFile
+    set var.htFaultMsg = var.htFaultMsg ^ "<br>Params: " ^ var.paramFile
+    M291 R"Heater Fault" P{var.htFaultMsg} S2
+    M98 P"0:/sys/led/resetstatus.g"
+    abort "Heating test aborted - heater fault detected"
+
+  ; Timeout check (90 minutes)
+  if var.elapsed >= var.maxDuration
+    M292
+    M140 S0 R0
+    M141 S0
+    ; Log final entry
+    set var.logLine = var.elapsed ^ "," ^ heat.heaters[2].current
+    set var.logLine = var.logLine ^ "," ^ heat.heaters[3].current
+    set var.logLine = var.logLine ^ "," ^ sensors.analog[4].lastReading
+    set var.logLine = var.logLine ^ "," ^ heat.heaters[0].current
+    set var.logLine = var.logLine ^ "," ^ heat.heaters[1].current
+    set var.logLine = var.logLine ^ "," ^ heat.heaters[2].state
+    set var.logLine = var.logLine ^ "," ^ heat.heaters[3].state
+    set var.logLine = var.logLine ^ "," ^ {fans[7].rpm / 100}
+    set var.logLine = var.logLine ^ "," ^ fans[7].requestedValue
+    set var.logLine = var.logLine ^ "," ^ fans[4].requestedValue
+    set var.logLine = var.logLine ^ "," ^ boards[0].vIn.current
+    set var.logLine = var.logLine ^ "," ^ boards[1].vIn.current
+    echo >>{var.logFile} var.logLine
+    echo >>{var.logFile} "RESULT: FAILED - Timeout (90 min)"
+    M98 P"0:/sys/led/fault.g"                                                                ; Red LED = failure
+    var failMsg = "Heating test FAILED<br>Timed out after 90 minutes.<br><br>"
+    if var.testBed
+      if var.bedReached
+        set var.failMsg = var.failMsg ^ "Bed: Reached target<br>"
+      else
+        set var.failMsg = var.failMsg ^ "Bed: NOT reached " ^ var.bedTarget ^ "°C<br>"
+    if var.testChamber
+      if var.chamberReached
+        set var.failMsg = var.failMsg ^ "Chamber: Reached target<br>"
+      else
+        set var.failMsg = var.failMsg ^ "Chamber: NOT reached 100°C<br>"
+    set var.failMsg = var.failMsg ^ "<br>Log: " ^ var.logFile
+    set var.failMsg = var.failMsg ^ "<br>Params: " ^ var.paramFile
+    M291 R"Heating Test Failed" P{var.failMsg} S2
+    M98 P"0:/sys/led/resetstatus.g"
+    abort "Heating test timed out after 90 minutes"
+
+  ; Endstop cancellation (X or U endstop)
+  if sensors.endstops[0].triggered || sensors.endstops[3].triggered
+    M292
+    M140 S0 R0
+    M141 S0
+    set var.logLine = var.elapsed ^ "," ^ heat.heaters[2].current
+    set var.logLine = var.logLine ^ "," ^ heat.heaters[3].current
+    set var.logLine = var.logLine ^ "," ^ sensors.analog[4].lastReading
+    set var.logLine = var.logLine ^ "," ^ heat.heaters[0].current
+    set var.logLine = var.logLine ^ "," ^ heat.heaters[1].current
+    set var.logLine = var.logLine ^ "," ^ heat.heaters[2].state
+    set var.logLine = var.logLine ^ "," ^ heat.heaters[3].state
+    set var.logLine = var.logLine ^ "," ^ {fans[7].rpm / 100}
+    set var.logLine = var.logLine ^ "," ^ fans[7].requestedValue
+    set var.logLine = var.logLine ^ "," ^ fans[4].requestedValue
+    set var.logLine = var.logLine ^ "," ^ boards[0].vIn.current
+    set var.logLine = var.logLine ^ "," ^ boards[1].vIn.current
+    echo >>{var.logFile} var.logLine
+    echo >>{var.logFile} "RESULT: Cancelled (endstop)"
+    M98 P"0:/sys/led/resetstatus.g"
+    abort "Heating test cancelled by endstop"
+
+; ---- Targets Reached - Soak for 5 minutes ----
+M292
+echo "All targets reached - holding for 5 minute soak period"
+M291 R"Soak Period" P"All targets reached! Holding temperature for 5 minutes to verify stability.<br>Logging continues." S1 T10
+
+var soakStart = state.upTime
+var soakDuration = 300                                                                        ; 5 minutes
+
+while (state.upTime - var.soakStart) < var.soakDuration
+  G4 S1
+  set var.elapsed = state.upTime - var.startTime
+
+  ; Log during soak every 10 seconds
+  if (var.elapsed - var.lastLogTime) >= 10
+    set var.lastLogTime = var.elapsed
+    set var.logLine = var.elapsed ^ "," ^ heat.heaters[2].current
+    set var.logLine = var.logLine ^ "," ^ heat.heaters[3].current
+    set var.logLine = var.logLine ^ "," ^ sensors.analog[4].lastReading
+    set var.logLine = var.logLine ^ "," ^ heat.heaters[0].current
+    set var.logLine = var.logLine ^ "," ^ heat.heaters[1].current
+    set var.logLine = var.logLine ^ "," ^ heat.heaters[2].state
+    set var.logLine = var.logLine ^ "," ^ heat.heaters[3].state
+    set var.logLine = var.logLine ^ "," ^ {fans[7].rpm / 100}
+    set var.logLine = var.logLine ^ "," ^ fans[7].requestedValue
+    set var.logLine = var.logLine ^ "," ^ fans[4].requestedValue
+    set var.logLine = var.logLine ^ "," ^ boards[0].vIn.current
+    set var.logLine = var.logLine ^ "," ^ boards[1].vIn.current
+    echo >>{var.logFile} var.logLine
+    echo "[" ^ var.elapsed ^ "s SOAK] Bed:" ^ heat.heaters[2].current ^ " Chamber:" ^ heat.heaters[3].current
+
+  ; Fault check during soak
+  if (var.testBed && heat.heaters[2].state == "fault") || (var.testChamber && heat.heaters[3].state == "fault")
+    M140 S0 R0
+    M141 S0
+    set var.logLine = var.elapsed ^ "," ^ heat.heaters[2].current
+    set var.logLine = var.logLine ^ "," ^ heat.heaters[3].current
+    set var.logLine = var.logLine ^ "," ^ sensors.analog[4].lastReading
+    set var.logLine = var.logLine ^ "," ^ heat.heaters[0].current
+    set var.logLine = var.logLine ^ "," ^ heat.heaters[1].current
+    set var.logLine = var.logLine ^ "," ^ heat.heaters[2].state
+    set var.logLine = var.logLine ^ "," ^ heat.heaters[3].state
+    set var.logLine = var.logLine ^ "," ^ {fans[7].rpm / 100}
+    set var.logLine = var.logLine ^ "," ^ fans[7].requestedValue
+    set var.logLine = var.logLine ^ "," ^ fans[4].requestedValue
+    set var.logLine = var.logLine ^ "," ^ boards[0].vIn.current
+    set var.logLine = var.logLine ^ "," ^ boards[1].vIn.current
+    echo >>{var.logFile} var.logLine
+    echo >>{var.logFile} "RESULT: FAILED - Heater fault during soak"
+    M98 P"0:/sys/led/fault.g"
+    M291 R"Heater Fault During Soak" P"Heater fault during soak period!<br><br>Log: " ^ var.logFile S2
+    M98 P"0:/sys/led/resetstatus.g"
+    abort "Heater fault during soak period"
+
+  ; Endstop cancel during soak
+  if sensors.endstops[0].triggered || sensors.endstops[3].triggered
+    M140 S0 R0
+    M141 S0
+    echo >>{var.logFile} "RESULT: Cancelled during soak (endstop)"
+    M98 P"0:/sys/led/resetstatus.g"
+    abort "Test cancelled by endstop during soak"
+
+echo "Soak period complete"
+
+; ---- Test Passed ----
+M140 S0 R0
+M141 S0
+
+var totalTime = state.upTime - var.startTime
+
+; Final log entry
+set var.logLine = var.totalTime ^ "," ^ heat.heaters[2].current
+set var.logLine = var.logLine ^ "," ^ heat.heaters[3].current
+set var.logLine = var.logLine ^ "," ^ sensors.analog[4].lastReading
+set var.logLine = var.logLine ^ "," ^ heat.heaters[0].current
+set var.logLine = var.logLine ^ "," ^ heat.heaters[1].current
+set var.logLine = var.logLine ^ "," ^ heat.heaters[2].state
+set var.logLine = var.logLine ^ "," ^ heat.heaters[3].state
+set var.logLine = var.logLine ^ "," ^ {fans[7].rpm / 100}
+set var.logLine = var.logLine ^ "," ^ fans[7].requestedValue
+set var.logLine = var.logLine ^ "," ^ fans[4].requestedValue
+set var.logLine = var.logLine ^ "," ^ boards[0].vIn.current
+set var.logLine = var.logLine ^ "," ^ boards[1].vIn.current
+echo >>{var.logFile} var.logLine
+echo >>{var.logFile} "RESULT: PASSED (incl. 5min soak)"
+
+echo "=== Heating Test Passed in " ^ var.totalTime ^ " seconds (incl. 5min soak) ==="
+
+M98 P"0:/sys/led/end.g"                                                                      ; Green LED = success
+
+; Build success message
+var passMsg = "Heating test completed!<br><br>"
+set var.passMsg = var.passMsg ^ "Total time: " ^ var.totalTime ^ " seconds<br>"
+if var.testBed
+  set var.passMsg = var.passMsg ^ "Bed: " ^ var.bedTarget ^ "°C in " ^ var.bedReachedTime ^ "s<br>"
+if var.testChamber
+  set var.passMsg = var.passMsg ^ "Chamber: 100°C in " ^ var.chamberReachedTime ^ "s<br>"
+set var.passMsg = var.passMsg ^ "<br>Log: " ^ var.logFile
+set var.passMsg = var.passMsg ^ "<br>Params: " ^ var.paramFile
+M291 R"Heating Test Passed" P{var.passMsg} S2
+M98 P"0:/sys/led/resetstatus.g"
+
+; ///// End of Build Plate & Chamber Heating Test /////
