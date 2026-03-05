@@ -21,6 +21,8 @@ All reference documentation lives in `.github/instructions/`. Consult these file
 | `Slicer Macros` | **PrusaSlicer macro language**: `{if ...}{endif}`, `{expression}`, `[placeholder]` syntax, operators, functions (`min`, `max`, `int`, `round`, `digits`, `zdigits`, `is_nil`), ternary operator, regex matching. |
 | `Slicer List of placeholders` | **PrusaSlicer placeholders**: all available variables for custom G-codes and output filename templates (`current_extruder`, `initial_tool`, `first_layer_temperature`, `layer_z`, `layer_num`, `total_layer_count`, `next_extruder`, `previous_extruder`, `filament_preset`, `nozzle_diameter[]`, etc.). |
 | `Slicer Placeholders.cpp` | **Slic3r placeholder reference**: legacy and extended placeholder list with usage examples and notes on value format differences (e.g., fan speeds are 0-100, not 0-255). |
+| `Macro Parameters.md` | **Firmware macro parameter reference**: complete audit of every `param.*` letter used across the firmware — which files receive them, what each letter means, what values to pass, and where each macro is called from. Consult this whenever you need to call or modify a system macro. |
+| `Memory Slots.md` | **Memory slots & restore points**: how the firmware uses `G60` save slots (0–5), which slots are auto-saved by RRF (slot 1 on pause, slot 2 on tool change), and all `G1 Rn` / `T Rn` / `M106 Rn` restore commands used across the codebase. |
 
 ---
 
@@ -335,6 +337,27 @@ if exists(param.A)
 ```
 
 **Reserved parameter letters:** `P` (file path) and `R` (restart). Do not use `G`, `M`, `N`, or `T` as parameters in custom G-code macro files.
+
+**Commonly used parameter letters in this firmware:**
+
+| Letter | Typical Meaning |
+|--------|-----------------|
+| `A` | Adaptive mesh X-min, authorization gate, auto-mode temp |
+| `B` | Adaptive mesh X-max |
+| `C` | Change mode, ramp clean, skip slow probe |
+| `D` | Adaptive mesh Y-min, extruder number (RRF event) |
+| `E` | Tool selection (initial.g), extrude amount (nozzlewipe.g) |
+| `J` | Adaptive mesh Y-max |
+| `K` | Keep current XY for probing (homez.g) |
+| `L` | Skip Z lower, skip placement, skip straight wipe |
+| `N` | Skip LED reset (cold homing) |
+| `R` | Restore position, ramp mode, quick-save, force-enable |
+| `S` | Skip park/lift, slow speed, silent mode |
+| `T` | Tool override, set temperature, skip probe test, store test data |
+| `W` | Skip bed wait (initial.g), wait for nozzle temp (nozzlewipe.g) |
+| `X`/`Y`/`Z` | Nozzle contact probe axis (nozzleprobe.g), skip Z lift (homez.g) |
+
+> **For the full reference** — every parameter per file, expected values, and all call sites — see `Macro Parameters.md` in this folder.
 
 ### 4.8 Writing to Files
 
