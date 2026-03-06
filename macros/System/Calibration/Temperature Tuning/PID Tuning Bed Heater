@@ -195,7 +195,7 @@ M141 S0
 echo "Chamber heater turned off after PID tuning"
 
 ; ---- Restore HEPA filter to default thermostatic mode ----
-M106 P7 H3 T50 X{global.hepafan}                                                             ; Restore HEPA to thermostatic
+M106 P7 H3 T35 X{global.hepafan}                                                             ; Restore HEPA to thermostatic
 echo "HEPA filter restored to default thermostatic mode"
 
 M291 R"PID Tune Complete" P{"Bed PID values have been saved.<br><br>Log: " ^ var.logFile} S1

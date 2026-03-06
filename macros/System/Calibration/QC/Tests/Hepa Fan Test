@@ -20,7 +20,7 @@ elif input == 0
         M291 R"Error" P"The fan speed does not match the set value. Please check the fan.<br> Do you want to stop test?" S4 K{"Stop","Continue Test"}
         if input == 0
             M106 P7 S0
-            M106 P7 H3 T50 X{global.hepafan}
+            M106 P7 H3 T35:90 L0.2 X{global.hepafan}
             abort "Test cancelled by user"
     else
         M291 R"Fan speed Test" P{"Preset Fan speed: "^fans[7].requestedValue*100^"% <br> Actual Fan speed is correct"} S2
@@ -33,7 +33,7 @@ elif input == 0
         M291 R"Error" P"The fan speed does not match the set value. Please check the fan.<br> Do you want to stop test?" S4 K{"Stop","Continue Test"}
         if input == 0
             M106 P7 S0
-            M106 P7 H3 T50 X{global.hepafan}
+            M106 P7 H3 T35:90 L0.2 X{global.hepafan}
             abort "Test cancelled by user"
     else
         M291 R"Fan speed Test" P{"Preset Fan speed: "^fans[7].requestedValue*100^"% <br>Actual Fan speed is correct"} S2
@@ -47,7 +47,7 @@ elif input == 0
         M291 R"Error" P"The fan speed does not match the set value. Please check the fan.<br> Do you want to stop test?" S4 K{"Stop","Continue Test"}
         if input == 0
             M106 P7 S0
-            M106 P7 H3 T50 X{global.hepafan}
+            M106 P7 H3 T35:90 L0.2 X{global.hepafan}
             abort "Test cancelled by user"
     else
         M291 R"Fan speed Test" P{"Preset Fan speed: "^fans[7].requestedValue*100^"% <br>Actual Fan speed is correct"} S2
@@ -61,7 +61,7 @@ elif input == 0
         M291 R"Error" P"The fan speed does not match the set value. Please check the fan.<br> Do you want to stop test?" S4 K{"Stop","Continue Test"}
         if input == 0
             M106 P7 S0
-            M106 P7 H3 T50 X{global.hepafan}
+            M106 P7 H3 T35:90 L0.2 X{global.hepafan}
             abort "Test cancelled by user"
     else
         M291 R"Fan speed Test" P{"Preset Fan speed: "^fans[7].requestedValue*100^" <br> Actual Fan speed is correct"} S2
@@ -75,13 +75,13 @@ elif input == 0
         M291 R"Error" P"The fan speed does not match the set value. Please check the fan.<br> Do you want to stop test?" S4 K{"Stop","Continue Test"}
         if input == 0
             M106 P7 S0
-            M106 P7 H3 T50 X{global.hepafan}
+            M106 P7 H3 T35:90 L0.2 X{global.hepafan}
             abort "Test cancelled by user"
     else
         M291 R"Fan speed Test" P{"Preset Fan speed: "^fans[7].requestedValue*100^"% <br> Actual Fan speed is correct"} S2
 
     M106 P7 S0
-    M106 P7 H3 T50 X{global.hepafan}
+    M106 P7 H3 T35:90 L0.2 X{global.hepafan}
     M291 R"Succes" P"Test completed successfully!" S2
 
     
