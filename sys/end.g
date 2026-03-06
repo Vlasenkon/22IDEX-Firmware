@@ -36,7 +36,15 @@ M568 P3 S0 R0
 
 M84 XYU
 
-M106 P7 H3 T50 X{global.hepafan}
+M106 P7 H3 T50:90 L0.25 X{global.hepafan}
+
+; If high-temp mode was active, restore full HEPA speed and notify user
+if exists(global.hepaHighTempMode)
+  if global.hepaHighTempMode
+    M106 P7 H-1
+    M106 P7 S{global.hepafan}
+    M291 R"HEPA Filter" P"Please wait before opening the chamber for proper air filtration." S1 T0
+    set global.hepaHighTempMode = false
 
 M98 P"0:/sys/resetzbabystep.g"
 G4 S1

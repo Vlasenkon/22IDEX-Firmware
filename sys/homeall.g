@@ -1,5 +1,8 @@
 ; Home Y
-M98 P"0:/sys/homey.g" L1
+if exists(param.N)
+  M98 P"0:/sys/homey.g" L1 N1
+else
+  M98 P"0:/sys/homey.g" L1
 
 M98 P"0:/sys/homex.g"
 M98 P"0:/sys/homeu.g"

@@ -29,6 +29,8 @@ var R1 = tools[1].standby[0]
 
 var div_Homing = 100
 var div_Cleaning = 20
+var coldHomed = false
+var bedMoved = false
 
 
 ; Preheat (Cold) ===========================================================================
@@ -64,29 +66,136 @@ else
 
 G60 S0  ; Save Tool selection to slot 0
 
-M106 P7 H-1
-M106 P7 S{global.hepafan}
+; ============= Initial Cold Homing =============
+; Home axes so we can safely command Z moves (bed lowering)
+; Skip if already homed (e.g., back-to-back prints)
+if !move.axes[0].homed || !move.axes[1].homed || !move.axes[2].homed || !move.axes[3].homed
+  set var.coldHomed = true
+  M98 P"homeall.g" S1 N1               ; Cold home — probe placed back after (no L1)
 
-; Wait for Bed and (Chamber - Optionally)
+; ============= Heating Optimization & HEPA Fan Control =============
+; Three-tier strategy based on bed target temperature:
+;   Tier 1 (<140°C)  — Default heating, gradual HEPA ramp to full speed
+;   Tier 2 (140-165°C) — Lower bed to Z350 to reduce HEPA airflow, gradual ramp
+;   Tier 3 (>165°C)  — HEPA OFF for bed heating, then 50% for chamber & print
+
+var heatStart = state.upTime
+var bedTarget = heat.heaters[2].active
+var bedReached = false
+if var.bedTarget > 0 && heat.heaters[2].current >= (var.bedTarget - 5)
+  set var.bedReached = true
+
+; Capture chamber state before heating begins (for heat soak calculation)
+var chamberTarget = heat.heaters[3].active
+var chamberStartTemp = sensors.analog[3].lastReading
+
+if var.chamberTarget > 0
+  echo "Chamber target: "^var.chamberTarget^"C (starting from "^var.chamberStartTemp^"C)"
+
+; Initialize HEPA high-temp mode flag (signals end.g to restore full speed)
+if !exists(global.hepaHighTempMode)
+  global hepaHighTempMode = false
+else
+  set global.hepaHighTempMode = false
+
+var hepaTarget = global.hepafan           ; Default: full user speed
+var hepaRamp = 0
+
+; --- Tier 3: Above 165°C — HEPA OFF for bed, then 50% for chamber ---
+if var.bedTarget > 165
+  set var.hepaTarget = global.hepafan / 2
+  M106 P7 H-1                            ; Switch HEPA to manual control
+  M106 P7 S0                             ; HEPA OFF during bed heating
+  ; Always lower bed — reduces HEPA airflow when fan kicks in for chamber
+  if !var.bedReached
+    G1 Z350 F3000
+    set var.bedMoved = true
+    M400
+  set global.hepaHighTempMode = true
+
+elif var.bedTarget >= 140                 ; Tier 2: 140-165°C — Lower bed to reduce HEPA airflow
+  if !var.bedReached
+    G1 Z350 F3000
+    set var.bedMoved = true
+    M400
+
+; --- Tier 1: Below 140°C — No special action needed ---
+
+
+; ============= Wait for Bed, Chamber & Heat Soak =============
 if !exists(param.W)
-  M116 H2 S10
-  M98 P"0:/user/chamberwait.g"
+  if var.bedReached
+    echo "Bed already at target temperature"
+  else
+    echo "Heating bed..."
+    M116 H2 S10
+    echo "Bed reached target temperature"
+
+  ; --- Tier 3: Ramp HEPA to 50% after bed is hot so chamber can heat ---
+  if var.bedTarget > 165
+    echo "Bed heated - ramping HEPA to "^floor(var.hepaTarget / 2.55)^"% (50% of user preset "^floor(global.hepafan / 2.55)^"%)"
+    M106 P7 H-1
+    while var.hepaRamp < var.hepaTarget
+      set var.hepaRamp = min(var.hepaRamp + 10, var.hepaTarget)
+      M106 P7 S{var.hepaRamp}
+      G4 P500
+    M106 P7 S{var.hepaTarget}
+
+  ; --- Chamber Wait & Heat Soak ---
+  if var.chamberTarget > 0
+    echo "Waiting for chamber to reach "^var.chamberTarget^"C..."
+    M116 H3 S5                           ; Wait for chamber within 5°C tolerance
+    echo "Chamber reached target temperature"
+
+    ; Calculate heat soak based on how cold the chamber started
+    var tempDelta = var.chamberTarget - var.chamberStartTemp
+    var soakTime = 0
+
+    if var.tempDelta <= 5
+      echo "Skipping heat soak - chamber was already at "^var.chamberStartTemp^"C"
+    elif var.tempDelta <= 20
+      set var.soakTime = 120
+      echo "Heat soaking for 2 min - chamber started warm at "^var.chamberStartTemp^"C"
+    elif var.tempDelta <= 50
+      set var.soakTime = 180
+      echo "Heat soaking for 3 min - chamber started at "^var.chamberStartTemp^"C"
+    else
+      set var.soakTime = 300
+      echo "Heat soaking for 5 min - chamber started cold at "^var.chamberStartTemp^"C"
+
+    if var.soakTime > 0
+      G4 S{var.soakTime}
+      echo "Heat soak complete"
 
 
+; ============= HEPA Fan Gradual Ramp (Tier 1 & 2 only) =============
+; Tier 3 already ramped HEPA above; skip if already running
+if var.bedTarget <= 165
+  M106 P7 H-1
+  while var.hepaRamp < var.hepaTarget
+    set var.hepaRamp = min(var.hepaRamp + 10, var.hepaTarget)
+    M106 P7 S{var.hepaRamp}
+    G4 P500
+  M106 P7 S{var.hepaTarget}
 
-; Home all and MBC ===========================================================================
+var heatDuration = state.upTime - var.heatStart
+var heatMin = floor(var.heatDuration / 60)
+var heatSec = mod(var.heatDuration, 60)
+echo "Preheat completed in "^var.heatMin^"m "^var.heatSec^"s"
+
+; Hot Re-Home & MBC =========================================================================
 M98 P"0:/sys/led/start_hot.g"
 
+; Re-home only when cold home ran (thermal expansion) or bed physically moved
+if var.coldHomed || var.bedMoved
+  M84 Y
+  G4 S2
+  M98 P"homeall.g" S1 L1               ; Hot re-home (L1 keeps probe for mesh)
+  M98 P"0:/user/xy_square_manual.g"
+  M98 P"0:/user/xy_square_auto.g"
+  M98 P"0:/user/xy_square_mode.g"
+  M98 P"0:/sys/xy_squaring.g"
 
-M84 Y
-G4 S2
-
-M98 P"homeall.g" Z1 S1 L1              ; Home the machine  
-
-M98 P"0:/user/xy_square_manual.g"
-M98 P"0:/user/xy_square_auto.g"
-M98 P"0:/user/xy_square_mode.g"
-M98 P"0:/sys/xy_squaring.g"
 M98 P"0:/user/periodic_wiping.g"
 
 if exists(param.A) && exists(param.B) && exists(param.D) && exists(param.J)

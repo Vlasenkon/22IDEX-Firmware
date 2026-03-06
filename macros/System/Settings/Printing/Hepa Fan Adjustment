@@ -8,6 +8,6 @@ echo >>"0:/user/hepafan.g" "  set global.hepafan = "^{var.speed}
 echo >>"0:/user/hepafan.g" "else"
 echo >>"0:/user/hepafan.g" "  global hepafan = "^{var.speed}
 
-M106 P7 H3 T50 X{global.hepafan}         ; Configure thermostatic control
+M106 P7 H3 T50:90 L0.25 X{global.hepafan}         ; Configure thermostatic control
 
 echo "HEPA fan speed set to " ^ input ^ "%"

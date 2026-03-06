@@ -1,15 +1,16 @@
 var msg1 = "By enabling wait, the machine will wait for the chamber "
-var msg2 = "to reach set temperature, then wait an additional 5 minutes "
-var msg3 = "for heat soak before starting the print.<br>"
-var msg4 = "Tip: To skip waiting for chamber temperature, set chamber temperature to 0 in your slicer."
+var msg2 = "to reach set temperature before resuming a paused print.<br>"
+var msg3 = "Note: initial.g now handles chamber wait and heat soak "
+var msg4 = "automatically. This setting only affects resume behavior."
 var message = var.msg1 ^ var.msg2 ^ var.msg3 ^ var.msg4
 
 M291 S4 P{var.message} R"Chamber Temperature Wait" K{"Wait","Don't Wait"} F0
 
 if input = 0
-    echo >"0:/user/chamberwait.g" "M116 H2 C0 S5 ; Wait for Chamber Temp"
-    echo >>"0:/user/chamberwait.g" "if heat.heaters[3].active != 0 "
-    echo >>"0:/user/chamberwait.g" "  G4 S300"
+    echo >"0:/user/chamberwait.g" "; Chamber wait for resume (initial.g handles startup soak)"
+    echo >>"0:/user/chamberwait.g" "M116 H2 S10"
+    echo >>"0:/user/chamberwait.g" "if heat.heaters[3].active > 0"
+    echo >>"0:/user/chamberwait.g" "  M116 H3 S5"
     echo "Wait for Chamber Temp selected"
 else
     echo >"0:/user/chamberwait.g" "M116 H2 S10 ; Do not wait for Chamber Temp"
