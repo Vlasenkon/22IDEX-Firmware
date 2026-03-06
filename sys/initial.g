@@ -133,7 +133,7 @@ if !exists(param.W)
 
   ; --- Tier 3: Ramp HEPA to 50% after bed is hot so chamber can heat ---
   if var.bedTarget > 165
-    echo "Bed heated - ramping HEPA to "^floor(var.hepaTarget / 2.55)^"% (50% of user preset "^floor(global.hepafan / 2.55)^"%)"
+    echo "Bed ready - ramping HEPA to "^floor(var.hepaTarget / 2.55)^"% (50% of user preset "^floor(global.hepafan / 2.55)^"%)"
     M106 P7 H-1
     while var.hepaRamp < var.hepaTarget
       set var.hepaRamp = min(var.hepaRamp + 10, var.hepaTarget)
