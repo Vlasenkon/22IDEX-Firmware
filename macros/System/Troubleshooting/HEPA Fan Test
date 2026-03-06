@@ -125,7 +125,7 @@ echo "=== HEPA Fan Test Complete ==="
 
 ; ---- Stop Fan & Restore Normal Operation ----
 M106 P7 S0
-M106 P7 H3 T50:90 L0.25 X{global.hepafan}
+M106 P7 H3 T35:90 L0.2 X{global.hepafan}
 
 ; ---- Build Results Summary ----
 

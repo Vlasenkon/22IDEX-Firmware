@@ -36,7 +36,7 @@ M568 P3 S0 R0
 
 M84 XYU
 
-M106 P7 H3 T50:90 L0.25 X{global.hepafan}
+M106 P7 H3 T35:90 L0.2 X{global.hepafan}
 
 ; If high-temp mode was active, restore full HEPA speed and notify user
 if exists(global.hepaHighTempMode)

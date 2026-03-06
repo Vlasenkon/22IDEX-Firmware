@@ -4,7 +4,7 @@ M106 P3 S0
 
 
 M98 P"0:/user/hepafan.g"
-M106 P7 H3 T50:90 L0.25 X{global.hepafan}
+M106 P7 H3 T35:90 L0.2 X{global.hepafan}
 ; Save current temperatures before resetting
 var bedTemp = heat.heaters[2].active
 var chamberTemp = heat.heaters[3].active
