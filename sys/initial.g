@@ -5,6 +5,17 @@ var S1 = tools[1].active[0]
 var R0 = tools[0].standby[0]
 var R1 = tools[1].standby[0]
 
+; Save print temps globally so recovery macros (place.g etc.) can read them
+; during bed leveling when the nozzle is intentionally held at S-100
+if exists(global.printTempT0)
+  set global.printTempT0 = var.S0
+else
+  global printTempT0 = var.S0
+if exists(global.printTempT1)
+  set global.printTempT1 = var.S1
+else
+  global printTempT1 = var.S1
+
 var div = 100                          ; Diviation for Nozzle Temp During Wait for a Bed
 
 ; Preheat (Cold) ===========================================================================
