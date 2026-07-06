@@ -8,8 +8,6 @@ G4 P500
 if sensors.probes[0].value[0] > 500
   echo "Error: Probe not detected at start of placing"
   echo >>"0:/sys/eventlog.txt" "Error: Probe not detected at start of placing"
-;else
-;  echo "IF 1 - Present"
 M42 P4 S0
 
 
@@ -35,8 +33,6 @@ G4 P500
 if sensors.probes[0].value[0] > 500
   echo "Error: Probe was not detected at the dock after placing"
   echo >>"0:/sys/eventlog.txt" "Error: Probe was not detected at the dock after placing"
-;else
-;  echo "IF 2 - Present"  
 M42 P4 S0
 
 
@@ -47,7 +43,7 @@ G91
 G1 F18000 X-50             ; Shear probe off the tool head
 M204 T5000                 ; set the accelerations
 G1 F18000 Y-50
-G1 F18000 U{move.axes[3].max} 
+G1 F18000 U{move.axes[3].max}
 G90
 M400
 M280 P0 S0       ; Take probe holder out of the way
@@ -57,10 +53,109 @@ M280 P0 S0       ; Take probe holder out of the way
 M42 P4 S1
 G4 P500
 if sensors.probes[0].value[0] < 500
-  M42 P4 S0   		 ; Turn off relay
-  M98 P"0:/sys/led/fault.g"
-  echo >>"0:/sys/eventlog.txt" "Error: Probe removal failed"
-  abort "Error: Probe removal failed"
-;else
-;  echo "IF 3 - Placed"
+  M42 P4 S0
+  echo "probe stuck after shear — trying recovery"
+  echo >>"0:/sys/eventlog.txt" "place.g: probe stuck after shear — trying recovery"
+
+  var t0Temp = (exists(global.printTempT0) && global.printTempT0 > 0) ? global.printTempT0 : 0
+  var t1Temp = (exists(global.printTempT1) && global.printTempT1 > 0) ? global.printTempT1 : 0
+
+  if var.t0Temp == 0 && var.t1Temp == 0
+    echo >>"0:/sys/eventlog.txt" "Error: Probe stuck — no print temps available"
+    M98 P"0:/sys/led/fault.g"
+    abort "Error: Probe stuck"
+
+  var success = false
+  var coldAttempt = 0
+
+  ; === Hot retract on active tools ===
+  if var.t0Temp > 0
+    T0 P0
+    M568 P0 S{var.t0Temp} R{var.t0Temp} A2
+    M116 P0 S5
+    M83
+    G91
+    G1 E-30 F2400
+    G90
+    M400
+
+  if var.t1Temp > 0
+    T1 P0
+    M568 P1 S{var.t1Temp} R{var.t1Temp} A2
+    M116 P1 S5
+    M83
+    G91
+    G1 E-30 F2400
+    G90
+    M400
+
+  T0 P0
+
+  M42 P4 S1
+  G4 P500
+  if sensors.probes[0].value[0] > 500
+    set var.success = true
+  M42 P4 S0
+
+  ; === Cold retract cycle: cool -40°C, retract 15mm, retry dock — up to 3 attempts ===
+  while var.success == false && var.coldAttempt < 3
+    set var.coldAttempt = var.coldAttempt + 1
+
+    if var.t0Temp > 0
+      T0 P0
+      M568 P0 S{var.t0Temp - 40} R{var.t0Temp - 40} A2
+      M116 P0 S5
+      M83
+      G91
+      G1 E-15 F600
+      G90
+      M400
+
+    if var.t1Temp > 0
+      T1 P0
+      M568 P1 S{var.t1Temp - 40} R{var.t1Temp - 40} A2
+      M116 P1 S5
+      M83
+      G91
+      G1 E-15 F600
+      G90
+      M400
+
+    G4 S3
+    T0 P0
+    M204 T5000
+    G90
+    G1 F18000 Y135 X{global.probePickX} U{move.axes[3].max-10}
+    M400
+    M280 P0 S{global.probePickAngle}
+    G4 S1
+    M564 S0
+    G90
+    G1 F18000 Y{global.probePickY}
+    M564 S1
+    M204 T2000
+    G91
+    G1 F18000 X-50
+    M204 T5000
+    G1 F18000 Y-50
+    G1 F18000 U{move.axes[3].max}
+    G90
+    M400
+    M280 P0 S0
+    M42 P4 S1
+    G4 P500
+    if sensors.probes[0].value[0] > 500
+      set var.success = true
+    M42 P4 S0
+
+  M568 P0 S0 R0 A0
+  M568 P1 S0 R0 A0
+  T0 P0
+
+  if var.success == false
+    M98 P"0:/sys/led/fault.g"
+    echo >>"0:/sys/eventlog.txt" "Error: Probe recovery failed"
+    M291 R"Probe Stuck" P"Probe could not be removed automatically after hot and cold retract attempts. Please remove it manually and restart the print." S1
+    abort "Error: Probe recovery failed"
+
 M42 P4 S0
