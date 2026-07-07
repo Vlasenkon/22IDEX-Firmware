@@ -57,8 +57,15 @@ if sensors.probes[0].value[0] < 500
   echo "probe stuck after shear — trying recovery"
   echo >>"0:/sys/eventlog.txt" "place.g: probe stuck after shear — trying recovery"
 
-  var t0Temp = (exists(global.printTempT0) && global.printTempT0 > 0) ? global.printTempT0 : 0
-  var t1Temp = (exists(global.printTempT1) && global.printTempT1 > 0) ? global.printTempT1 : 0
+  var stateFile = "0:/sys/PrintStartState.csv"
+  if !fileexists(var.stateFile)
+    echo >>"0:/sys/eventlog.txt" "Error: Probe stuck — PrintStartState.csv not found"
+    M98 P"0:/sys/led/fault.g"
+    abort "Error: Probe stuck"
+
+  var printState = fileread(var.stateFile, 0, 2, ',')
+  var t0Temp = var.printState[0]
+  var t1Temp = var.printState[1]
 
   if var.t0Temp == 0 && var.t1Temp == 0
     echo >>"0:/sys/eventlog.txt" "Error: Probe stuck — no print temps available"
@@ -155,6 +162,8 @@ if sensors.probes[0].value[0] < 500
   if var.success == false
     M98 P"0:/sys/led/fault.g"
     echo >>"0:/sys/eventlog.txt" "Error: Probe recovery failed"
+    if fileexists(var.stateFile)
+      M30 {var.stateFile}
     M291 R"Probe Stuck" P"Probe could not be removed automatically after hot and cold retract attempts. Please remove it manually and restart the print." S1
     abort "Error: Probe recovery failed"
 
