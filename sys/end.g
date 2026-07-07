@@ -42,3 +42,8 @@ if move.axes[2].babystep != 0
 	M291 R"Reminder: Save Z - Offset?" P{"Adjustment of "^move.axes[2].babystep^" mm was detected, please save Z - Offset"} S1 T120
 
 M98 P"0:/user/filamentbackup.g"                          ; load filament runout tool swap variable
+
+; Disarm probe recovery — remove print-start state so a later bare home won't heat
+var stateFile = "0:/sys/PrintStartState.csv"
+if fileexists(var.stateFile)
+  M30 {var.stateFile}

@@ -187,3 +187,8 @@ M98 P"0:/sys/led/startup.g"                                      ; startup LED
 ; test internet connection
 echo >"0:/sys/runonce.g" "G4 S5"
 echo >>"0:/sys/runonce.g" "M98 P""0:/sys/networktest.g"""
+
+; Clear any stale probe-recovery state left by a power-off mid print
+var stateFile = "0:/sys/PrintStartState.csv"
+if fileexists(var.stateFile)
+  M30 {var.stateFile}

@@ -5,6 +5,12 @@ var S1 = tools[1].active[0]
 var R0 = tools[0].standby[0]
 var R1 = tools[1].standby[0]
 
+; Save print temps to a state file so place.g recovery can read them during
+; homing (nozzles are held at S-100 during bed leveling). Deleted in
+; end.g / cancel.g / config.g so recovery is disarmed once the print is over.
+var stateFile = "0:/sys/PrintStartState.csv"
+echo >{var.stateFile} var.S0 ^ "," ^ var.S1
+
 var div = 100                          ; Diviation for Nozzle Temp During Wait for a Bed
 
 ; Preheat (Cold) ===========================================================================

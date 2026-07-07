@@ -9,6 +9,11 @@ G10 P3 S0 R0
 M140 S0 R0    ; Bed heater off
 M141 S0       ; turn off chamber heater
 
+; Disarm probe recovery — remove print-start state on cancel
+var stateFile = "0:/sys/PrintStartState.csv"
+if fileexists(var.stateFile)
+  M30 {var.stateFile}
+
 M98 P"0:/sys/led/stop.g"
 
 ;reset Z baby steping if it was savedduring the ptint
